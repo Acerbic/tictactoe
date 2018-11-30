@@ -1,23 +1,25 @@
 var express = require('express');
 var router = express.Router();
-var games = require('../games');
 
 router.post('/DropGame/:gameId', function(req, res, next) {
-  const gameId = req.params.gameId;
+  const gameId = parseInt(req.params.gameId);
+  const gamesDb = req.app.gamesDb;
 
-  if (games.has(gameId)) {
+  if (gamesDb.has(gameId)) {
 
-    games.delete(gameId);
+    gamesDb.delete(gameId);
     res.send({
       success: true,
     });
 
   } else {
+
     res.send({
       success: false,
       errorMessage: "Can't drop - game not found",
       errorCode: 0 // TODO: replace with a proper code
     });
+
   }
 });
 

@@ -1,17 +1,21 @@
-var express = require('express');
-var router = express.Router();
-var games = require('../games');
+const express = require('express');
+const router = express.Router();
+
+const xstate = require('xstate');
 
 /**
  * Check the state of a game, if it exists
  */
 router.get('/CheckGame/:gameId', async function(req, res, next) {
-  const gameId = req.params.gameId;
+  const gameId = parseInt(req.params.gameId);
+  const gamesDb = req.app.gamesDb;
 
-  if (games.has(gameId)) {
+  if (gamesDb.has(gameId)) {
+    const current_state = xstate.State.create(JSON.parse(gamesDb.get(gameId).state));
+
     res.send({
       success: true,
-      state: games[gameId].state
+      state: current_state.value
     })
   } else {
     res.send({
