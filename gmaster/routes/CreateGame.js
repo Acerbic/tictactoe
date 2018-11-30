@@ -1,13 +1,13 @@
 var express = require('express');
 var router = express.Router();
-const { GameMachine } = require('../game/game-machine');
+const GameMachine = require('../game/game-machine');
 
 let gameId = 1;
 
 router.post('/CreateGame', function(req, res, next) {
   const data = req.body;
-  const p1_id = data.player1Id;
-  const p2_id = data.player2Id;
+  const p1_id = parseInt(data.player1Id);
+  const p2_id = parseInt(data.player2Id);
   const gamesDb = req.app.gamesDb;
 
   if (p1_id && p2_id) {
