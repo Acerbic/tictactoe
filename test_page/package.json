@@ -1,0 +1,18 @@
+{
+  "name": "ttt-tst-page",
+  "version": "1.0.0",
+  "description": "Test game master for TicTacToe",
+  "main": "index.js",
+  "license": "MIT",
+  "private": false,
+  "scripts": {
+    "dev": "next",
+    "build": "next build",
+    "start": "next start"
+  },
+  "dependencies": {
+    "next": "^7.0.2",
+    "react": "^16.6.3",
+    "react-dom": "^16.6.3"
+  }
+}
