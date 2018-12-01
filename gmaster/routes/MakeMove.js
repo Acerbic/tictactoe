@@ -6,10 +6,14 @@ const { interpret } = require('xstate/lib/interpreter');
 const GameMachine = require('../game/game-machine');
 
 router.post('/MakeMove/:gameId', function(req, res, next) {
-  const game_id = parseInt(req.params.gameId);
+  const gameId = parseInt(req.params.gameId);
   const gamesDb = req.app.gamesDb;
 
-  if (!gamesDb.has(game_id)) {
+  let game = null;
+  try {
+    game = gamesDb.LoadGame(gameId);
+  }
+  catch (ex) {
     res.send({
       state: null,
       success: false,
@@ -20,7 +24,6 @@ router.post('/MakeMove/:gameId', function(req, res, next) {
   }
 
   // restore the machine
-  const game = gamesDb.get(game_id);
   const current_state = xstate.State.create(JSON.parse(game.state));
   const service = interpret(GameMachine).start(current_state);
 
@@ -73,8 +76,8 @@ router.post('/MakeMove/:gameId', function(req, res, next) {
     move: {column, row},
     playerId
   });
-  // TODO: when id real DB, persist the changed state
   game.state = JSON.stringify(new_state);
+  gamesDb.SaveGame(gameId, game);
 
   // send result in reply
   res.send({

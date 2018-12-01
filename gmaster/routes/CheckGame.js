@@ -1,6 +1,5 @@
 const express = require('express');
 const router = express.Router();
-
 const xstate = require('xstate');
 
 /**
@@ -10,14 +9,17 @@ router.get('/CheckGame/:gameId', async function(req, res, next) {
   const gameId = parseInt(req.params.gameId);
   const gamesDb = req.app.gamesDb;
 
-  if (gamesDb.has(gameId)) {
-    const current_state = xstate.State.create(JSON.parse(gamesDb.get(gameId).state));
+  try {
+    const game = gamesDb.LoadGame(gameId);
+
+    const current_state = xstate.State.create(JSON.parse(game.state));
 
     res.send({
       success: true,
       state: current_state.value
     })
-  } else {
+  }
+  catch (ex) {
     res.send({
       state: null,
       success: false,

@@ -5,21 +5,18 @@ router.post('/DropGame/:gameId', function(req, res, next) {
   const gameId = parseInt(req.params.gameId);
   const gamesDb = req.app.gamesDb;
 
-  if (gamesDb.has(gameId)) {
-
-    gamesDb.delete(gameId);
+  if (gamesDb.HasGame(gameId)) {
+    gamesDb.DropGame(gameId);
     res.send({
       success: true,
     });
-
-  } else {
-
+  }
+  else {
     res.send({
       success: false,
       errorMessage: "Can't drop - game not found",
       errorCode: 0 // TODO: replace with a proper code
     });
-
   }
 });
 

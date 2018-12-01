@@ -2,15 +2,14 @@ var express = require('express');
 var router = express.Router();
 const GameMachine = require('../game/game-machine');
 
-let gameId = 1;
-
 router.post('/CreateGame', function(req, res, next) {
-  const data = req.body;
-  const p1_id = parseInt(data.player1Id);
-  const p2_id = parseInt(data.player2Id);
+  const p1_id = parseInt(req.body.player1Id);
+  const p2_id = parseInt(req.body.player2Id);
   const gamesDb = req.app.gamesDb;
 
   if (p1_id && p2_id) {
+    let gameId = gamesDb.GenerateNewId();
+
     let game = {
       state: JSON.stringify(GameMachine.initialState),
       player1: p1_id,
@@ -18,11 +17,11 @@ router.post('/CreateGame', function(req, res, next) {
 
       board: new Array(9)
     }
-    gamesDb.set(gameId++, game);
+    gamesDb.SaveGame(gameId, game);
 
     res.send({
       success: true,
-      gameId: gameId-1
+      gameId: gameId
     });
   } else {
     res.send({
