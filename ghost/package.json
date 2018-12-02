@@ -1,0 +1,12 @@
+{
+  "name": "ghost",
+  "version": "1.0.0",
+  "description": "Game host. Backend module to communicate game between players (via sockets) and game master. An instance of game host is spawned for each game.",
+  "author": "Gleb Varenov",
+  "license": "MIT",
+  "private": false,
+  "dependencies": {
+    "express": "^4.16.4",
+    "socket.io": "^2.2.0"
+  }
+}

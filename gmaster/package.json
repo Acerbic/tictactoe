@@ -1,12 +1,14 @@
 {
   "name": "gmaster",
-  "version": "0.0.0",
-  "private": true,
+  "version": "1.0.0",
+  "description": "Game master. Handles all game-related logic - accepts moves by players, checks game rules, determines the winner, etc. An instance of game master is spawned for each running game",
+  "private": false,
+  "author": "Gleb Varenov",
+  "license": "MIT",
   "scripts": {
     "start": "node ./bin/www"
   },
   "dependencies": {
-    "cookie-parser": "~1.4.3",
     "debug": "~2.6.9",
     "express": "~4.16.0",
     "morgan": "~1.9.0",
