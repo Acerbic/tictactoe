@@ -7,15 +7,15 @@ const player_setup = {
             on: {
                 SOC_CONNECT: {
                     target: 'wait4rolepick',
-                    actions: 'emit_choose_role'
+                    actions: 'emit_choose_role',
                 }
             }
         },
-        waite4rolepick: {
+        wait4rolepick: {
             on: {
                 SOC_IWANNABETRACER: {
                     target: 'rolerequested',
-                    action: 'store_role_requested'
+                    actions: 'store_role_requested',
                 }
             }
         },
@@ -33,10 +33,34 @@ const machine = xstate.Machine({
             type: 'parallel',
             states: {
                 player1: {
-                    ...player_setup
+                    initial: 'player_setup',
+                    states: {
+                        player_setup: {
+
+                            invoke: {
+                                src: player_setup_machine('player1'),
+                                data: { parent_ctx: ctx => ctx, player_slot: 'player1' },
+                                onDone: 'player_setup_done'
+                            },
+
+                        },
+                        player_setup_done: {type: 'final'}
+                    },
                 },
                 player2: {
-                    ...player_setup
+                    initial: 'player_setup',
+                    states: {
+                        player_setup: {
+
+                            invoke: {
+                                src: player_setup_machine('player2'),
+                                data: { parent_ctx: ctx => ctx, player_slot: 'player2' },
+                                onDone: 'player_setup_done'
+                            },
+                            
+                        },
+                        player_setup_done: {type: 'final'}
+                    }
                 }
             },
             onDone: 'role_requests_taken'
@@ -103,5 +127,23 @@ const machine = xstate.Machine({
         }
     }
 });
+
+// FIXME: extract code from this module.
+function player_setup_machine( player_slot ) {
+    return xstate.Machine(
+        Object.assign({}, player_setup, {id: player_slot}),
+        {
+            actions: {
+                emit_choose_role: (ctx, event) => {
+                    const socket = ctx.parent_ctx[`${ctx.player_slot}_socket`];
+                    socket.emit('choose_role');
+                },
+                store_role_requested: (ctx, event) => {
+                    ctx.parent_ctx[`${ctx.player_slot}_role_request`] = event.role;
+                }
+            }
+        }
+    );
+}
 
 module.exports = machine;

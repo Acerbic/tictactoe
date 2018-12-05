@@ -55,7 +55,7 @@ const GameMachine = xstate.Machine({
   }
 }, {
   actions: {
-    applyMove: xstate.actions.assign({ 
+    applyMove: xstate.actions.assign({
       board: (ctx, event) => {
         // not sure, should I make a copy of the board object?
         ctx.board[event.move.row][event.move.column] = event.playerId;

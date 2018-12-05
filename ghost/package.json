@@ -5,7 +5,11 @@
   "author": "Gleb Varenov",
   "license": "MIT",
   "private": false,
+  "scripts": {
+    "start": "cross-env DEBUG=*,-engine*,-express:router node index.js"
+  },
   "dependencies": {
+    "cross-env": "^5.2.0",
     "express": "^4.16.4",
     "socket.io": "^2.2.0",
     "xstate": "^4.1.2"
