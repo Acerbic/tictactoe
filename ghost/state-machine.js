@@ -66,6 +66,7 @@ const machine = xstate.Machine({
             onDone: 'role_requests_taken'
         },
         role_requests_taken: {
+            onEntry: 'conflict_evaluation',
             on: {
                 ROLE_REQUESTED_CONFLICT: {
                     target: 'role_requested_conflict',
@@ -78,10 +79,11 @@ const machine = xstate.Machine({
             }
         },
         role_requested_conflict: {
+            onEntry: 'cointoss_roles',
             on: {
                 COIN_TOSS: {
                     target: 'roles_assigned',
-                    actions: ['store_roles_assigned', 'emit_you_are_it']
+                    actions: ['emit_you_are_it']
                 }
             }
         },
@@ -89,6 +91,7 @@ const machine = xstate.Machine({
             onEntry: ['call_creategame'],
             on: {
                 CALL_CREATEGAME_ENDED: {
+                    cond: 'call_success',
                     target: 'wait4move',
                     actions: 'emit_your_turn'
                 }

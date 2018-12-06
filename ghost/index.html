@@ -15,12 +15,18 @@
       <button type="button" id="role_second">Be second</button>
       <input id="m" autocomplete="off" /><button>Send</button>
     </form>
-    
+
     <script>
       var socket = io();
       socket.on('choose_role', () => {
         console.log('choose_role!');
-      })
+      });
+      socket.on('iamalreadytracer', () => {
+        console.log('no luck!');
+      });
+      socket.on('you_are_it', data => {
+        console.log('you are...', data);
+      });
       document.getElementById('role_first').addEventListener('click', () => {
         socket.emit('iwannabetracer', 'first');
       })
