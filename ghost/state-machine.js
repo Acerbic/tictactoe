@@ -88,7 +88,7 @@ const machine = xstate.Machine({
             }
         },
         roles_assigned: {
-            onEntry: ['call_creategame'],
+            onEntry: ['attach_remaining_listeners', 'call_creategame'],
             on: {
                 CALL_CREATEGAME_ENDED: {
                     cond: 'call_success',
@@ -114,6 +114,7 @@ const machine = xstate.Machine({
             }
         },
         move_result: {
+            onEntry: 'judge_move_results',
             on: {
                 GAME_STATE_WAIT: {
                     target: 'wait4move',

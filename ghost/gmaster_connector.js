@@ -17,7 +17,7 @@ async function gmasterPost( endpoint, payload, gameId ) {
 
 async function gmasterGet( endpoint, gameId ) {
     const uri = gmaster_url + endpoint + gameId ? gameId : '';
-    const res = await fetch(gmaster_url + endpoint, {
+    const res = await fetch(uri, {
         method: 'GET',
     });
     return res.json();

@@ -60,12 +60,30 @@ const ghost = interpret(
                 ghost.send({type: "COIN_TOSS"});
             },
 
+            attach_remaining_listeners: (ctx) => {
+                // attaching socket listeners here, since we only now know who
+                // is player 1 and who is player 2...
+                ctx.player1_socket.on('move', move => {
+                    ghost.send( { type: "SOC_MOVE", move, player_slot: 'player1' } );
+                });
+                ctx.player2_socket.on('move', move => {
+                    ghost.send( { type: "SOC_MOVE", move, player_slot: 'player2' } );
+                });
+            },
+
             call_creategame: (ctx) => {
-                gmaster.get(
+                gmaster.post(
                     'CreateGame',
                     { player1Id: ctx.player1, player2Id: ctx.player2 }
                 )
-                .then( response => ghost.send({ type: "CALL_CREATEGAME_ENDED", response }))
+                .then( response => {
+                    if (response.success) {
+                        ctx.latest_game_state = response.newState;
+                        ghost.send({ type: "CALL_CREATEGAME_ENDED", response })
+                    } else {
+                        // TODO:
+                    }
+                })
                 .catch(ex => {
                     errorlog("Exceptional thing happened: %o", ex);
                 });
@@ -74,6 +92,51 @@ const ghost = interpret(
             emit_your_turn: (ctx) => {
                 const socket = ctx[`${ctx.current_player}_socket`];
                 socket.emit('your_turn');
+            },
+
+            call_makemove: (ctx, event) => {
+                gmaster.post(
+                    'MakeMove',
+                    {
+                        playerId: ctx[`${ctx.current_player}`],
+                        move: {
+                            row: event.row,
+                            column: event.column,
+                        }
+                    },
+                    ctx.game_id
+                )
+                .then ( response => {
+                    if (response.success) {
+                        ghost.send({ type: "CALL_MAKEMOVE_ENDED", response })
+                    } else {
+                        // TODO:
+                    }
+                })
+                .catch(ex => {
+                    errorlog("Exceptional thing happened: %o", ex);
+                });
+            },
+
+            emit_opponent_moved: (ctx) => {
+                const player = ctx.current_player == 'player1' ? 'player2' : 'player1';
+                const socket = ctx[`${player}_socket`];
+
+                gmaster.get('CheckGame', ctx.game_id)
+                .then( response => {
+                    if (response.success) {
+                        socket.emit('opponent_moved', {game_state: ctx.latest_game_state});
+                    }
+                });
+            },
+
+            judge_move_results: (ctx) => {
+                switch (ctx.latest_game_state.game) {
+                    case 'wait': 
+                        break;
+                    case 'over':
+                    case 'draw':
+                }
             }
         }
     })
