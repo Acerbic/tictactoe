@@ -8,7 +8,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
 // DB connection to be reused by all API calls
-app.gamesDb = require('./db/db-memory');
+app.gamesDb = require('./db/db-prisma');
 
 // Stupid CORS
 app.use(function(req, res, next) {

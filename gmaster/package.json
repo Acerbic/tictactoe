@@ -12,6 +12,7 @@
     "debug": "~2.6.9",
     "express": "~4.16.0",
     "morgan": "~1.9.0",
+    "prisma-client-lib": "^1.22.2",
     "xstate": "^4.1.2"
   }
 }

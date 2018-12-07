@@ -10,14 +10,17 @@ router.get('/CheckGame/:gameId', async function(req, res, next) {
   const gamesDb = req.app.gamesDb;
 
   try {
-    const game = gamesDb.LoadGame(gameId);
+    gamesDb.LoadGame(gameId)
+    .then( game => {
 
-    const current_state = xstate.State.create(JSON.parse(game.state));
+      const current_state = xstate.State.create(JSON.parse(game.state));
 
-    res.send({
-      success: true,
-      state: current_state.value
-    })
+      res.send({
+        success: true,
+        state: current_state.value
+      })
+
+    });
   }
   catch (ex) {
     res.send({

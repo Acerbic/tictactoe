@@ -1,6 +1,6 @@
 
 /**
- * Load game record from the DV
+ * Load game record from the DB
  * @param {int} gameId 
  * @returns {object}
  */
@@ -12,15 +12,15 @@ function LoadGame( gameId ) {
  * Store/update game record into DB
  * @param {int} gameId 
  */
-function SaveGame( gameId ) {
+function SaveGame( gameId, game ) {
     throw new Exception( "Not implemented" );
 }
 
 /**
- * Obtain a unique unoccupied id in concurrent-safe manner
+ * Create new game session in DB and return its ID
  * @returns {int}
  */
-function GenerateNewId() {
+function CreateGame( game ) {
     throw new Exception( "Not implemented" );
 }
 
@@ -41,4 +41,4 @@ function HasGame( gameId ) {
     throw new Exception( "Not implemented" );
 }
 
-module.exports = {LoadGame, SaveGame, GenerateNewId, DropGame, HasGame};
+module.exports = {LoadGame, SaveGame, CreateGame, DropGame, HasGame};

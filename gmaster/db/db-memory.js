@@ -15,8 +15,10 @@ function SaveGame( gameId, game ) {
     games.set(gameId, game)
 }
 
-function GenerateNewId() {
-    return ++lastGameId;
+function CreateGame( game ) {
+    ++lastGameId;
+    games.set(lastGameId, game);
+    return lastGameId;
 }
 
 function DropGame( gameId ) {
@@ -27,4 +29,4 @@ function HasGame( gameId ) {
     return games.has(gameId);
 }
 
-module.exports = {LoadGame, SaveGame, GenerateNewId, DropGame, HasGame};
+module.exports = {LoadGame, SaveGame, CreateGame, DropGame, HasGame};

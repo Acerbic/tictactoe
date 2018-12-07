@@ -8,20 +8,22 @@ router.post('/CreateGame', function(req, res, next) {
   const gamesDb = req.app.gamesDb;
 
   if (p1_id && p2_id) {
-    let gameId = gamesDb.GenerateNewId();
+    // let gameId// = gamesDb.GenerateNewId();
 
     let game = {
       state: JSON.stringify(GameMachine.initialState),
       player1: p1_id,
       player2: p2_id,
 
-      board: new Array(9)
+      board: JSON.stringify(GameMachine.initialState.context.board)
     }
-    gamesDb.SaveGame(gameId, game);
-
-    res.send({
-      success: true,
-      gameId: gameId
+    
+    gamesDb.CreateGame(game)
+    .then(gameId => {
+      res.send({
+        success: true,
+        gameId: gameId
+      });
     });
   } else {
     res.send({
