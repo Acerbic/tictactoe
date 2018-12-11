@@ -91,7 +91,6 @@ const machine = xstate.Machine({
             onEntry: ['attach_remaining_listeners', 'call_creategame'],
             on: {
                 CALL_CREATEGAME_ENDED: {
-                    cond: 'call_success',
                     target: 'wait4move',
                     actions: 'emit_your_turn'
                 }

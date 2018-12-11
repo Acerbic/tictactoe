@@ -4,7 +4,7 @@ const fetch = require('isomorphic-unfetch');
 const gmaster_url = 'http://localhost:3000/';
 
 async function gmasterPost( endpoint, payload, gameId ) {
-    const uri = gmaster_url + endpoint + gameId ? gameId : '';
+    const uri = gmaster_url + endpoint + (gameId ? ('/'+gameId) : '');
     const res = await fetch(uri, {
         method: 'POST',
         headers: {
@@ -12,11 +12,15 @@ async function gmasterPost( endpoint, payload, gameId ) {
         },
         body: JSON.stringify(payload)
     });
-    return res.json();
+    return res.text().then( body => {
+        console.log('gmaster said: ~' + body + '~');
+        return JSON.parse(body);
+    });
+    // return res.json();
 };
 
 async function gmasterGet( endpoint, gameId ) {
-    const uri = gmaster_url + endpoint + gameId ? gameId : '';
+    const uri = gmaster_url + endpoint + (gameId ? ('/'+gameId) : '');
     const res = await fetch(uri, {
         method: 'GET',
     });

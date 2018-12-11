@@ -3,16 +3,17 @@ const { prisma } = require('../../gamesdb/generated/prisma-client')
 
 /**
  * Load game record from the DB
- * @param {int} gameId 
+ * @param {?} gameId 
  * @returns {object}
  */
 async function LoadGame( gameId ) {
-    return prisma.gameSession( {gameId} );
+    // console.log("GameId = [" + gameId + "]");
+    return prisma.gameSession( {id: gameId} );
 }
 
 /**
  * Store/update game record into DB
- * @param {int} gameId 
+ * @param {?} gameId 
  * @param {object} game
  */
 async function SaveGame( gameId, game ) {

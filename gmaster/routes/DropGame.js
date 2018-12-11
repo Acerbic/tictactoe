@@ -2,7 +2,7 @@ var express = require('express');
 var router = express.Router();
 
 router.post('/DropGame/:gameId', function(req, res, next) {
-  const gameId = parseInt(req.params.gameId);
+  const gameId = req.params.gameId;
   const gamesDb = req.app.gamesDb;
 
   gamesDb.HasGame(gameId)

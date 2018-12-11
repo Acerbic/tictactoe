@@ -6,7 +6,7 @@ const xstate = require('xstate');
  * Check the state of a game, if it exists
  */
 router.get('/CheckGame/:gameId', async function(req, res, next) {
-  const gameId = parseInt(req.params.gameId);
+  const gameId = req.params.gameId;
   const gamesDb = req.app.gamesDb;
 
   try {

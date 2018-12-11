@@ -6,10 +6,12 @@ const { interpret } = require('xstate/lib/interpreter');
 const GameMachine = require('../game/game-machine');
 
 router.post('/MakeMove/:gameId', function(req, res, next) {
-  const gameId = parseInt(req.params.gameId);
+  const gameId = req.params.gameId;
   const gamesDb = req.app.gamesDb;
+  // console.log("sending ["+gameId+"]");
 
-  gamesDb.LoadGame(gameId).then( game => {
+  gamesDb.LoadGame(gameId)
+  .then( game => {
 
     // restore the machine
     const current_state = xstate.State.create(JSON.parse(game.state));
@@ -64,22 +66,24 @@ router.post('/MakeMove/:gameId', function(req, res, next) {
       move: {column, row},
       playerId
     });
-    game.state = JSON.stringify(new_state);
-    game.board = JSON.stringify(new_state.context.board);
-    gamesDb.SaveGame(gameId, game);
-
-    // send result in reply
-    res.send({
-      success: true,
-      newState: new_state.value
+    gamesDb.SaveGame(gameId, {
+      state: JSON.stringify(new_state),
+      board: JSON.stringify(new_state.context.board)
+    })
+    .then( () => {
+      // wait for saving to finish and 
+      // send result in reply
+      res.send({
+        success: true,
+        newState: new_state.value
+      });
     });
-
   })
   .catch(ex => {
     res.send({
       state: null,
       success: false,
-      errorMessage: "Game not found",
+      errorMessage: "Game was not loaded from DB: " + ex,
       errorCode: 0 // TODO: replace with a regular code
     });
     return;
