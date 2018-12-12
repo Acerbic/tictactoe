@@ -48,21 +48,17 @@ const ghost = interpret(
             },
 
             emit_iamalreadytracer: (ctx) => {
-                ctx.emits_sync = ctx.emits_sync
-                    .then( () => {
-                        ctx.player1_socket.emit('iamalreadytracer');
-                        ctx.player2_socket.emit('iamalreadytracer');
-                    })
-                ;
+                ctx.emits_sync.then( () => {
+                    ctx.player1_socket.emit('iamalreadytracer');
+                    ctx.player2_socket.emit('iamalreadytracer');
+                });
             },
 
             emit_you_are_it: (ctx) => {
-                ctx.emits_sync = ctx.emits_sync
-                    .then( () => {
-                        ctx.player1_socket.emit('you_are_it', 'first');
-                        ctx.player2_socket.emit('you_are_it', 'second');
-                    })
-                ;
+                ctx.emits_sync.then( () => {
+                    ctx.player1_socket.emit('you_are_it', 'first');
+                    ctx.player2_socket.emit('you_are_it', 'second');
+                });
             },
 
             cointoss_roles: (ctx) => {
@@ -106,11 +102,10 @@ const ghost = interpret(
             emit_your_turn: (ctx) => {
                 debuglog("action: emit your turn")
                 const socket = ctx[`${ctx.current_player}_socket`];
-                ctx.emits_sync = ctx.emits_sync
-                    .then( () => {
-                        debuglog("actually emitting your turn");
-                        socket.emit('your_turn');
-                    })
+                ctx.emits_sync.then( () => {
+                    debuglog("actually emitting your turn");
+                    socket.emit('your_turn');
+                });
             },
 
             call_makemove: (ctx, event) => {
@@ -149,20 +144,21 @@ const ghost = interpret(
                 .then ( () => 
                     GetGameBoard( ctx.game_id )
                     .then( board => {
-                            debuglog(" GGB resolved. attaching op_moved emit");
-                            const turn = ctx[ctx.latest_game_state.turn];
-                            return new Promise( (resolve, reject) =>
-                                {
-                                    socket_waiting.emit('opponent_moved', {
-                                        game_state: Object.assign({}, ctx.latest_game_state, {turn}),
-                                        board
-                                    });
-                                    socket_moving.emit('meme_accepted', {
-                                        game_state: Object.assign({}, ctx.latest_game_state, {turn}),
-                                        board
-                                    });
-                                    resolve();
+                        debuglog(" GGB resolved. attaching op_moved emit");
+                        const turn = ctx[ctx.latest_game_state.turn];
+                        return new Promise( (resolve, reject) =>
+                            {
+                                debuglog("emitting op_moved");
+                                socket_waiting.emit('opponent_moved', {
+                                    game_state: Object.assign({}, ctx.latest_game_state, {turn}),
+                                    board
                                 });
+                                socket_moving.emit('meme_accepted', {
+                                    game_state: Object.assign({}, ctx.latest_game_state, {turn}),
+                                    board
+                                });
+                                resolve();
+                            });
                     })
                     .catch( rejection => {
                         errorlog("GetGameBoard rejection: " + rejection);
@@ -173,20 +169,18 @@ const ghost = interpret(
 
             judge_move_results: (ctx) => {
                 debuglog("judge_move_result");
-                // ctx.p.then( () => {
-                    switch (ctx.latest_game_state.game) {
-                        case 'wait':
-                            ghost.send({
-                                type: 'GAME_STATE_WAIT'
-                            });
-                            break;
-                        case 'over':
-                        case 'draw':
-                            ghost.send({
-                                type: 'GAME_STATE_OVER_DRAW'
-                            })
-                    }
-                // })
+                switch (ctx.latest_game_state.game) {
+                    case 'wait':
+                        ghost.send({
+                            type: 'GAME_STATE_WAIT'
+                        });
+                        break;
+                    case 'over':
+                    case 'draw':
+                        ghost.send({
+                            type: 'GAME_STATE_OVER_DRAW'
+                        })
+                }
             },
 
             switch_player: (ctx) => {
@@ -199,13 +193,12 @@ const ghost = interpret(
                     winner = ctx[ctx.latest_game_state.turn];
                 }
 
-                ctx.emits_sync = ctx.emits_sync
-                    .then( () => {
+                ctx.emits_sync.then( () => {
 
-                        ctx.player1_socket.emit('gameover', {winner});
-                        ctx.player2_socket.emit('gameover', {winner});
+                    ctx.player1_socket.emit('gameover', {winner});
+                    ctx.player2_socket.emit('gameover', {winner});
 
-                    })
+                });
             },
 
             call_dropgame: (ctx) => {
@@ -256,8 +249,6 @@ io.on('connection', function(socket) {
     }, player_slot)
 
     statelog("New state: %O", ghost.state.value);
-    // statelog("P1 state: %O", ghost.children.get('player1').state.value);
-    // statelog("P2 state: %O", ghost.children.get('player2').state.value);
 
     // listen for further socket messages
     socket.once('iwannabetracer', function (data) {

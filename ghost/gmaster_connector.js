@@ -12,11 +12,15 @@ async function gmasterPost( endpoint, payload, gameId ) {
         },
         body: JSON.stringify(payload)
     });
-    return res.text().then( body => {
-        console.log('gmaster said: ~' + body + '~');
-        return JSON.parse(body);
-    });
-    // return res.json();
+    // return res.text().then( body => {
+    //     console.log('gmaster said: ~' + body + '~');
+    //     return JSON.parse(body);
+    // });
+    const json = res.json();
+    json.catch(err => 
+        console.error(`gmaster.post ({uri})[{JSON.stringify(payload)}]: err`)
+    )
+    return json;
 };
 
 async function gmasterGet( endpoint, gameId ) {
