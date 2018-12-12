@@ -50,7 +50,7 @@ async function DropGame( id ) {
  * @returns {boolean} - true if game exists, false otherwise
  */
 async function HasGame( id ) {
-    return 1 == prisma.gameSessions( {id} ).aggregate().count();
+    return 1 == prisma.gameSessionsConnection( {where: {id}} ).aggregate().count();
 }
 
 module.exports = {LoadGame, SaveGame, CreateGame, DropGame, HasGame};
