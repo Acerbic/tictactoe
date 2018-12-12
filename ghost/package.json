@@ -6,7 +6,7 @@
   "license": "MIT",
   "private": false,
   "scripts": {
-    "start": "cross-env DEBUG=*,-engine*,-express:router node index.js"
+    "start": "cross-env DEBUG=*,-engine*,-express:router,-socket.io-parser node index.js"
   },
   "dependencies": {
     "cross-env": "^5.2.0",

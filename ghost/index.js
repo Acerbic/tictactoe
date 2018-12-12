@@ -26,7 +26,12 @@ const ghost = interpret(
         game_id: null,
         latest_game_state: null,
         player1_role_request: null,
-        player2_role_request: null
+        player2_role_request: null,
+
+        // Used to synchronize calls to socket.emit (state transitions
+        // could cause racing in actions, if action is delaying emit to the
+        // later time)
+        emits_sync: Promise.resolve()
     })
     .withConfig({
         actions: {
@@ -43,13 +48,21 @@ const ghost = interpret(
             },
 
             emit_iamalreadytracer: (ctx) => {
-                ctx.player1_socket.emit('iamalreadytracer');
-                ctx.player2_socket.emit('iamalreadytracer');
+                ctx.emits_sync = ctx.emits_sync
+                    .then( () => {
+                        ctx.player1_socket.emit('iamalreadytracer');
+                        ctx.player2_socket.emit('iamalreadytracer');
+                    })
+                ;
             },
 
             emit_you_are_it: (ctx) => {
-                ctx.player1_socket.emit('you_are_it', 'first');
-                ctx.player2_socket.emit('you_are_it', 'second');
+                ctx.emits_sync = ctx.emits_sync
+                    .then( () => {
+                        ctx.player1_socket.emit('you_are_it', 'first');
+                        ctx.player2_socket.emit('you_are_it', 'second');
+                    })
+                ;
             },
 
             cointoss_roles: (ctx) => {
@@ -91,9 +104,13 @@ const ghost = interpret(
             },
 
             emit_your_turn: (ctx) => {
-                console.log("emitting your turn")
+                debuglog("action: emit your turn")
                 const socket = ctx[`${ctx.current_player}_socket`];
-                socket.emit('your_turn');
+                ctx.emits_sync = ctx.emits_sync
+                    .then( () => {
+                        debuglog("actually emitting your turn");
+                        socket.emit('your_turn');
+                    })
             },
 
             call_makemove: (ctx, event) => {
@@ -113,7 +130,8 @@ const ghost = interpret(
                         ctx.latest_game_state = response.newState;
                         ghost.send({ type: "CALL_MAKEMOVE_ENDED", response });
                     } else {
-                        // TODO:
+                        errorlog(`Call to MakeMove failed: [{response.errorCode}] - {response.errorMessage}`);
+                        // TODO: handle non-success by the game master
                     }
                 })
                 .catch(ex => {
@@ -126,31 +144,36 @@ const ghost = interpret(
                 const socket_waiting = ctx[`${player}_socket`];
                 const socket_moving = ctx[`${ctx.current_player}_socket`];
 
-                // storing promise to avoid emit-racing ('opponent_moved' could
-                // be otherwise send later than 'your turn')
-                ctx.p = Promise.all([
-                    gmaster.get('CheckGame', ctx.game_id),
+                debuglog("attaching GGB promise");
+                ctx.emits_sync = ctx.emits_sync
+                .then ( () => 
                     GetGameBoard( ctx.game_id )
-                ])
-                .then( values => {
-                    if (values[0].success) {
-                        const turn = ctx[ctx.latest_game_state.turn];
-                        socket_waiting.emit('opponent_moved', {
-                            game_state: Object.assign({}, ctx.latest_game_state, {turn}),
-                            board: values[1]
-                        });
-                        socket_moving.emit('meme_accepted', {
-                            game_state: Object.assign({}, ctx.latest_game_state, {turn}),
-                            board: values[1]
-                        });
-                    } else {
-                        // TODO: 
-                    }
-                })
+                    .then( board => {
+                            debuglog(" GGB resolved. attaching op_moved emit");
+                            const turn = ctx[ctx.latest_game_state.turn];
+                            return new Promise( (resolve, reject) =>
+                                {
+                                    socket_waiting.emit('opponent_moved', {
+                                        game_state: Object.assign({}, ctx.latest_game_state, {turn}),
+                                        board
+                                    });
+                                    socket_moving.emit('meme_accepted', {
+                                        game_state: Object.assign({}, ctx.latest_game_state, {turn}),
+                                        board
+                                    });
+                                    resolve();
+                                });
+                    })
+                    .catch( rejection => {
+                        errorlog("GetGameBoard rejection: " + rejection);
+                        // TODO: handle exception
+                    })
+                )
             },
 
             judge_move_results: (ctx) => {
-                ctx.p.then( () => {
+                debuglog("judge_move_result");
+                // ctx.p.then( () => {
                     switch (ctx.latest_game_state.game) {
                         case 'wait':
                             ghost.send({
@@ -163,7 +186,7 @@ const ghost = interpret(
                                 type: 'GAME_STATE_OVER_DRAW'
                             })
                     }
-                })
+                // })
             },
 
             switch_player: (ctx) => {
@@ -175,8 +198,14 @@ const ghost = interpret(
                 if (ctx.latest_game_state.game == 'over') {
                     winner = ctx[ctx.latest_game_state.turn];
                 }
-                ctx.player1_socket.emit('gameover', {winner});
-                ctx.player2_socket.emit('gameover', {winner});
+
+                ctx.emits_sync = ctx.emits_sync
+                    .then( () => {
+
+                        ctx.player1_socket.emit('gameover', {winner});
+                        ctx.player2_socket.emit('gameover', {winner});
+
+                    })
             },
 
             call_dropgame: (ctx) => {
