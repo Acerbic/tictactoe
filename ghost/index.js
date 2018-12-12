@@ -12,6 +12,19 @@ const gmaster = require('./gmaster_connector');
 const { GetGameBoard } = require('./prisma_connector');
 
 statelog('machine loaded');
+
+/*
+    PlayerId : string
+    PlayerContext: {
+        id: PlayerId,
+        socket: Socket,
+        role_request: string,
+        submachine_id: string
+    }
+
+ */
+
+
 // start state machine
 const ghost = interpret(
     // with the initial context
@@ -27,6 +40,8 @@ const ghost = interpret(
         latest_game_state: null,
         player1_role_request: null,
         player2_role_request: null,
+
+        players: new Map(), // PlayerId => PlayerContext
 
         // Used to synchronize calls to socket.emit (state transitions
         // could cause racing in actions, if action is delaying emit to the
@@ -212,41 +227,60 @@ const ghost = interpret(
 
 statelog('machine started');
 
-app.get('/', function(req, res){
-    res.sendFile(__dirname + '/index.html');
-});
-
 io.on('connection', function(socket) {
 
-    debuglog('a user with id = ' + socket.handshake.query.playerId + ' connected: ' + socket.id);
-    socket.on('disconnect', function() {
-        debuglog('user disconnected' + socket.id);
-    });
+    const player_id = socket.handshake.query.playerId;
+    if (!player_id) {
+        errorlog("Socket tried to connect without player ID. Refusing.");
+        socket.disconnect(true);
+        return;
+    }
+    debuglog(`a user with id = {player_id} connecting: {socket.id}`);
 
-    // select a player slot to connect to.
     const context = ghost.state.context;
-    const player_slot = context.player1_socket == null ? 'player1' : (
-        context.player2_socket == null ? 'player2' : null
-    );
-
-    if (!player_slot) {
+    if (context.players.size >= 2) {
         // two players have already connected to the game. reject this connection!
-        errorlog('too many connections %s', socket.id);
+        errorlog('too many players %s. Refusing.', socket.id);
         socket.disconnect(true);
         return;
     }
 
-    // remember this socket
-    context[`${player_slot}_socket`] = socket;
-    // and this player NOTE: typically you id the user and load him from DB.
-    context[player_slot] = socket.handshake.query.playerId;
-    debuglog("User " + socket.handshake.query.playerId + " connected as " + player_slot);
+    socket.on('disconnect', function() {
+        debuglog('user disconnected (id=%s), socket=%s', player_id, socket.id);
+    });
+
+            // select a player slot to connect to.
+            const player_slot = context.player1_socket == null ? 'player1' : (
+                context.player2_socket == null ? 'player2' : null
+            );
+
+            if (!player_slot) {
+                // two players have already connected to the game. reject this connection!
+                errorlog('too many connections %s', socket.id);
+                socket.disconnect(true);
+                return;
+            }
+
+    const submachine_id = 'player' + (context.players.size + 1);
+    context.players.set(player_id, {
+        id: player_id,
+        socket,
+        role_request: null,
+        submachine_id
+    });
+
+            // remember this socket
+            context[`${player_slot}_socket`] = socket;
+            // and this player NOTE: typically you id the user and load him from DB.
+            context[player_slot] = socket.handshake.query.playerId;
+    debuglog("User %s connected as %s", player_id, submachine_id);
 
     // raise machine EVENT
     ghost.sendTo({
         type: "SOC_CONNECT",
-        player_slot
-    }, player_slot)
+        player_id,
+        player_slot: submachine_id
+    }, submachine_id)
 
     statelog("New state: %O", ghost.state.value);
 
@@ -255,15 +289,16 @@ io.on('connection', function(socket) {
         // raise machine EVENT
         ghost.sendTo({
             type: "SOC_IWANNABETRACER",
+            player_id,
             role: data
-        }, player_slot)
+        }, submachine_id)
 
         statelog("New state: %O", ghost.state.value);
     })
 
 });
 
-http.listen(3060, function(){
+http.listen(3060, function() {
     console.log('ghost is listening on *:3060');
 });
 
