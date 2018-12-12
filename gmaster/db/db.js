@@ -1,43 +1,45 @@
+// STUB for implementation of database access
 
 /**
  * Load game record from the DB
- * @param {int} gameId 
+ * @param {string} id - id of the game
  * @returns {object}
  */
-function LoadGame( gameId ) {
+async function LoadGame( id ) {
     throw new Exception( "Not implemented" );
 }
 
 /**
  * Store/update game record into DB
- * @param {int} gameId 
+ * @param {string} id - id of the game
+ * @param {object} game
  */
-function SaveGame( gameId, game ) {
+async function SaveGame( id, game ) {
     throw new Exception( "Not implemented" );
 }
 
 /**
- * Create new game session in DB and return its ID
- * @returns {int}
+ * Obtain a unique unoccupied id in concurrent-safe manner
+ * @returns {string} - id of the game created
  */
-function CreateGame( game ) {
+async function CreateGame( game ) {
     throw new Exception( "Not implemented" );
 }
 
 /**
  * Delete game
- * @param {int} gameId 
+ * @param {string} id - id of the gamed int database
  */
-function DropGame( gameId ) {
+async function DropGame( id ) {
     throw new Exception( "Not implemented" );
 }
 
 /**
  * Check if the game exists
- * @param {int} gameId 
- * @returns {boolean}
+ * @param {string} id - id of the gamed int database
+ * @returns {boolean} - true if game exists, false otherwise
  */
-function HasGame( gameId ) {
+async function HasGame( id ) {
     throw new Exception( "Not implemented" );
 }
 

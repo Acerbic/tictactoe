@@ -1,21 +1,13 @@
 var express = require('express');
-var logger = require('morgan');
+var morgan = require('morgan');
 
 var app = express();
 
-app.use(logger('dev'));
+app.use(morgan('dev'));
 app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
 
 // DB connection to be reused by all API calls
 app.gamesDb = require('./db/db-prisma');
-
-// Stupid CORS
-app.use(function(req, res, next) {
-  res.header("Access-Control-Allow-Origin", "*");
-  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
-  next();
-});
 
 // Rest API
 app.use(require('./routes/CreateGame'));

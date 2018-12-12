@@ -3,31 +3,28 @@ const { prisma } = require('../../gamesdb/generated/prisma-client')
 
 /**
  * Load game record from the DB
- * @param {?} gameId 
+ * @param {string} id - id of the game
  * @returns {object}
  */
-async function LoadGame( gameId ) {
-    // console.log("GameId = [" + gameId + "]");
-    return prisma.gameSession( {id: gameId} );
+async function LoadGame( id ) {
+    return prisma.gameSession( {id} );
 }
 
 /**
  * Store/update game record into DB
- * @param {?} gameId 
+ * @param {string} id - id of the game
  * @param {object} game
  */
-async function SaveGame( gameId, game ) {
+async function SaveGame( id, game ) {
     return prisma.updateGameSession({
         data: game,
-        where: {
-            id: gameId
-        }
+        where: { id }
     });
 }
 
 /**
  * Obtain a unique unoccupied id in concurrent-safe manner
- * @returns {int}
+ * @returns {string} - id of the game created
  */
 async function CreateGame( game ) {
     const newGame = await prisma.createGameSession({
@@ -41,19 +38,19 @@ async function CreateGame( game ) {
 
 /**
  * Delete game
- * @param {int} gameId 
+ * @param {string} id - id of the gamed int database
  */
-async function DropGame( gameId ) {
-    prisma.deleteGameSession( {id: gameId} )
+async function DropGame( id ) {
+    prisma.deleteGameSession( {id} )
 }
 
 /**
  * Check if the game exists
- * @param {int} gameId 
- * @returns {boolean}
+ * @param {string} id - id of the gamed int database
+ * @returns {boolean} - true if game exists, false otherwise
  */
-async function HasGame( gameId ) {
-    return 1 == prisma.gameSessions( {id: gameId} ).aggregate().count();
+async function HasGame( id ) {
+    return 1 == prisma.gameSessions( {id} ).aggregate().count();
 }
 
 module.exports = {LoadGame, SaveGame, CreateGame, DropGame, HasGame};
