@@ -88,7 +88,7 @@ const machine = xstate.Machine({
             }
         },
         roles_assigned: {
-            onEntry: ['attach_remaining_listeners', 'call_creategame'],
+            onEntry: ['call_creategame'],
             on: {
                 CALL_CREATEGAME_ENDED: {
                     target: 'wait4move',
@@ -143,8 +143,8 @@ function player_setup_machine( player_slot ) {
                     socket.emit('choose_role');
                 },
                 store_role_requested: (ctx, event) => {
-                    ctx.parent_ctx[`${ctx.player_slot}_role_request`] = event.role;
-                    ctx.parent_ctx.players.get(event.player_id).role_requested = event.role;
+                    // ctx.parent_ctx[`${ctx.player_slot}_role_request`] = event.role;
+                    ctx.parent_ctx.players.get(event.player_id).role_request = event.role;
                 }
             }
         }

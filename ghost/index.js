@@ -30,16 +30,22 @@ const ghost = interpret(
     // with the initial context
     StateMachine.withContext({
         // players' sockets
-        player1_socket: null,
-        player2_socket: null,
+        // player1_socket: null,
+        // player2_socket: null,
         // players' ids
+
+        // since game master operates on 'player1' and 'player2' tokens
+        // we need to keep mapping of those to player ids.
         player1: null,
         player2: null,
-        current_player: 'player1',
+        // id of the current player (the one who's turn is next)
+        current_player: null,
+        // game id in gamesDB
         game_id: null,
+        // latest game state, reported after a move was accepted by game master
         latest_game_state: null,
-        player1_role_request: null,
-        player2_role_request: null,
+        // player1_role_request: null,
+        // player2_role_request: null,
 
         players: new Map(), // PlayerId => PlayerContext
 
@@ -50,52 +56,62 @@ const ghost = interpret(
     })
     .withConfig({
         actions: {
+            /**
+             * compare roles requested by players and either raise
+             * ROLE_REQUESTED_CONFLICT or ROLE_REQUESTED_NO_CONFLICT.
+             * Determines ctx.current_player
+             */
             conflict_evaluation: (ctx) => {
-                if (ctx.player1_role_request == ctx.player2_role_request) {
+                const it = ctx.players.values();
+                const p1 = it.next().value;
+                const p2 = it.next().value;
+
+                if (p1.role_request === p2.role_request) {
                     ghost.send({type: "ROLE_REQUESTED_CONFLICT"});
                 } else {
-                    if (ctx.player1_role_request == 'second') {
-                        [ctx.player1_socket, ctx.player2_socket] = [ctx.player2_socket, ctx.player1_socket];
-                        [ctx.player1, ctx.player2] = [ctx.player2, ctx.player1];
-                    };
+                    ctx.current_player = (p1.role_request == 'second') ? p2.id : p1.id;
                     ghost.send({type: "ROLE_REQUESTED_NO_CONFLICT"});
                 }
             },
 
+            /**
+             * Send 'iamalreadytracer' to both clients
+             */
             emit_iamalreadytracer: (ctx) => {
                 ctx.emits_sync.then( () => {
-                    ctx.player1_socket.emit('iamalreadytracer');
-                    ctx.player2_socket.emit('iamalreadytracer');
+                    ctx.players.forEach( player_context => player_context.socket.emit('iamalreadytracer') );
                 });
             },
 
+            /**
+             * Send 'you_are_it' to both clients
+             */
             emit_you_are_it: (ctx) => {
                 ctx.emits_sync.then( () => {
-                    ctx.player1_socket.emit('you_are_it', 'first');
-                    ctx.player2_socket.emit('you_are_it', 'second');
+                    ctx.players.forEach( player_context => player_context.socket.emit(
+                        'you_are_it',
+                        ctx.current_player == player_context.id ? 'first' : 'second'
+                    ) )
                 });
             },
 
+            /**
+             * Toss a coin and decide who has the first turn
+             */
             cointoss_roles: (ctx) => {
-                if (Math.random() > 0.5) {
-                    [ctx.player1_socket, ctx.player2_socket] = [ctx.player2_socket, ctx.player1_socket];
-                    [ctx.player1, ctx.player2] = [ctx.player2, ctx.player1];
-                }
+                ctx.current_player = (Math.random() > 0.5) ? ctx.player1 : ctx.player2;
                 ghost.send({type: "COIN_TOSS"});
             },
 
-            attach_remaining_listeners: (ctx) => {
-                // attaching socket listeners here, since we only now know who
-                // is player 1 and who is player 2...
-                ctx.player1_socket.on('move', move => {
-                    ghost.send( { type: "SOC_MOVE", move, player_slot: 'player1' } );
-                });
-                ctx.player2_socket.on('move', move => {
-                    ghost.send( { type: "SOC_MOVE", move, player_slot: 'player2' } );
-                });
-            },
-
+            /**
+             * call CreateGame Rest API on game master
+             */
             call_creategame: (ctx) => {
+
+                if (ctx.current_player == ctx.player2) {
+                    [ctx.player1, ctx.player2] = [ctx.player2, ctx.player1];
+                }
+
                 gmaster.post(
                     'CreateGame',
                     { player1Id: ctx.player1, player2Id: ctx.player2 }
@@ -114,20 +130,28 @@ const ghost = interpret(
                 });
             },
 
+            /**
+             * Send 'your_turn' to a client
+             */
             emit_your_turn: (ctx) => {
                 debuglog("action: emit your turn")
-                const socket = ctx[`${ctx.current_player}_socket`];
+                // const socket = ctx[`${ctx.current_player}_socket`];
+                const socket = ctx.players.get(ctx.current_player).socket;
                 ctx.emits_sync.then( () => {
                     debuglog("actually emitting your turn");
                     socket.emit('your_turn');
                 });
             },
 
+            /**
+             * Call MakeMove on game master. Upon completion, this will raise
+             * CALL_MAKEMOVE_ENDED event with the response from game master
+             */
             call_makemove: (ctx, event) => {
                 gmaster.post(
                     'MakeMove',
                     {
-                        playerId: ctx[`${ctx.current_player}`],
+                        playerId: ctx.current_player,
                         move: {
                             row: event.move.row,
                             column: event.move.column,
@@ -150,9 +174,12 @@ const ghost = interpret(
             },
 
             emit_opponent_moved: (ctx) => {
-                const player = ctx.current_player == 'player1' ? 'player2' : 'player1';
-                const socket_waiting = ctx[`${player}_socket`];
-                const socket_moving = ctx[`${ctx.current_player}_socket`];
+                const it = ctx.players.values();
+                const p1 = it.next().value;
+                const p2 = it.next().value;
+
+                const socket_waiting = ctx.current_player == p1.id ? p2.socket : p1.socket;
+                const socket_moving = ctx.players.get(ctx.current_player).socket;
 
                 debuglog("attaching GGB promise");
                 ctx.emits_sync = ctx.emits_sync
@@ -199,7 +226,7 @@ const ghost = interpret(
             },
 
             switch_player: (ctx) => {
-                ctx.current_player = ctx.current_player == 'player1' ? 'player2' : 'player1';
+                ctx.current_player = ctx.current_player == ctx.player1 ? ctx.player2 : ctx.player1;
             },
 
             emit_gameover: (ctx) => {
@@ -209,10 +236,9 @@ const ghost = interpret(
                 }
 
                 ctx.emits_sync.then( () => {
-
-                    ctx.player1_socket.emit('gameover', {winner});
-                    ctx.player2_socket.emit('gameover', {winner});
-
+                    ctx.players.forEach(
+                        player_context => player_context.socket.emit('gameover', {winner})
+                    );
                 });
             },
 
@@ -249,18 +275,6 @@ io.on('connection', function(socket) {
         debuglog('user disconnected (id=%s), socket=%s', player_id, socket.id);
     });
 
-            // select a player slot to connect to.
-            const player_slot = context.player1_socket == null ? 'player1' : (
-                context.player2_socket == null ? 'player2' : null
-            );
-
-            if (!player_slot) {
-                // two players have already connected to the game. reject this connection!
-                errorlog('too many connections %s', socket.id);
-                socket.disconnect(true);
-                return;
-            }
-
     const submachine_id = 'player' + (context.players.size + 1);
     context.players.set(player_id, {
         id: player_id,
@@ -269,17 +283,13 @@ io.on('connection', function(socket) {
         submachine_id
     });
 
-            // remember this socket
-            context[`${player_slot}_socket`] = socket;
-            // and this player NOTE: typically you id the user and load him from DB.
-            context[player_slot] = socket.handshake.query.playerId;
+    context[submachine_id] = player_id;
     debuglog("User %s connected as %s", player_id, submachine_id);
 
     // raise machine EVENT
     ghost.sendTo({
         type: "SOC_CONNECT",
         player_id,
-        player_slot: submachine_id
     }, submachine_id)
 
     statelog("New state: %O", ghost.state.value);
@@ -296,6 +306,9 @@ io.on('connection', function(socket) {
         statelog("New state: %O", ghost.state.value);
     })
 
+    socket.on('move', move => {
+        ghost.send( { type: "SOC_MOVE", move} );
+    });
 });
 
 http.listen(3060, function() {
