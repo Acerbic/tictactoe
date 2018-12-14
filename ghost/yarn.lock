@@ -650,9 +650,9 @@ xmlhttprequest-ssl@~1.5.4:
   integrity sha1-wodrBhaKrcQOV9l+gRkayPQ5iz4=
 
 xstate@^4.1.2:
-  version "4.1.2"
-  resolved "https://registry.yarnpkg.com/xstate/-/xstate-4.1.2.tgz#588bd4efee695ff15ac96e9074848d9566e2aceb"
-  integrity sha512-YjCpT+si6QfKTX5o7evf1/FvBUeSfvUxz7Eay/SlGFBtPm1ZSeCH4MGuTSgTtRaw63m40MbMj6jc+OF8JuQorg==
+  version "4.2.1"
+  resolved "https://registry.yarnpkg.com/xstate/-/xstate-4.2.1.tgz#d3a8aa304a22117a741b94401b8632cd75ec902f"
+  integrity sha512-dQEHU/78tUWQd43EMm+17xdM9xVqivSYvNh2++5CY0yST8FcBSl0cyfwrL6tF2MZBqpbuuNLWYc+Ib1bG/jlxQ==
 
 yeast@0.1.2:
   version "0.1.2"

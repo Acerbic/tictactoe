@@ -1,13 +1,11 @@
-const xstate = require('xstate');
-
-const player_setup = {
+const player_setup_machine = {
     initial: 'wait4client',
     states: {
         wait4client: {
             on: {
                 SOC_CONNECT: {
                     target: 'wait4rolepick',
-                    actions: 'emit_choose_role',
+                    actions: ['add_player', 'emit_choose_role'],
                 }
             }
         },
@@ -25,7 +23,7 @@ const player_setup = {
     }
 };
 
-const machine = xstate.Machine({
+const state_machine = {
     id: 'ghost',
     initial: 'setup',
     states: {
@@ -38,8 +36,9 @@ const machine = xstate.Machine({
                         player_setup: {
 
                             invoke: {
-                                src: player_setup_machine('player1'),
-                                data: { parent_ctx: ctx => ctx, player_slot: 'player1' },
+                                id: 'player1',
+                                src: 'submachine',
+                                data: { parent_ctx: ctx => ctx },
                                 onDone: 'player_setup_done'
                             },
 
@@ -53,8 +52,9 @@ const machine = xstate.Machine({
                         player_setup: {
 
                             invoke: {
-                                src: player_setup_machine('player2'),
-                                data: { parent_ctx: ctx => ctx, player_slot: 'player2' },
+                                id: 'player2',
+                                src: 'submachine',
+                                data: { parent_ctx: ctx => ctx },
                                 onDone: 'player_setup_done'
                             },
                             
@@ -129,24 +129,6 @@ const machine = xstate.Machine({
             type: 'final'
         }
     }
-});
+};
 
-// FIXME: extract code from this module.
-function player_setup_machine( player_slot ) {
-    return xstate.Machine(
-        Object.assign({}, player_setup, {id: player_slot}),
-        {
-            actions: {
-                emit_choose_role: (ctx, event) => {
-                    const socket = ctx.parent_ctx.players.get(event.player_id).socket;
-                    socket.emit('choose_role');
-                },
-                store_role_requested: (ctx, event) => {
-                    ctx.parent_ctx.players.get(event.player_id).role_request = event.role;
-                }
-            }
-        }
-    );
-}
-
-module.exports = machine;
+module.exports = {state_machine, player_setup_machine};
