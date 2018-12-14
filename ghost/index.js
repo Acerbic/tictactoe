@@ -29,23 +29,20 @@ statelog('machine loaded');
 const ghost = interpret(
     // with the initial context
     StateMachine.withContext({
-        // players' sockets
-        // player1_socket: null,
-        // player2_socket: null,
-        // players' ids
 
         // since game master operates on 'player1' and 'player2' tokens
         // we need to keep mapping of those to player ids.
         player1: null,
         player2: null,
+
         // id of the current player (the one who's turn is next)
         current_player: null,
+
         // game id in gamesDB
         game_id: null,
+
         // latest game state, reported after a move was accepted by game master
         latest_game_state: null,
-        // player1_role_request: null,
-        // player2_role_request: null,
 
         players: new Map(), // PlayerId => PlayerContext
 

@@ -138,12 +138,10 @@ function player_setup_machine( player_slot ) {
         {
             actions: {
                 emit_choose_role: (ctx, event) => {
-                    // const socket = ctx.parent_ctx[`${ctx.player_slot}_socket`];
                     const socket = ctx.parent_ctx.players.get(event.player_id).socket;
                     socket.emit('choose_role');
                 },
                 store_role_requested: (ctx, event) => {
-                    // ctx.parent_ctx[`${ctx.player_slot}_role_request`] = event.role;
                     ctx.parent_ctx.players.get(event.player_id).role_request = event.role;
                 }
             }
