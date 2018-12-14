@@ -1,6 +1,5 @@
 import 'bootstrap/dist/css/bootstrap.min.css'
 import React from 'react'
-import fetch from 'isomorphic-unfetch'
 import io from 'socket.io-client'
 
 import GameBoard from '../components/GameBoard'
@@ -14,21 +13,30 @@ export default class TestPage extends React.Component {
             socket: null,
             gameId: null,
             playerId: null,
-            board: Array(Array(3), Array(3), ["a", "b", "c"]),
+            board: Array(Array(3), Array(3), Array(3)),
             currentPlayer: 'player1',
-            step: 'initial'
+            step: 'initial',
+            statusMessage: "Ready to connect to the game"
         }
     }
 
-    btnNewGame() {
+    btnConnect() {
         console.log('New game button pressed');
         const playerId = document.getElementsByName("pid")[0].value;
         if (!playerId) {
-            alert("Players' ids must be set!");
+            // alert("Players' ids must be set!");
+            this.setState({
+                statusMessage: "Players' ids must be set!"
+            });
             return;
         }
 
-        this.setState({gameId: null, playerId, step: 'wait4start'});
+        this.setState({
+            gameId: null,
+            playerId,
+            step: 'wait4start',
+            statusMessage: "Connecting..."
+        });
 
         (async () => {
             console.log('Opening socket');
@@ -57,13 +65,13 @@ export default class TestPage extends React.Component {
         }
 
         this.state.socket.emit('move', {row, column});
-        this.setState({step: 'meme_review'});
+        this.setState({step: 'meme_review', statusMessage: "Move sent."});
     }
 
     // received 'choose_role' message
     s_choose_role() {
         console.log('Got choose_role');
-        this.setState({step: 'role-pick'});
+        this.setState({step: 'role-pick', statusMessage: "Choose your destiny!"});
     }
 
     s_iamalreadytracer() {
@@ -76,7 +84,7 @@ export default class TestPage extends React.Component {
         if (role == 'first') {
             this.setState({step: 'ready'});
         } else {
-            this.setState({step: 'opponents-turn'});
+            this.setState({step: 'opponents-turn', statusMessage: "Enemy is trying to not lose..."});
         }
         this.state.socket.on('your_turn', () => this.s_your_turn());
         this.state.socket.on('meme_accepted', (data) => this.s_meme_accepted(data));
@@ -86,13 +94,13 @@ export default class TestPage extends React.Component {
 
     s_your_turn() {
         console.log("its my turn!");
-        this.setState({step: 'my-turn'});
+        this.setState({step: 'my-turn', statusMessage: "Your turn! Destroy them!"});
     }
 
     s_meme_accepted(response) {
         console.log("my move was accepted!");
         console.log(response);
-        this.setState({step: 'opponents-turn', board: response.board});
+        this.setState({step: 'opponents-turn', board: response.board, statusMessage: "Enemy is trying to not lose..."});
     }
 
     s_opponent_moved(response) {
@@ -104,12 +112,22 @@ export default class TestPage extends React.Component {
     s_gameover(data) {
         console.log("it seems the game is over");
         console.log(data);
-        this.setState({step: 'game-over'});
+        let statusMessage = "";
+        if (data.winner) {
+            if (data.winner == this.state.playerId) {
+                statusMessage = "As expected, you are the best";
+            } else {
+                statusMessage = "... he probably cheated :-\\";
+            }
+        } else {
+            statusMessage = "You spared him, how noble.";
+        }
+        this.setState({step: 'game-over', statusMessage});
     }
 
     btnRole( role ) {
         console.log("Requested to be " + role);
-        this.setState({step: 'wait4game'});
+        this.setState({step: 'wait4game', statusMessage: "Waiting for that slowpoke to join.."});
         this.state.socket.emit('iwannabetracer', role);
         this.state.socket.once('iamalreadytracer', () => this.s_iamalreadytracer());
         this.state.socket.once('you_are_it', (role) => this.s_you_are_it(role));
@@ -121,7 +139,7 @@ export default class TestPage extends React.Component {
                 <div id="game">
                     <GameBoard board={this.state.board} onCellClick={
                         (i, j) => this.cellClicked(i, j) } />
-                    <p ref="status"></p>
+                    <h1>{this.state.statusMessage}</h1>
                 </div>
                 <div id="controls" className="container-fluid">
                     <div className="row">
@@ -135,7 +153,7 @@ export default class TestPage extends React.Component {
                                 </div>
                                 <button id="btnConnect" type="button" className="btn btn-primary" 
                                     disabled={ (this.state.step == 'initial' ? null : true) }
-                                    onClick={() => this.btnNewGame()}>
+                                    onClick={() => this.btnConnect()}>
                                     Connect
                                 </button>
                             </div>
@@ -173,9 +191,15 @@ export default class TestPage extends React.Component {
                 #game {
                     width: 70%;
                     display: flex;
+                    flex-wrap: wrap;
                     justify-content: center;
                     align-items: center;
+                    align-content: center;
                     /* height: 100%; */
+                }
+                #game h1 {
+                    width: 100%;
+                    text-align: center;
                 }
                 #controls {
                     background-color: darkkhaki;
