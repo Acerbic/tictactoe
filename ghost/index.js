@@ -6,7 +6,7 @@ const statelog = require('debug')('ttt:ghost:state-machine');
 const errorlog = require('debug')('ttt:ghost:error');
 const debuglog = require('debug')('ttt:ghost:debug');
 
-const ghost = require('./state-machine/state-interpreter');
+const ghost = require('./state-machine/state-interpreter')();
 
 // start machine interpreter
 ghost

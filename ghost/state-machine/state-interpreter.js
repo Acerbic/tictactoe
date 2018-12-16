@@ -9,6 +9,12 @@ const statelog = require('debug')('ttt:ghost:state-machine');
 const errorlog = require('debug')('ttt:ghost:error');
 const debuglog = require('debug')('ttt:ghost:debug')
 
+let gameRoomsCounter = 1;
+const GameRooms = new Map();
+
+/**
+ * Generate a machine for player preparation
+ */
 function player_setup() {
     return xstate.Machine(
         player_setup_machine,
@@ -37,6 +43,13 @@ function player_setup() {
     );
 }
 
+/**
+ *  Since options contain actions and some of those actions need to raise events
+ *  on the state machine, they need a ready reference to the interpreter. But the
+ *  interpreter itself is generated at the runtime. Thus, we need this function to
+ *  "cook" a new batch of options for every new interpreter instance.
+ * @param {*} _interpreter 
+ */
 const options = {
     services: {
         submachine: player_setup()
@@ -53,10 +66,10 @@ const options = {
             const p2 = it.next().value;
 
             if (p1.role_request === p2.role_request) {
-                ghost.send({type: "ROLE_REQUESTED_CONFLICT"});
+                GameRooms.get(ctx.game_room_id).send({type: "ROLE_REQUESTED_CONFLICT"});
             } else {
                 ctx.current_player = (p1.role_request == 'second') ? p2.id : p1.id;
-                ghost.send({type: "ROLE_REQUESTED_NO_CONFLICT"});
+                GameRooms.get(ctx.game_room_id).send({type: "ROLE_REQUESTED_NO_CONFLICT"});
             }
         },
 
@@ -86,7 +99,7 @@ const options = {
          */
         cointoss_roles: (ctx) => {
             ctx.current_player = (Math.random() > 0.5) ? ctx.player1 : ctx.player2;
-            ghost.send({type: "COIN_TOSS"});
+            GameRooms.get(ctx.game_room_id).send({type: "COIN_TOSS"});
         },
 
         /**
@@ -106,7 +119,7 @@ const options = {
                 if (response.success) {
                     ctx.latest_game_state = response.newState;
                     ctx.game_id = response.gameId;
-                    ghost.send({ type: "CALL_CREATEGAME_ENDED", response })
+                    GameRooms.get(ctx.game_room_id).send({ type: "CALL_CREATEGAME_ENDED", response })
                 } else {
                     // TODO:
                 }
@@ -146,7 +159,7 @@ const options = {
             .then ( response => {
                 if (response.success) {
                     ctx.latest_game_state = response.newState;
-                    ghost.send({ type: "CALL_MAKEMOVE_ENDED", response });
+                    GameRooms.get(ctx.game_room_id).send({ type: "CALL_MAKEMOVE_ENDED", response });
                 } else {
                     errorlog(`Call to MakeMove failed: [{response.errorCode}] - {response.errorMessage}`);
                     // TODO: handle non-success by the game master
@@ -194,13 +207,13 @@ const options = {
             debuglog("judge_move_result");
             switch (ctx.latest_game_state.game) {
                 case 'wait':
-                    ghost.send({
+                    GameRooms.get(ctx.game_room_id).send({
                         type: 'GAME_STATE_WAIT'
                     });
                     break;
                 case 'over':
                 case 'draw':
-                    ghost.send({
+                    GameRooms.get(ctx.game_room_id).send({
                         type: 'GAME_STATE_OVER_DRAW'
                     })
             }
@@ -238,7 +251,9 @@ const options = {
         submachine_id: string
     }
 */
-const context = {
+const initial_context = {
+    game_room_id: null,
+
     // since game master operates on 'player1' and 'player2' tokens
     // we need to keep mapping of those to player ids.
     player1: null,
@@ -261,36 +276,45 @@ const context = {
     emits_sync: Promise.resolve()
 }
 
-const ghost = interpret(
-    // with the initial context
-    xstate.Machine(state_machine, options, context)
-)
+// const ghost = interpret(
+//     // with the initial context
+//     xstate.Machine(state_machine, options, initial_context)
+// )
 
-ghost.on_socket_connected = function (player_id, submachine_id, socket) {
+function createGameRoom() {
 
-    debuglog("User %s connected as %s", player_id, submachine_id);
+    const _interpreter = interpret(xstate.Machine(
+        state_machine,
+        options,
+        Object.assign({}, initial_context, {game_room_id: gameRoomsCounter})
+    ));
 
-    // raise machine EVENT
-    ghost.sendTo({
-        type: "SOC_CONNECT",
-        player_id,
-        socket,
-        submachine_id
-    }, submachine_id)
+    GameRooms.set(gameRoomsCounter, _interpreter);
+    gameRoomsCounter++;
 
-    statelog("New state: %O", ghost.state.value);
+    _interpreter.on_iwannabetracer = (role, player_id, submachine_id) => {
+        // raise machine EVENT
+        _interpreter.sendTo({
+            type: "SOC_IWANNABETRACER",
+            player_id,
+            role
+        }, submachine_id)
+        statelog("New state: %O", _interpreter.state.value);
+    }
+
+    _interpreter.on_socket_connected = function (player_id, submachine_id, socket) {
+        debuglog("User %s connected as %s", player_id, submachine_id);
+        // raise machine EVENT
+        _interpreter.sendTo({
+            type: "SOC_CONNECT",
+            player_id,
+            socket,
+            submachine_id
+        }, submachine_id)
+        statelog("New state: %O", _interpreter.state.value);
+    }
+
+    return _interpreter;
 }
 
-ghost.on_iwannabetracer = function(role, player_id, submachine_id) {
-    // raise machine EVENT
-    ghost.sendTo({
-        type: "SOC_IWANNABETRACER",
-        player_id,
-        role
-    }, submachine_id)
-
-    statelog("New state: %O", ghost.state.value);
-}
-
-
-module.exports = ghost;
+module.exports = createGameRoom;
