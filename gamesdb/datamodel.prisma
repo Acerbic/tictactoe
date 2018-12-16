@@ -1,7 +1,7 @@
 type GameSession {
   id: ID! @unique
-  player1: Int!
-  player2: Int!
+  player1: String!
+  player2: String!
   state: String!
   board: String!
 }
