@@ -11,8 +11,10 @@
   "dependencies": {
     "cross-env": "^5.2.0",
     "express": "^4.16.4",
+    "global-singleton": "^0.1.2",
     "isomorphic-unfetch": "^3.0.0",
     "socket.io": "^2.2.0",
     "xstate": "^4.1.2"
-  }
+  },
+  { "engines" : { "node" : ">=10" } }
 }

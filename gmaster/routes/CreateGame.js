@@ -3,12 +3,11 @@ var router = express.Router();
 const GameMachine = require('../game/game-machine');
 
 router.post('/CreateGame', function(req, res, next) {
-  const p1_id = parseInt(req.body.player1Id);
-  const p2_id = parseInt(req.body.player2Id);
+  const p1_id = req.body.player1Id;
+  const p2_id = req.body.player2Id;
   const gamesDb = req.app.gamesDb;
 
   if (p1_id && p2_id) {
-    // let gameId// = gamesDb.GenerateNewId();
 
     let game = {
       state: JSON.stringify(GameMachine.initialState),

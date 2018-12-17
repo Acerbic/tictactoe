@@ -18,7 +18,7 @@ router.post('/MakeMove/:gameId', function(req, res, next) {
     const service = interpret(GameMachine).start(current_state);
 
     // read request data
-    const playerId = parseInt(req.body.playerId);
+    const playerId = req.body.playerId;
     const column = req.body.move && req.body.move.column && parseInt(req.body.move.column);
     const row    = req.body.move && req.body.move.row && parseInt(req.body.move.row);
 
