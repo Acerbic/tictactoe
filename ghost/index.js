@@ -10,19 +10,44 @@ const gs = require('global-singleton');
 let gameRoomsCounter = gs('ghost.GameRoomsCounter', function () { return 1; });
 const GameRooms = gs('ghost.GameRooms', function () { return new Map(); });
 
-
 const { createGameRoom } = require('./state-machine/state-interpreter');
-
-// start machine interpreter
-const ghost = createGameRoom()
-    .onTransition((state, event) => statelog("Transition (%s) -> %O", event.type, state.value))
+let waitingRoom = createGameRoom();
+waitingRoom
+    .onTransition((r => ((state, event) => statelog("Transition in room {%s}: (%s) -> %O", r.id, event.type, state.value)))(waitingRoom))
     .start();
 
-hostlog('state machine started');
+
+
+// start machine interpreter
+// const ghost = createGameRoom()
+//     .onTransition((state, event) => statelog("Transition (%s) -> %O", event.type, state.value))
+//     .start();
+hostlog('game room created: %s', waitingRoom.id);
+
 
 // attach important socket handlers
 io.on('connection', function(socket) {
-    ghost.on_socket_connection(socket);
+
+    // TODO: auth
+    const player_id = socket.handshake.query.playerId;
+    
+    if (GameRooms.has(player_id)) {
+        // reconnection to the game
+        // TODO:
+    } else {
+        // connect the player to existing room
+        waitingRoom.on_socket_connection(socket);
+        GameRooms.set(player_id, waitingRoom);
+
+        // if the room is full, create a new room for future players
+        if (waitingRoom.playersCount() >= 2) {
+            waitingRoom = createGameRoom();
+            waitingRoom
+                .onTransition((r => ((state, event) => statelog("Transition in room {%s}: (%s) -> %O", r.id, event.type, state.value)))(waitingRoom))
+                .start();
+            hostlog('game room created: %s', waitingRoom.id);
+        }
+    }
 });
 
 // start listening for connections

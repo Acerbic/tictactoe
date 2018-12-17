@@ -244,8 +244,6 @@ const options = {
     }
 */
 const initial_context = {
-    game_room_id: null,
-
     // since game master operates on 'player1' and 'player2' tokens
     // we need to keep mapping of those to player ids.
     player1: null,
@@ -260,7 +258,7 @@ const initial_context = {
     // latest game state, reported after a move was accepted by game master
     latest_game_state: null,
 
-    players: new Map(), // PlayerId => PlayerContext
+    players: null, // Map: PlayerId => PlayerContext
 
     // Used to synchronize calls to socket.emit (state transitions
     // could cause racing in actions, if action is delaying emit to the
@@ -276,7 +274,7 @@ function createGameRoom() {
     const _interpreter = new ActionableInterpreter(xstate.Machine(
         state_machine,
         options,
-        Object.assign({}, initial_context)
+        Object.assign({}, initial_context, {players: new Map()})
     ));
 
     // extending interpreter for our use case
@@ -291,7 +289,7 @@ function createGameRoom() {
             socket.disconnect(true);
             return;
         }
-        debuglog(`a user with id = {player_id} connecting: {socket.id}`);
+        debuglog(`a user with id = ${player_id} connecting: ${socket.id}`);
 
         const context = _interpreter.state.context;
         if (context.players.size >= 2) {
@@ -334,6 +332,12 @@ function createGameRoom() {
         }, submachine_id)
         statelog("New state: %O", _interpreter.state.value);
     };
+
+    /**
+     * Number of players already connected to this room
+     */
+    _interpreter.playersCount = () => 
+         (_interpreter.state) ?  _interpreter.state.context.players.size : 0;
 
     return _interpreter;
 }
