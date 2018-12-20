@@ -23,5 +23,20 @@ services:
       MYSQL_ROOT_PASSWORD: prisma
     volumes:
       - mysql:/var/lib/mysql
+  gmaster:
+    image: gmaster:latest
+    restart: always
+    ports:
+    - "3000:3000"
+  ghost:
+    image: ghost:latest
+    restart: always
+    ports:
+    - "3060:3060"
+  deployer:
+    image: deployer:latest
+    restart: on-failure
+    depends_on:
+    - prisma
 volumes:
   mysql:

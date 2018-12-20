@@ -1,5 +1,7 @@
 // FIXME: publish prisma-client as a module and npm-install it
-const { prisma } = require('../../gamesdb/generated/prisma-client')
+//const { prisma } = require('../../gamesdb/generated/prisma-client')
+//const { prisma } = require('prisma-client')
+const { prisma } = require('@trulyacerbic/ttt-gamesdb')
 
 /**
  * Load game record from the DB

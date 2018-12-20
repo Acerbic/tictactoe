@@ -1,7 +1,7 @@
 const fetch = require('isomorphic-unfetch');
 
 // TODO: move to .env variable
-const gmaster_url = 'http://localhost:3000/';
+const gmaster_url = 'http://gmaster:3000/';
 
 async function gmasterPost( endpoint, payload, gameId ) {
     const uri = gmaster_url + endpoint + (gameId ? ('/'+gameId) : '');
@@ -17,7 +17,7 @@ async function gmasterPost( endpoint, payload, gameId ) {
     //     return JSON.parse(body);
     // });
     const json = res.json();
-    json.catch(err => 
+    json.catch(err =>
         console.error(`gmaster.post ({uri})[{JSON.stringify(payload)}]: err`)
     )
     return json;
