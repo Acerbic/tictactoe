@@ -90,9 +90,9 @@ const state_machine = {
             }
         },
         roles_assigned: {
-            onEntry: ['call_creategame'],
-            on: {
-                CALL_CREATEGAME_ENDED: {
+            invoke: {
+                src: 'invoke_create_game',
+                onDone: {
                     target: 'wait4move',
                     actions: 'emit_your_turn'
                 }
@@ -107,8 +107,9 @@ const state_machine = {
             }
         },
         game_move: {
-            on: {
-                CALL_MAKEMOVE_ENDED: {
+            invoke: {
+                src: 'invoke_make_move',
+                onDone: {
                     target: 'move_result',
                     actions: 'emit_opponent_moved'
                 }

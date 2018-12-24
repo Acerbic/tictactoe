@@ -1,5 +1,5 @@
 const xstate = require('xstate');
-const ActionableInterpreter = require('@trulyacerbic/xstate.actionable-interpreter');
+const { interpret } = require('xstate/lib/interpreter');
 
 const {state_machine, player_setup_machine} = require('./state-machine');
 const gmaster = require('../gmaster_connector');
@@ -49,10 +49,65 @@ function player_setup() {
  */
 const options = {
     services: {
-        submachine: player_setup()
-    },
-    actions: {
+        submachine: player_setup(),
 
+        /**
+         * call CreateGame Rest API on game master
+         */
+        invoke_create_game: (ctx) => {
+
+            if (ctx.current_player == ctx.player2) {
+                [ctx.player1, ctx.player2] = [ctx.player2, ctx.player1];
+            }
+
+            return gmaster.post( 'CreateGame', { player1Id: ctx.player1, player2Id: ctx.player2 } )
+                .then(response => {
+                    if (response.success) {
+                        ctx.latest_game_state = response.newState;
+                        ctx.game_id = response.gameId;
+                        return response;
+                    } else {
+                        return Promise.reject(response);
+                    }
+                });
+        },
+
+        /**
+         * Call MakeMove on game master.
+         */
+        invoke_make_move: (ctx, event) => {
+            return gmaster.post(
+                'MakeMove',
+                {
+                    playerId: ctx.current_player,
+                    move: {
+                        row: event.move.row,
+                        column: event.move.column,
+                    }
+                },
+                ctx.game_id
+            )
+            .then ( response => {
+                if (response.success) {
+                    ctx.latest_game_state = response.newState;
+                    return { type: "CALL_MAKEMOVE_ENDED", response };
+                } else {
+                    errorlog(`Call to MakeMove failed: [{response.errorCode}] - {response.errorMessage}`);
+                    return Promise.reject(response);
+                    // TODO: handle non-success by the game master
+                }
+            })
+            .catch(ex => {
+                errorlog("Exceptional thing happened: %o", ex);
+            });
+        },
+    },
+
+    actions: {
+        /**
+         * Initialize "current_player" context property based on
+         * player's requested roles
+         */
         set_current_player: (ctx) => {
             const it = ctx.players.values();
             const p1 = it.next().value;
@@ -90,72 +145,15 @@ const options = {
         },
 
         /**
-         * call CreateGame Rest API on game master
-         */
-        call_creategame: (ctx) => {
-
-            if (ctx.current_player == ctx.player2) {
-                [ctx.player1, ctx.player2] = [ctx.player2, ctx.player1];
-            }
-
-            return gmaster.post(
-                'CreateGame',
-                { player1Id: ctx.player1, player2Id: ctx.player2 }
-            )
-            .then( response => {
-                if (response.success) {
-                    ctx.latest_game_state = response.newState;
-                    ctx.game_id = response.gameId;
-                    return { type: "CALL_CREATEGAME_ENDED", response };
-                } else {
-                    // TODO:
-                }
-            })
-            .catch( ex => {
-                errorlog("Exceptional thing happened: %o", ex);
-            });
-        },
-
-        /**
          * Send 'your_turn' to a client
          */
         emit_your_turn: (ctx) => {
-            debuglog("action: emit your turn")
             const socket = ctx.players.get(ctx.current_player).socket;
             ctx.emits_sync.then( () => {
                 socket.emit('your_turn');
             });
         },
 
-        /**
-         * Call MakeMove on game master. Upon completion, this will raise
-         * CALL_MAKEMOVE_ENDED event with the response from game master
-         */
-        call_makemove: (ctx, event) => {
-            return gmaster.post(
-                'MakeMove',
-                {
-                    playerId: ctx.current_player,
-                    move: {
-                        row: event.move.row,
-                        column: event.move.column,
-                    }
-                },
-                ctx.game_id
-            )
-            .then ( response => {
-                if (response.success) {
-                    ctx.latest_game_state = response.newState;
-                    return { type: "CALL_MAKEMOVE_ENDED", response };
-                } else {
-                    errorlog(`Call to MakeMove failed: [{response.errorCode}] - {response.errorMessage}`);
-                    // TODO: handle non-success by the game master
-                }
-            })
-            .catch(ex => {
-                errorlog("Exceptional thing happened: %o", ex);
-            });
-        },
 
         emit_opponent_moved: (ctx) => {
             const it = ctx.players.values();
@@ -259,7 +257,7 @@ const initial_context = {
  */
 function createGameRoom() {
 
-    const _interpreter = new ActionableInterpreter(xstate.Machine(
+    const _interpreter = interpret(xstate.Machine(
         state_machine,
         options,
         Object.assign({}, initial_context, {players: new Map()})
