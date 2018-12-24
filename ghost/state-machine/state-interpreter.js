@@ -1,5 +1,5 @@
 const xstate = require('xstate');
-const ActionableInterpreter = require('./actionable-interpreter');
+const ActionableInterpreter = require('@trulyacerbic/xstate.actionable-interpreter');
 
 const {state_machine, player_setup_machine} = require('./state-machine');
 const gmaster = require('../gmaster_connector');
@@ -45,29 +45,20 @@ function player_setup() {
  *  on the state machine, they need a ready reference to the interpreter. But the
  *  interpreter itself is generated at the runtime. Thus, we need this function to
  *  "cook" a new batch of options for every new interpreter instance.
- * @param {*} _interpreter 
+ * @param {*} _interpreter
  */
 const options = {
     services: {
         submachine: player_setup()
     },
     actions: {
-        /**
-         * compare roles requested by players and either raise
-         * ROLE_REQUESTED_CONFLICT or ROLE_REQUESTED_NO_CONFLICT.
-         * Determines ctx.current_player
-         */
-        conflict_evaluation: (ctx) => {
+
+        set_current_player: (ctx) => {
             const it = ctx.players.values();
             const p1 = it.next().value;
             const p2 = it.next().value;
 
-            if (p1.role_request === p2.role_request) {
-                return "ROLE_REQUESTED_CONFLICT";
-            } else {
-                ctx.current_player = (p1.role_request == 'second') ? p2.id : p1.id;
-                return "ROLE_REQUESTED_NO_CONFLICT";
-            }
+            ctx.current_player = (p1.role_request == 'second') ? p2.id : p1.id;
         },
 
         /**
@@ -96,7 +87,6 @@ const options = {
          */
         cointoss_roles: (ctx) => {
             ctx.current_player = (Math.random() > 0.5) ? ctx.player1 : ctx.player2;
-            return "COIN_TOSS";
         },
 
         /**
@@ -176,7 +166,7 @@ const options = {
             const socket_moving = ctx.players.get(ctx.current_player).socket;
 
             ctx.emits_sync = ctx.emits_sync
-            .then ( () => 
+            .then ( () =>
                 GetGameBoard( ctx.game_id )
                 .then( board => {
                     const turn = ctx[ctx.latest_game_state.turn];
@@ -200,17 +190,6 @@ const options = {
             )
         },
 
-        judge_move_results: (ctx) => {
-            debuglog("judge_move_result");
-            switch (ctx.latest_game_state.game) {
-                case 'wait':
-                    return 'GAME_STATE_WAIT';
-                case 'over':
-                case 'draw':
-                    return 'GAME_STATE_OVER_DRAW';
-            }
-        },
-
         switch_player: (ctx) => {
             ctx.current_player = ctx.current_player == ctx.player1 ? ctx.player2 : ctx.player1;
         },
@@ -230,6 +209,15 @@ const options = {
 
         call_dropgame: (ctx) => {
             gmaster.post('DropGame', {}, ctx.game_id);
+        }
+    },
+    guards: {
+        role_requests_conflict: (ctx, event) => {
+            const it = ctx.players.values();
+            const p1 = it.next().value;
+            const p2 = it.next().value;
+
+            return p1.role_request === p2.role_request;
         }
     }
 };
@@ -336,7 +324,7 @@ function createGameRoom() {
     /**
      * Number of players already connected to this room
      */
-    _interpreter.playersCount = () => 
+    _interpreter.playersCount = () =>
          (_interpreter.state) ?  _interpreter.state.context.players.size : 0;
 
     return _interpreter;

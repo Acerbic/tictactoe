@@ -3,8 +3,6 @@ services:
   prisma:
     image: prismagraphql/prisma:1.22
     restart: always
-    ports:
-    - "4466:4466"
     environment:
       PRISMA_CONFIG: |
         port: 4466
@@ -26,8 +24,6 @@ services:
   gmaster:
     image: gmaster:latest
     restart: always
-    ports:
-    - "3000:3000"
   ghost:
     image: ghost:latest
     restart: always

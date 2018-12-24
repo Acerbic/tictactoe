@@ -66,22 +66,24 @@ const state_machine = {
             onDone: 'role_requests_taken'
         },
         role_requests_taken: {
-            onEntry: 'conflict_evaluation',
             on: {
-                ROLE_REQUESTED_CONFLICT: {
-                    target: 'role_requested_conflict',
-                    actions: 'emit_iamalreadytracer'
-                },
-                ROLE_REQUESTED_NO_CONFLICT: {
-                    target: 'roles_assigned',
-                    actions: 'emit_you_are_it'
-                }
+                '': [
+                    {
+                        cond: 'role_requests_conflict',
+                        target: 'role_requested_conflict',
+                        actions: 'emit_iamalreadytracer'
+                    },
+                    {
+                        target: 'roles_assigned',
+                        actions: ['set_current_player', 'emit_you_are_it']
+                    }
+                ],
             }
         },
         role_requested_conflict: {
             onEntry: 'cointoss_roles',
             on: {
-                COIN_TOSS: {
+                '': {
                     target: 'roles_assigned',
                     actions: ['emit_you_are_it']
                 }
@@ -113,16 +115,22 @@ const state_machine = {
             }
         },
         move_result: {
-            onEntry: 'judge_move_results',
             on: {
-                GAME_STATE_WAIT: {
-                    target: 'wait4move',
-                    actions: ['switch_player', 'emit_your_turn'],
-                },
-                GAME_STATE_OVER_DRAW: {
-                    target: 'end',
-                    actions: ['emit_gameover', 'call_dropgame']
-                }
+                '': [
+                    {
+                        cond: ctx => ctx.latest_game_state.game == 'wait',
+                        target: 'wait4move',
+                        actions: ['switch_player', 'emit_your_turn']
+                    },
+                    {
+                        cond: ctx => (
+                            ctx.latest_game_state.game == 'over' 
+                            || ctx.latest_game_state.game == 'draw'
+                        ),
+                        target: 'end',
+                        actions: ['emit_gameover', 'call_dropgame']
+                    }
+                ],
             }
         },
         end: {

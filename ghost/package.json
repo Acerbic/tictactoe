@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@trulyacerbic/ttt-gamesdb": "^1.0.10",
+    "@trulyacerbic/xstate.actionable-interpreter": "^1.0.3",
     "cross-env": "^5.2.0",
     "express": "^4.16.4",
     "global-singleton": "^0.1.2",

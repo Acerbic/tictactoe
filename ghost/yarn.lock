@@ -9,6 +9,13 @@
   dependencies:
     prisma-client-lib "^1.23.1"
 
+"@trulyacerbic/xstate.actionable-interpreter@^1.0.3":
+  version "1.0.3"
+  resolved "https://registry.yarnpkg.com/@trulyacerbic/xstate.actionable-interpreter/-/xstate.actionable-interpreter-1.0.3.tgz#dc25128cef308035536ff843ae5bf874fcfafd71"
+  integrity sha512-5OBidURSjk2APDnGpuoyuYL1xDinJaJTKwf5//402AxLXkxbtHfWdf41sphWoDv3xmGE7jFGOPv7Tw0H9iecpw==
+  dependencies:
+    xstate "^4.2.2"
+
 "@types/concat-stream@^1.6.0":
   version "1.6.0"
   resolved "https://registry.yarnpkg.com/@types/concat-stream/-/concat-stream-1.6.0.tgz#394dbe0bb5fee46b38d896735e8b68ef2390d00d"
@@ -1073,7 +1080,7 @@ xmlhttprequest-ssl@~1.5.4:
   resolved "https://registry.yarnpkg.com/xmlhttprequest-ssl/-/xmlhttprequest-ssl-1.5.5.tgz#c2876b06168aadc40e57d97e81191ac8f4398b3e"
   integrity sha1-wodrBhaKrcQOV9l+gRkayPQ5iz4=
 
-xstate@^4.1.2:
+xstate@^4.1.2, xstate@^4.2.2:
   version "4.2.2"
   resolved "https://registry.yarnpkg.com/xstate/-/xstate-4.2.2.tgz#66fe7a61dd9f40f6460a6dced7a92bfe3b402241"
   integrity sha512-EDYvtdUyGX6bbjQ7vs+GQyc6OjXg+5ovLdm9zKMTV0uRpR1WbDywFPRZj4LWzUvkdFJJr3kHx3r5pkpzrWLg0Q==
