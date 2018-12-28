@@ -16,12 +16,6 @@ waitingRoom
     .onTransition((r => ((state, event) => statelog("Transition in room {%s}: (%s) -> %O", r.id, event.type, state.value)))(waitingRoom))
     .start();
 
-
-
-// start machine interpreter
-// const ghost = createGameRoom()
-//     .onTransition((state, event) => statelog("Transition (%s) -> %O", event.type, state.value))
-//     .start();
 hostlog('game room created: %s', waitingRoom.id);
 
 

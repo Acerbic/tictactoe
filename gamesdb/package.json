@@ -4,7 +4,7 @@
   "description": "Prisma graphql database model definition",
   "main": "generated/prisma-client/index.js",
   "scripts": {
-    "prepublishOnly": "prisma generate"
+    "prisma": "prisma"
   },
   "keywords": [
     "prisma",

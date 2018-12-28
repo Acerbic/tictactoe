@@ -1,8 +1,15 @@
 FROM node:lts-alpine
 
-RUN npm i -g prisma
-COPY . /app
-WORKDIR /app
-RUN apk add bash
+# yarn for lock file
+RUN apk add yarn
 
-CMD ["./wait-for-it.sh", "prisma:4466", "-s", "-t", "0", "--", "prisma", "deploy"]
+# need bash for the wait script
+RUN apk add bash
+CMD ["./wait-for-it.sh", "prisma:4466", "-s", "-t", "0", "--", "npm", "run", "prisma", "deploy"]
+
+WORKDIR /app
+COPY ["package.json", "yarn.lock", "./"]
+RUN yarn && yarn cache clean
+
+COPY . .
+RUN yarn prisma generate

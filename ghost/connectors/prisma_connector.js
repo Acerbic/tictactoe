@@ -1,5 +1,4 @@
-// FIXME: publish prisma-client as a module and npm-install it
-const { prisma } = require('@trulyacerbic/ttt-gamesdb')
+const { prisma } = require('./prisma-client')
 
 /**
  * Load game record from the DB and return the board

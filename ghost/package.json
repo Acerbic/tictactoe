@@ -9,11 +9,11 @@
     "start": "cross-env DEBUG=*,-engine*,-express:router,-socket.io-parser node index.js"
   },
   "dependencies": {
-    "@trulyacerbic/ttt-gamesdb": "^1.0.10",
     "cross-env": "^5.2.0",
     "express": "^4.16.4",
     "global-singleton": "^0.1.2",
     "isomorphic-unfetch": "^3.0.0",
+    "prisma-client-lib": "^1.23.2",
     "socket.io": "^2.2.0",
     "xstate": "^4.1.2"
   },

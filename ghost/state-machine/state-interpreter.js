@@ -2,8 +2,8 @@ const xstate = require('xstate');
 const { interpret } = require('xstate/lib/interpreter');
 
 const {state_machine, player_setup_machine} = require('./state-machine');
-const gmaster = require('../gmaster_connector');
-const { GetGameBoard } = require('../prisma_connector');
+const gmaster = require('../connectors/gmaster_connector');
+const { GetGameBoard } = require('../connectors/prisma_connector');
 
 const statelog = require('debug')('ttt:ghost:state-machine');
 const errorlog = require('debug')('ttt:ghost:error');
