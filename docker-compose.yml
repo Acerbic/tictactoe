@@ -1,7 +1,7 @@
 version: '3'
 services:
   prisma:
-    image: prismagraphql/prisma:1.22
+    image: prismagraphql/prisma:latest
     restart: always
     environment:
       PRISMA_CONFIG: |
@@ -21,18 +21,29 @@ services:
       MYSQL_ROOT_PASSWORD: prisma
     volumes:
       - mysql:/var/lib/mysql
-  gmaster:
-    image: gmaster:latest
-    restart: always
-  ghost:
-    image: ghost:latest
-    restart: always
-    ports:
-    - "3060:3060"
   deployer:
+    build:
+      context: ./gamesdb
+      dockerfile: Dockerfile
+      args:
+        PRISMA_PORT: 4466
     image: deployer:latest
     restart: on-failure
     depends_on:
     - prisma
+  gmaster:
+    build:
+      context: ./gmaster
+      dockerfile: Dockerfile
+    image: gmaster:latest
+    restart: always
+  ghost:
+    build:
+      context: ./ghost
+      dockerfile: Dockerfile
+    image: ghost:latest
+    restart: always
+    ports:
+    - "3060:3060"
 volumes:
   mysql:

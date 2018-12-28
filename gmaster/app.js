@@ -1,4 +1,4 @@
-var express = require('express');
+const express = require('express');
 var morgan = require('morgan');
 
 var app = express();
