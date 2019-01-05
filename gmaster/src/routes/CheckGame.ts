@@ -1,13 +1,16 @@
-const express = require('express');
+import * as express from 'express';
+import * as xstate from 'xstate';
+import { GameId, Game, DbConnector } from '../db/db.js'
+
+
 const router = express.Router();
-const xstate = require('xstate');
 
 /**
  * Check the state of a game, if it exists
  */
 router.get('/CheckGame/:gameId', async function(req, res, next) {
-  const gameId = req.params.gameId;
-  const gamesDb = req.app.gamesDb;
+  const gameId = req.params.gameId as GameId;
+  const gamesDb = (req.app as any).gamesDb as DbConnector; // faceplum
 
   try {
     gamesDb.LoadGame(gameId)
@@ -32,4 +35,4 @@ router.get('/CheckGame/:gameId', async function(req, res, next) {
   }
 });
 
-module.exports = router;
+export = router;

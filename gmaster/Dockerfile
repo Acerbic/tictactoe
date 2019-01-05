@@ -8,11 +8,11 @@ EXPOSE 3000
 WORKDIR /app
 COPY ["package.json", "yarn.lock", "./"]
 RUN yarn && \
-#    yarn upgrade @trulyacerbic/ttt-gamesdb@latest && \
     yarn cache clean
 
-COPY --from=deployer /app/generated/prisma-client ./db/prisma-client
-
 COPY . .
+COPY --from=deployer /app/generated/prisma-client ./dist/db/prisma-client
+
+RUN yarn build; exit 0
 
 CMD ["yarn", "start"]

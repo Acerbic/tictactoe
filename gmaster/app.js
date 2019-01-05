@@ -7,12 +7,12 @@ app.use(morgan('dev'));
 app.use(express.json());
 
 // DB connection to be reused by all API calls
-app.gamesDb = require('./db/db-prisma');
+app.gamesDb = require('./dist/db/db-prisma');
 
 // Rest API
-app.use(require('./routes/CreateGame'));
-app.use(require('./routes/CheckGame'));
-app.use(require('./routes/DropGame'));
-app.use(require('./routes/MakeMove'));
+app.use(require('./dist/routes/CreateGame'));
+app.use(require('./dist/routes/CheckGame'));
+app.use(require('./dist/routes/DropGame'));
+app.use(require('./dist/routes/MakeMove'));
 
 module.exports = app;
