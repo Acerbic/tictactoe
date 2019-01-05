@@ -101,8 +101,7 @@ const state_machine = {
         wait4move: {
             on: {
                 SOC_MOVE: {
-                    target: 'game_move',
-                    actions: 'call_makemove'
+                    target: 'game_move'
                 }
             }
         },

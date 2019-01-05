@@ -43,7 +43,9 @@ services:
       dockerfile: Dockerfile
     image: ghost:latest
     restart: always
+#    command: node --inspect-brk=0.0.0.0 index.js
     ports:
     - "3060:3060"
+#    - "9229:9229"
 volumes:
   mysql:

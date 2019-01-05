@@ -6,12 +6,18 @@ const statelog = require('debug')('ttt:ghost:state-machine');
 const hostlog =  require('debug')('ttt:ghost')
 
 const gs = require('global-singleton');
+
+const deps = {
+    gmaster: require('./connectors/gmaster_connector'),
+    prisma: require('./connectors/prisma_connector')
+};
+
 // safe singletons
-let gameRoomsCounter = gs('ghost.GameRoomsCounter', function () { return 1; });
+// let gameRoomsCounter = gs('ghost.GameRoomsCounter', function () { return 1; });
 const GameRooms = gs('ghost.GameRooms', function () { return new Map(); });
 
 const { createGameRoom } = require('./state-machine/state-interpreter');
-let waitingRoom = createGameRoom();
+let waitingRoom = createGameRoom(deps);
 waitingRoom
     .onTransition((r => ((state, event) => statelog("Transition in room {%s}: (%s) -> %O", r.id, event.type, state.value)))(waitingRoom))
     .start();
@@ -35,7 +41,7 @@ io.on('connection', function(socket) {
 
         // if the room is full, create a new room for future players
         if (waitingRoom.playersCount() >= 2) {
-            waitingRoom = createGameRoom();
+            waitingRoom = createGameRoom(deps);
             waitingRoom
                 .onTransition((r => ((state, event) => statelog("Transition in room {%s}: (%s) -> %O", r.id, event.type, state.value)))(waitingRoom))
                 .start();

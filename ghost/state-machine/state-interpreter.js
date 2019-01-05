@@ -2,8 +2,6 @@ const xstate = require('xstate');
 const { interpret } = require('xstate/lib/interpreter');
 
 const {state_machine, player_setup_machine} = require('./state-machine');
-const gmaster = require('../connectors/gmaster_connector');
-const { GetGameBoard } = require('../connectors/prisma_connector');
 
 const statelog = require('debug')('ttt:ghost:state-machine');
 const errorlog = require('debug')('ttt:ghost:error');
@@ -47,178 +45,193 @@ function player_setup() {
  *  "cook" a new batch of options for every new interpreter instance.
  * @param {*} _interpreter
  */
-const options = {
-    services: {
-        submachine: player_setup(),
 
-        /**
-         * call CreateGame Rest API on game master
-         */
-        invoke_create_game: (ctx) => {
+class MachineOptions {
+    constructor (deps) {
+        this.deps = deps;
+    }
 
-            if (ctx.current_player == ctx.player2) {
-                [ctx.player1, ctx.player2] = [ctx.player2, ctx.player1];
-            }
+    getOptions() {
+        return {
+            services: {
+                submachine: player_setup(),
 
-            return gmaster.post( 'CreateGame', { player1Id: ctx.player1, player2Id: ctx.player2 } )
-                .then(response => {
-                    if (response.success) {
-                        ctx.latest_game_state = response.newState;
-                        ctx.game_id = response.gameId;
-                        return response;
-                    } else {
-                        return Promise.reject(response);
+                /**
+                 * call CreateGame Rest API on game master
+                 */
+                invoke_create_game: (ctx) => {
+
+                    if (ctx.current_player == ctx.player2) {
+                        [ctx.player1, ctx.player2] = [ctx.player2, ctx.player1];
                     }
-                });
-        },
 
-        /**
-         * Call MakeMove on game master.
-         */
-        invoke_make_move: (ctx, event) => {
-            return gmaster.post(
-                'MakeMove',
-                {
-                    playerId: ctx.current_player,
-                    move: {
-                        row: event.move.row,
-                        column: event.move.column,
-                    }
-                },
-                ctx.game_id
-            )
-            .then ( response => {
-                if (response.success) {
-                    ctx.latest_game_state = response.newState;
-                    return { type: "CALL_MAKEMOVE_ENDED", response };
-                } else {
-                    errorlog(`Call to MakeMove failed: [{response.errorCode}] - {response.errorMessage}`);
-                    return Promise.reject(response);
-                    // TODO: handle non-success by the game master
-                }
-            })
-            .catch(ex => {
-                errorlog("Exceptional thing happened: %o", ex);
-            });
-        },
-    },
-
-    actions: {
-        /**
-         * Initialize "current_player" context property based on
-         * player's requested roles
-         */
-        set_current_player: (ctx) => {
-            const it = ctx.players.values();
-            const p1 = it.next().value;
-            const p2 = it.next().value;
-
-            ctx.current_player = (p1.role_request == 'second') ? p2.id : p1.id;
-        },
-
-        /**
-         * Send 'iamalreadytracer' to both clients
-         */
-        emit_iamalreadytracer: (ctx) => {
-            ctx.emits_sync.then( () => {
-                ctx.players.forEach( player_context => player_context.socket.emit('iamalreadytracer') );
-            });
-        },
-
-        /**
-         * Send 'you_are_it' to both clients
-         */
-        emit_you_are_it: (ctx) => {
-            ctx.emits_sync.then( () => {
-                ctx.players.forEach( player_context => player_context.socket.emit(
-                    'you_are_it',
-                    ctx.current_player == player_context.id ? 'first' : 'second'
-                ) )
-            });
-        },
-
-        /**
-         * Toss a coin and decide who has the first turn
-         */
-        cointoss_roles: (ctx) => {
-            ctx.current_player = (Math.random() > 0.5) ? ctx.player1 : ctx.player2;
-        },
-
-        /**
-         * Send 'your_turn' to a client
-         */
-        emit_your_turn: (ctx) => {
-            const socket = ctx.players.get(ctx.current_player).socket;
-            ctx.emits_sync.then( () => {
-                socket.emit('your_turn');
-            });
-        },
-
-
-        emit_opponent_moved: (ctx) => {
-            const it = ctx.players.values();
-            const p1 = it.next().value;
-            const p2 = it.next().value;
-
-            const socket_waiting = ctx.current_player == p1.id ? p2.socket : p1.socket;
-            const socket_moving = ctx.players.get(ctx.current_player).socket;
-
-            ctx.emits_sync = ctx.emits_sync
-            .then ( () =>
-                GetGameBoard( ctx.game_id )
-                .then( board => {
-                    const turn = ctx[ctx.latest_game_state.turn];
-                    return new Promise( (resolve, reject) =>
-                        {
-                            socket_waiting.emit('opponent_moved', {
-                                game_state: Object.assign({}, ctx.latest_game_state, {turn}),
-                                board
-                            });
-                            socket_moving.emit('meme_accepted', {
-                                game_state: Object.assign({}, ctx.latest_game_state, {turn}),
-                                board
-                            });
-                            resolve();
+                    return this.deps.gmaster.post(
+                            'CreateGame', 
+                            {
+                                player1Id: ctx.player1,
+                                player2Id: ctx.player2
+                            }
+                        )
+                        .then(response => {
+                            if (response.success) {
+                                ctx.latest_game_state = response.newState;
+                                ctx.game_id = response.gameId;
+                                return response;
+                            } else {
+                                return Promise.reject(response);
+                            }
                         });
-                })
-                .catch( rejection => {
-                    errorlog("GetGameBoard rejection: " + rejection);
-                    // TODO: handle exception
-                })
-            )
-        },
+                },
 
-        switch_player: (ctx) => {
-            ctx.current_player = ctx.current_player == ctx.player1 ? ctx.player2 : ctx.player1;
-        },
+                /**
+                 * Call MakeMove on game master.
+                 */
+                invoke_make_move: (ctx, event) => {
+                    return this.deps.gmaster.post(
+                        'MakeMove',
+                        {
+                            playerId: ctx.current_player,
+                            move: {
+                                row: event.move.row,
+                                column: event.move.column,
+                            }
+                        },
+                        ctx.game_id
+                    )
+                    .then ( response => {
+                        if (response.success) {
+                            ctx.latest_game_state = response.newState;
+                            return { type: "CALL_MAKEMOVE_ENDED", response };
+                        } else {
+                            errorlog(`Call to MakeMove failed: [${response.errorCode}] - ${response.errorMessage}`);
+                            return Promise.reject(response);
+                            // TODO: handle non-success by the game master
+                        }
+                    })
+                    .catch(ex => {
+                        errorlog("Exceptional thing happened: %o", ex);
+                    });
+                },
+            },
 
-        emit_gameover: (ctx) => {
-            let winner = null;
-            if (ctx.latest_game_state.game == 'over') {
-                winner = ctx[ctx.latest_game_state.turn];
+            actions: {
+                /**
+                 * Initialize "current_player" context property based on
+                 * player's requested roles
+                 */
+                set_current_player: (ctx) => {
+                    const it = ctx.players.values();
+                    const p1 = it.next().value;
+                    const p2 = it.next().value;
+
+                    ctx.current_player = (p1.role_request == 'second') ? p2.id : p1.id;
+                },
+
+                /**
+                 * Send 'iamalreadytracer' to both clients
+                 */
+                emit_iamalreadytracer: (ctx) => {
+                    ctx.emits_sync.then( () => {
+                        ctx.players.forEach( player_context => player_context.socket.emit('iamalreadytracer') );
+                    });
+                },
+
+                /**
+                 * Send 'you_are_it' to both clients
+                 */
+                emit_you_are_it: (ctx) => {
+                    ctx.emits_sync.then( () => {
+                        ctx.players.forEach( player_context => player_context.socket.emit(
+                            'you_are_it',
+                            ctx.current_player == player_context.id ? 'first' : 'second'
+                        ) )
+                    });
+                },
+
+                /**
+                 * Toss a coin and decide who has the first turn
+                 */
+                cointoss_roles: (ctx) => {
+                    ctx.current_player = (Math.random() > 0.5) ? ctx.player1 : ctx.player2;
+                },
+
+                /**
+                 * Send 'your_turn' to a client
+                 */
+                emit_your_turn: (ctx) => {
+                    const socket = ctx.players.get(ctx.current_player).socket;
+                    ctx.emits_sync.then( () => {
+                        socket.emit('your_turn');
+                    });
+                },
+
+                emit_opponent_moved: (ctx) => {
+                    const it = ctx.players.values();
+                    const p1 = it.next().value;
+                    const p2 = it.next().value;
+
+                    const socket_waiting = ctx.current_player == p1.id ? p2.socket : p1.socket;
+                    const socket_moving = ctx.players.get(ctx.current_player).socket;
+
+                    ctx.emits_sync = ctx.emits_sync
+                    .then ( () =>
+                        this.deps.prisma.GetGameBoard( ctx.game_id )
+                        .then( board => {
+                            const turn = ctx[ctx.latest_game_state.turn];
+                            return new Promise( (resolve, reject) =>
+                                {
+                                    socket_waiting.emit('opponent_moved', {
+                                        game_state: Object.assign({}, ctx.latest_game_state, {turn}),
+                                        board
+                                    });
+                                    socket_moving.emit('meme_accepted', {
+                                        game_state: Object.assign({}, ctx.latest_game_state, {turn}),
+                                        board
+                                    });
+                                    resolve();
+                                });
+                        })
+                        .catch( rejection => {
+                            errorlog("GetGameBoard rejection: " + rejection);
+                            // TODO: handle exception
+                        })
+                    )
+                },
+
+                switch_player: (ctx) => {
+                    ctx.current_player = ctx.current_player == ctx.player1 ? ctx.player2 : ctx.player1;
+                },
+
+                emit_gameover: (ctx) => {
+                    let winner = null;
+                    if (ctx.latest_game_state.game == 'over') {
+                        winner = ctx[ctx.latest_game_state.turn];
+                    }
+
+                    ctx.emits_sync.then( () => {
+                        ctx.players.forEach(
+                            player_context => player_context.socket.emit('gameover', {winner})
+                        );
+                    });
+                },
+
+                call_dropgame: (ctx) => {
+                    this.deps.gmaster.post('DropGame', {}, ctx.game_id);
+                }
+            },
+
+            guards: {
+                role_requests_conflict: (ctx, event) => {
+                    const it = ctx.players.values();
+                    const p1 = it.next().value;
+                    const p2 = it.next().value;
+
+                    return p1.role_request === p2.role_request;
+                }
             }
-
-            ctx.emits_sync.then( () => {
-                ctx.players.forEach(
-                    player_context => player_context.socket.emit('gameover', {winner})
-                );
-            });
-        },
-
-        call_dropgame: (ctx) => {
-            gmaster.post('DropGame', {}, ctx.game_id);
-        }
-    },
-    guards: {
-        role_requests_conflict: (ctx, event) => {
-            const it = ctx.players.values();
-            const p1 = it.next().value;
-            const p2 = it.next().value;
-
-            return p1.role_request === p2.role_request;
         }
     }
-};
+}
 
 /*
     PlayerId : string
@@ -255,11 +268,11 @@ const initial_context = {
 /**
  * starts up a separate game room to host a game
  */
-function createGameRoom() {
+function createGameRoom(deps) {
 
     const _interpreter = interpret(xstate.Machine(
         state_machine,
-        options,
+        (new MachineOptions(deps)).getOptions(),
         Object.assign({}, initial_context, {players: new Map()})
     ));
 
@@ -323,7 +336,7 @@ function createGameRoom() {
      * Number of players already connected to this room
      */
     _interpreter.playersCount = () =>
-         (_interpreter.state) ?  _interpreter.state.context.players.size : 0;
+         (_interpreter.state) ? _interpreter.state.context.players.size : 0;
 
     return _interpreter;
 }
