@@ -11,8 +11,8 @@ RUN yarn && \
     yarn cache clean
 
 COPY . .
-COPY --from=deployer /app/generated/prisma-client ./dist/db/prisma-client
+COPY --from=deployer /app/generated/prisma-ts-client ./src/db/prisma-client
 
-RUN yarn build; exit 0
+RUN yarn build
 
 CMD ["yarn", "start"]

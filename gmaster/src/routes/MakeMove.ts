@@ -1,62 +1,72 @@
-var express = require('express');
-var router = express.Router();
+import * as express from 'express';
+import * as xstate from 'xstate';
+import { GameId, Game, DbConnector } from '../db/db.js';
+import { MakeMoveRequest, MakeMoveResponse } from 'gmasterREST';
 
-const xstate = require('xstate');
-const { interpret } = require('xstate/lib/interpreter');
-const GameMachine = require('../game/game-machine');
+const router = express.Router();
+
+import { interpret } from 'xstate/lib/interpreter';
+import { GameContext, GameMachine } from '../game/game-machine';
 
 router.post('/MakeMove/:gameId', function(req, res, next) {
-  const gameId = req.params.gameId;
-  const gamesDb = req.app.gamesDb;
-  // console.log("sending ["+gameId+"]");
+  const gameId = req.params.gameId as GameId;
+  const gamesDb = (req.app as any).gamesDb as DbConnector;
 
   gamesDb.LoadGame(gameId)
   .then( game => {
 
     // restore the machine
-    const current_state = xstate.State.create(JSON.parse(game.state));
+    const current_state = xstate.State.create<GameContext>(JSON.parse(game.state));
+    const state_value = current_state.value as xstate.StateValueMap;
     const service = interpret(GameMachine).start(current_state);
 
     // read request data
-    const playerId = req.body.playerId;
-    const column = req.body.move && req.body.move.column && parseInt(req.body.move.column);
-    const row    = req.body.move && req.body.move.row && parseInt(req.body.move.row);
+    const request = req.body as MakeMoveRequest;
+    const playerId = request.playerId;
+    const column = request.move && request.move.column;
+    const row    = request.move && request.move.row;
 
     // Perform various checks on request data
-    if (current_state.value.game !== "wait") {
-      res.send({
-        state: current_state.value,
+    // if ((current_state.value as xstate.StateValueMap).game !== "wait") {
+    if (state_value.game !== "wait") {
+      const response : MakeMoveResponse = {
+        newState: current_state.value,
         success: false,
         errorMessage: "Game already ended",
         errorCode: 0 // TODO: replace with a regular code
-      });
-      return;
+      };
+      res.send(response);
     }
-    if (game[current_state.value.turn] !== playerId) {
-      res.send({
-        state: current_state.value,
+    if (game[state_value.turn as ("player1" | "player2")] !== playerId) {
+      const response : MakeMoveResponse = {
+        newState: current_state.value,
         success: false,
         errorMessage: "Wrong player",
         errorCode: 0 // TODO: replace with a regular code
-      });
+      };
+      res.send(response);
       return;
     }
     if (!Number.isInteger(column) || column < 0 || column > 2 || 
         !Number.isInteger(row) || row < 0 || row > 2)
     {
-      res.send({
+      const response : MakeMoveResponse = {
+        newState: current_state.value,
         success: false,
         errorMessage: "Malformed move",
         errorCode: 0 // TODO: replace with a regular code
-      });
+      };
+      res.send(response);
       return;
     }
     if (current_state.context.board[row][column] !== null) {
-      res.send({
+      const response : MakeMoveResponse = {
+        newState: current_state.value,
         success: false,
         errorMessage: "Bad move - cell already taken",
         errorCode: 0 // TODO: replace with a regular code
-      });
+      };
+      res.send(response);
       return;
     }
 
@@ -73,19 +83,22 @@ router.post('/MakeMove/:gameId', function(req, res, next) {
     .then( () => {
       // wait for saving to finish and 
       // send result in reply
-      res.send({
+      const response : MakeMoveResponse = {
         success: true,
         newState: new_state.value
-      });
+      };
+      res.send( response );
     });
+    return;
   })
   .catch(ex => {
-    res.send({
-      state: null,
+    const response : MakeMoveResponse = {
+      newState: null,
       success: false,
       errorMessage: "Game was not loaded from DB: " + ex,
       errorCode: 0 // TODO: replace with a regular code
-    });
+    };
+    res.send( response );
     return;
   });
 });

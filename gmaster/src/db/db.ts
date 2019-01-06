@@ -1,9 +1,11 @@
-// STUB for implementation of database access
-
 type GameId = string;
 
 interface Game {
-    state: string
+    state: string; // JSON-serialized machine state
+    board: string; // JSON-serialized board state
+
+    player1?: any;
+    player2?: any;
 }
 
 interface DbConnector {

@@ -1,6 +1,7 @@
 {
     "compilerOptions": {
-        "lib": ["es6"],
+        "lib": ["es6", "esnext.asynciterable"],
+        "skipLibCheck": true,
         "module": "commonjs",
         "allowJs": true,
         "esModuleInterop": true,

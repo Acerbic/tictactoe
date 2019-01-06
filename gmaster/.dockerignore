@@ -2,3 +2,4 @@
 node_modules
 tests
 dist
+src/db/prisma-client

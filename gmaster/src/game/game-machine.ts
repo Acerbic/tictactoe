@@ -1,6 +1,12 @@
-const xstate = require('xstate');
+import * as xstate from 'xstate';
 
-const GameMachine = xstate.Machine({
+export interface GameContext extends xstate.DefaultContext {
+  board: Array<Array<any>>;
+  moves_made: number;
+  last_move: any;
+};
+
+export const GameMachine = xstate.Machine({
   id: "tictactoe",
   context: {
     // game board (3x3 table)
@@ -11,7 +17,7 @@ const GameMachine = xstate.Machine({
     // since each move creates 2 transitions, it helps to know what caused 
     // it on the derived transitions
     last_move: null
-  },
+  } as GameContext,
   type: "parallel",
   states: {
     /* since game is symmetrical for players (same rules), we just track
@@ -56,13 +62,13 @@ const GameMachine = xstate.Machine({
 }, {
   actions: {
     applyMove: xstate.actions.assign({
-      board: (ctx, event) => {
+      board: (ctx : GameContext, event : any) => {
         // not sure, should I make a copy of the board object?
         ctx.board[event.move.row][event.move.column] = event.playerId;
         return ctx.board;
       },
-      moves_made: ctx => ctx.moves_made + 1,
-      last_move: (ctx, event) => event
+      moves_made: (ctx : GameContext) => ctx.moves_made + 1,
+      last_move: (ctx : GameContext, event : any) => event
     })
   }
 });
@@ -72,11 +78,11 @@ const GameMachine = xstate.Machine({
  * @param {*} ctx 
  * @param {*} event 
  */
-function condGameOver( {board, moves_made, last_move} ) {
+function condGameOver( {board, moves_made, last_move} : GameContext ) {
   const move = last_move.move;
   const currentPlayerTag = board[move.row][move.column];
   if (!currentPlayerTag) {
-    throw new Exception("bad player's tag on board during guard check: " + String(currentPlayerTag));
+    throw new Error("bad player's tag on board during guard check: " + String(currentPlayerTag));
   }
 
   // check row
@@ -113,8 +119,8 @@ function condGameOver( {board, moves_made, last_move} ) {
  * @param {*} ctx 
  * @param {*} event 
  */
-function condDraw(ctx, event) {
+function condDraw(ctx : GameContext) {
   return ctx.moves_made == 9;
 }
 
-module.exports = GameMachine;
+// module.exports = GameMachine;
