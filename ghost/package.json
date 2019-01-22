@@ -6,6 +6,7 @@
   "license": "MIT",
   "private": false,
   "scripts": {
+    "build": "tsc",
     "start": "cross-env DEBUG=*,-engine*,-express:router,-socket.io-parser node index.js"
   },
   "dependencies": {
@@ -19,5 +20,10 @@
   },
   "engines": {
     "node": ">=10"
+  },
+  "devDependencies": {
+    "@types/events": "^1.2.0",
+    "@types/graphql": "^14.0.5",
+    "typescript": "^3.2.4"
   }
 }

@@ -1,4 +1,6 @@
-const fetch = require('isomorphic-unfetch');
+import { GameId } from 'ttt-db';
+import { GameMasterGetRequest, GameMasterPostRequest, GameMasterResponse } from 'ttt-gmasterREST';
+import fetch from 'isomorphic-unfetch';
 
 // TODO: move to .env variable
 const gmaster_url = 'http://gmaster:3000/';
@@ -10,7 +12,11 @@ const gmaster_url = 'http://gmaster:3000/';
  * @param {object} payload 
  * @param {string} gameId id of the game instance to affect
  */
-async function gmasterPost( endpoint, payload, gameId ) {
+async function gmasterPost(
+            endpoint : string,
+            payload : GameMasterPostRequest,
+            gameId? : GameId) : Promise<GameMasterResponse> {
+
     const uri = gmaster_url + endpoint + (gameId ? ('/'+gameId) : '');
     const res = await fetch(uri, {
         method: 'POST',
@@ -20,7 +26,7 @@ async function gmasterPost( endpoint, payload, gameId ) {
         body: JSON.stringify(payload)
     });
     const json = res.json();
-    json.catch(err =>
+    json.catch((err:any) =>
         console.error(`gmaster.post (${uri})[${JSON.stringify(payload)}]: ${err}`)
     )
     return json;
@@ -32,7 +38,7 @@ async function gmasterPost( endpoint, payload, gameId ) {
  * @param {string} endpoint 
  * @param {string} gameId 
  */
-async function gmasterGet( endpoint, gameId ) {
+async function gmasterGet( endpoint : string, gameId : GameId ) : Promise<GameMasterResponse> {
     const uri = gmaster_url + endpoint + (gameId ? ('/'+gameId) : '');
     const res = await fetch(uri, {
         method: 'GET',
@@ -40,4 +46,10 @@ async function gmasterGet( endpoint, gameId ) {
     return res.json();
 };
 
-module.exports = { get: gmasterGet, post: gmasterPost }
+
+class GMConnector { 
+    post = gmasterPost;
+    get = gmasterGet;
+};
+
+export = GMConnector;

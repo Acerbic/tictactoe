@@ -7,11 +7,14 @@ EXPOSE 3060
 
 WORKDIR /app
 COPY ["package.json", "yarn.lock", "./"]
-RUN yarn && \
+# install devDeps for TS compilations
+RUN yarn --production=false && \
     yarn cache clean
 
-COPY --from=deployer /app/generated/prisma-client ./connectors/prisma-client
-
 COPY . .
+COPY --from=deployer /app/generated/prisma-ts-client ./src/connectors/prisma-client
+
+# compile TypeScript
+RUN yarn build
 
 CMD ["yarn", "start"]

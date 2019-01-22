@@ -1,6 +1,9 @@
 var app = require('express')();
 var http = require('http').Server(app);
-var io = require('socket.io')(http, {pingTimeout: 1000000});
+var io = require('socket.io')(http, {
+    pingTimeout: process.env.NODE_ENV == 'production' ? 3000 : 1000000
+});
+const { GameRoomInterpreter } = require('./dist/state-machine/game-room-machine');
 
 const statelog = require('debug')('ttt:ghost:state-machine');
 const hostlog =  require('debug')('ttt:ghost')
@@ -8,16 +11,15 @@ const hostlog =  require('debug')('ttt:ghost')
 const gs = require('global-singleton');
 
 const deps = {
-    gmaster: require('./connectors/gmaster_connector'),
-    prisma: require('./connectors/prisma_connector')
+    gmaster: new (require('./dist/connectors/gmaster_connector')),
+    prisma: require('./dist/connectors/prisma_connector').GetGameBoard
 };
 
 // safe singletons
 // let gameRoomsCounter = gs('ghost.GameRoomsCounter', function () { return 1; });
 const GameRooms = gs('ghost.GameRooms', function () { return new Map(); });
 
-const { createGameRoom } = require('./state-machine/state-interpreter');
-let waitingRoom = createGameRoom(deps);
+let waitingRoom = new GameRoomInterpreter(deps);
 waitingRoom
     .onTransition((r => ((state, event) => statelog("Transition in room {%s}: (%s) -> %O", r.id, event.type, state.value)))(waitingRoom))
     .start();
@@ -41,7 +43,7 @@ io.on('connection', function(socket) {
 
         // if the room is full, create a new room for future players
         if (waitingRoom.playersCount() >= 2) {
-            waitingRoom = createGameRoom(deps);
+            waitingRoom = new GameRoomInterpreter(deps);
             waitingRoom
                 .onTransition((r => ((state, event) => statelog("Transition in room {%s}: (%s) -> %O", r.id, event.type, state.value)))(waitingRoom))
                 .start();
