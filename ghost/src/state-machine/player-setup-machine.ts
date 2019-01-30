@@ -28,6 +28,11 @@ const player_setup_machine_config : MachineConfig<
             }
         },
         rolerequested: {
+            after: {
+                0: 'end'
+            }
+        },
+        end: {
             type: 'final'
         }
     }
