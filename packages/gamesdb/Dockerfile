@@ -8,7 +8,7 @@ RUN apk add bash
 CMD ["./wait-for-it.sh", "prisma:4466", "-s", "-t", "0", "--", "npm", "run", "prisma", "deploy"]
 
 WORKDIR /app
-COPY ["package.json", "yarn.lock", "./"]
+COPY ["package.json", "./"]
 RUN yarn && yarn cache clean
 
 COPY . .

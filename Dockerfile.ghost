@@ -1,0 +1,26 @@
+FROM node:lts-alpine
+
+RUN apk add yarn && npm i lerna -g
+
+EXPOSE 3060
+
+WORKDIR /app
+
+# install devDeps for TS compilations
+COPY ["package.json", "yarn.lock", "./"]
+RUN yarn --production=false && \
+    yarn cache clean
+
+COPY packages/gamesdb ./packages/gamesdb
+COPY ["packages/ghost/package.json", "./packages/ghost/"]
+
+# crosslink
+COPY lerna.json .
+RUN lerna bootstrap
+
+COPY packages/ghost ./packages/ghost
+
+# compile TypeScript
+RUN yarn build
+
+CMD ["yarn", "--cwd", "./packages/ghost", "start"]

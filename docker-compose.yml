@@ -25,7 +25,7 @@ services:
 
   deployer:
     build:
-      context: ./gamesdb
+      context: ./packages/gamesdb
       dockerfile: Dockerfile
       args:
         PRISMA_PORT: 4466
@@ -36,18 +36,18 @@ services:
 
   gmaster:
     build:
-      context: ./gmaster
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: Dockerfile.gmaster
     image: gmaster:latest
     restart: always
 
   ghost:
     build:
-      context: ./ghost
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: Dockerfile.gmaster
     image: ghost:latest
     restart: always
-    command: node --inspect=0.0.0.0 index.js
+    # command: node --inspect=0.0.0.0 index.js
     ports:
     - "3060:3060"
     - "9229:9229"

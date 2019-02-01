@@ -2,5 +2,3 @@
 node_modules
 tests
 dist
-# for dev ts linking - ignore mock prisma-client
-src/connectors/prisma-client
