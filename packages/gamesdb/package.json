@@ -1,6 +1,6 @@
 {
   "name": "@trulyacerbic/ttt-gamesdb",
-  "version": "1.0.16",
+  "version": "1.0.17",
   "description": "Prisma graphql database model definition",
   "main": "generated/prisma-client/index.js",
   "scripts": {
