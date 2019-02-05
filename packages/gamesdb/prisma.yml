@@ -4,5 +4,3 @@ datamodel: datamodel.prisma
 generate:
   - generator: javascript-client
     output: ./generated/prisma-client/
-  - generator: typescript-client
-    output: ./generated/prisma-ts-client/

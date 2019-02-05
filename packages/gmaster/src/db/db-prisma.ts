@@ -1,5 +1,5 @@
 import { GameId, Game, DbConnector } from './db.js'
-import { prisma } from '@trulyacerbic/ttt-gamesdb/generated/prisma-ts-client'
+import { prisma } from '@trulyacerbic/ttt-gamesdb/generated/prisma-client'
 
 const PrismaConnector : DbConnector = {
     async LoadGame(id: GameId): Promise<Game> {

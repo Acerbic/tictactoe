@@ -21,6 +21,6 @@ RUN lerna bootstrap
 COPY packages/gmaster ./packages/gmaster
 
 # compile TypeScript
-RUN yarn build
+RUN cd ./packages/gmaster && yarn build
 
-CMD ["yarn", "--cwd", "./packages/gmaster", "start"]
+CMD cd ./packages/gmaster && yarn start

@@ -44,7 +44,7 @@ services:
   ghost:
     build:
       context: .
-      dockerfile: Dockerfile.gmaster
+      dockerfile: Dockerfile.ghost
     image: ghost:latest
     restart: always
     # command: node --inspect=0.0.0.0 index.js

@@ -21,6 +21,6 @@ RUN lerna bootstrap
 COPY packages/ghost ./packages/ghost
 
 # compile TypeScript
-RUN yarn build
+RUN cd ./packages/ghost && yarn build
 
-CMD ["yarn", "--cwd", "./packages/ghost", "start"]
+CMD cd ./packages/ghost && yarn start
