@@ -16,7 +16,7 @@ my hand on a number of exciting technologies.
 - Lerna
 - Docker
 
-```
+```bash
 docker-compose build
 docker-compose up -d
 ```

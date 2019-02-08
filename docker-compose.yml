@@ -32,25 +32,25 @@ services:
     image: deployer:latest
     restart: on-failure
     depends_on:
-    - prisma
+      - prisma
 
   gmaster:
     build:
       context: .
-      dockerfile: Dockerfile.gmaster
+      dockerfile: gmaster.Dockerfile
     image: gmaster:latest
     restart: always
 
   ghost:
     build:
       context: .
-      dockerfile: Dockerfile.ghost
+      dockerfile: ghost.Dockerfile
     image: ghost:latest
     restart: always
     # command: node --inspect=0.0.0.0 index.js
     ports:
-    - "3060:3060"
-    - "9229:9229"
+      - "3060:3060"
+      - "9229:9229"
 
 volumes:
   mysql:
