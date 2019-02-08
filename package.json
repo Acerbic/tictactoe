@@ -1,6 +1,7 @@
 {
   "scripts": {
-    "build": "tsc -b packages/gmaster packages/ghost"
+    "build": "tsc -b packages/gmaster packages/ghost",
+    "start:client": "cd packages/test_client && yarn dev"
   },
   "private": true,
   "workspaces": [

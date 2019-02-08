@@ -1,26 +1,25 @@
 FROM node:lts-alpine
-
 RUN apk add yarn && npm i lerna -g
-
-EXPOSE 3000
-
 WORKDIR /app
 
-# install devDeps for TS compilations
+# Common dependencies among projects
 COPY ["package.json", "yarn.lock", "./"]
-RUN yarn --production=false && \
-    yarn cache clean
+RUN yarn 
 
-COPY packages/gamesdb ./packages/gamesdb
+# install node_modules & crosslink
+COPY ["packages/gamesdb/package.json", "./packages/gamesdb/"]
 COPY ["packages/gmaster/package.json", "./packages/gmaster/"]
-
-# crosslink
 COPY lerna.json .
-RUN lerna bootstrap
+RUN lerna bootstrap --ignore-scripts
 
+# post-install tasks
+COPY packages/gamesdb ./packages/gamesdb
+RUN lerna run postinstall --scope=@trulyacerbic/ttt-gamesdb
 COPY packages/gmaster ./packages/gmaster
+RUN lerna run postinstall --scope=gmaster
 
 # compile TypeScript
 RUN cd ./packages/gmaster && yarn build
 
 CMD cd ./packages/gmaster && yarn start
+EXPOSE 3000

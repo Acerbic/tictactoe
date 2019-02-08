@@ -8,6 +8,7 @@ my hand on a number of exciting technologies.
 - NodeJS
 - yarn
 - Node Express
+- NextJS (React)
 - Xstate
 - Prisma GraphQL
 - Socket.io
@@ -26,7 +27,7 @@ docker-compose up -d
 npm i -g yarn lerna
 ```
 
-## Scaffold for dev ##
+## Bootstrap for dev ##
 
 Windows: (a bit complicated to avoid a [bug](https://github.com/yarnpkg/yarn/issues/6175))
 
@@ -39,4 +40,20 @@ Linux (Mac?):
 
 ```bash
 lerna bootstrap
+```
+
+## Build for dev ##
+
+Dev (after bootstrapping above):
+
+```bash
+yarn build
+```
+
+## Build & Run ##
+
+```bash
+docker-compose build
+docker-compose up -d
+yarn start:client
 ```
