@@ -19,3 +19,24 @@ my hand on a number of exciting technologies.
 docker-compose build
 docker-compose up -d
 ```
+
+## Install prerequisites ##
+
+```bash
+npm i -g yarn lerna
+```
+
+## Scaffold for dev ##
+
+Windows: (a bit complicated to avoid a [bug](https://github.com/yarnpkg/yarn/issues/6175))
+
+```bash
+lerna bootstrap --ignore-scripts
+lerna run generate --scope=@trulyacerbic/ttt-gamesdb
+```
+
+Linux (Mac?):
+
+```bash
+lerna bootstrap
+```

@@ -1,9 +1,6 @@
 #ts compiled
 dist
 
-#dev .d.ts deps
-src/db/prisma-client
-
 #editor
 .vscode
 

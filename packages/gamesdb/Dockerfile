@@ -12,4 +12,4 @@ COPY ["package.json", "./"]
 RUN yarn && yarn cache clean
 
 COPY . .
-RUN yarn prisma generate
+RUN yarn generate

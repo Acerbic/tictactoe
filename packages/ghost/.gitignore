@@ -1,8 +1,5 @@
 # TS build
 dist
-# for dev ts linking - ignore mock prisma-client
-src/connectors/prisma-client
-
 
 #editor
 .vscode
