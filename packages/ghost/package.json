@@ -26,6 +26,6 @@
     "@types/events": "^3.0.0",
     "@types/graphql": "^14.0.5",
     "rimraf": "^2.6.3",
-    "typescript": "^3.2.4"
+    "typescript": "latest"
   }
 }

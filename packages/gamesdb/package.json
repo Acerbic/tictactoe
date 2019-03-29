@@ -24,7 +24,7 @@
     "prisma-client-lib": "^1.29.1"
   },
   "devDependencies": {
-    "prisma": "^1.23.1",
+    "prisma": "^1.29.1",
     "rimraf": "^2.6.3"
   }
 }

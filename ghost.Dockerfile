@@ -10,7 +10,7 @@ RUN yarn --pure-lockfile
 COPY ["packages/gamesdb/package.json", "packages/gamesdb/yarn.lock", "./packages/gamesdb/"]
 COPY ["packages/ghost/package.json", "packages/ghost/yarn.lock", "./packages/ghost/"]
 COPY lerna.json .
-RUN lerna bootstrap
+RUN lerna bootstrap -- --pure-lockfile
 
 # copy the rest
 COPY packages/gamesdb ./packages/gamesdb

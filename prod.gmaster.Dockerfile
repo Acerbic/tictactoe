@@ -10,7 +10,7 @@ RUN yarn --pure-lockfile
 COPY ["packages/gamesdb/package.json", "packages/gamesdb/yarn.lock", "./packages/gamesdb/"]
 COPY ["packages/gmaster/package.json", "packages/gmaster/yarn.lock", "./packages/gmaster/"]
 COPY lerna.json .
-RUN lerna bootstrap
+RUN lerna bootstrap -- --pure-lockfile
 
 # copy the rest
 COPY packages/gamesdb ./packages/gamesdb
@@ -20,7 +20,7 @@ COPY packages/gmaster ./packages/gmaster
 RUN lerna run build --scope="gmaster"
 
 # ---- remove dev files ---- #
-RUN lerna clean -y && lerna bootstrap -- --production
+RUN lerna clean -y && lerna bootstrap -- --production --pure-lockfile
 
 FROM node:lts-alpine
 WORKDIR /app
