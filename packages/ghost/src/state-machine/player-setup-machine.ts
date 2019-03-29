@@ -38,8 +38,8 @@ const player_setup_machine_config : MachineConfig<
     }
 };
 
-const player_setup_machine_options : MachineOptions<
-    PlayerSetupContext, PlayerSetupEvent> = {
+const player_setup_machine_options : Partial<MachineOptions<
+    PlayerSetupContext, PlayerSetupEvent>> = {
 
     actions: {
         add_player: (ctx, event : PlayerSetup_SocConnect_Event) => {

@@ -4,34 +4,28 @@ WORKDIR /app
 
 # Common dependencies among projects
 COPY ["package.json", "yarn.lock", "./"]
-RUN yarn 
+RUN yarn --pure-lockfile
 
 # install node_modules & crosslink
-COPY ["packages/gamesdb/package.json", "./packages/gamesdb/"]
-COPY ["packages/gmaster/package.json", "./packages/gmaster/"]
+COPY ["packages/gamesdb/package.json", "packages/gamesdb/yarn.lock", "./packages/gamesdb/"]
+COPY ["packages/gmaster/package.json", "packages/gmaster/yarn.lock", "./packages/gmaster/"]
 COPY lerna.json .
-RUN lerna bootstrap --ignore-scripts
+RUN lerna bootstrap
 
-# post-install tasks
+# copy the rest
 COPY packages/gamesdb ./packages/gamesdb
-RUN lerna run postinstall --scope=@trulyacerbic/ttt-gamesdb
 COPY packages/gmaster ./packages/gmaster
-RUN lerna run postinstall --scope=gmaster
 
 # compile TypeScript
-RUN cd ./packages/gmaster && yarn build
-
-CMD cd ./packages/gmaster && yarn start
-EXPOSE 3000
-
+RUN lerna run build --scope="gmaster"
 
 # ---- remove dev files ---- #
-RUN lerna clean -y && lerna bootstrap --ignore-scripts -- --production
+RUN lerna clean -y && lerna bootstrap -- --production
 
 FROM node:lts-alpine
 WORKDIR /app
 
 COPY --from=lerna ["/app", "./"]
 
-CMD cd ./packages/gmaster && yarn start
+CMD cd ./packages/gmaster && npm run start
 EXPOSE 3000

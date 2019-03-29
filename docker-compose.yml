@@ -1,8 +1,10 @@
 version: '3'
 services:
   prisma:
-    image: prismagraphql/prisma:1.22
+    image: prismagraphql/prisma:1.29.1
     restart: always
+    depends_on:
+      - mysql
     environment:
       PRISMA_CONFIG: |
         port: 4466

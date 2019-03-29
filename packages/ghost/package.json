@@ -7,7 +7,8 @@
   "private": false,
   "scripts": {
     "build": "tsc",
-    "start": "cross-env DEBUG=*,-engine*,-express:router,-socket.io-parser node index.js"
+    "start": "cross-env DEBUG=*,-engine*,-express:router,-socket.io-parser node index.js",
+    "clean": "rimraf dist"
   },
   "dependencies": {
     "@trulyacerbic/ttt-gamesdb": "^1.0.16",
@@ -15,7 +16,6 @@
     "express": "^4.16.4",
     "global-singleton": "^0.1.2",
     "isomorphic-unfetch": "^3.0.0",
-    "prisma-client-lib": "^1.23.2",
     "socket.io": "^2.2.0",
     "xstate": "^4.1.2"
   },
@@ -23,8 +23,9 @@
     "node": ">=10"
   },
   "devDependencies": {
-    "@types/events": "^1.2.0",
+    "@types/events": "^3.0.0",
     "@types/graphql": "^14.0.5",
+    "rimraf": "^2.6.3",
     "typescript": "^3.2.4"
   }
 }

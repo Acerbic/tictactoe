@@ -4,22 +4,20 @@ WORKDIR /app
 
 # Common dependencies among projects
 COPY ["package.json", "yarn.lock", "./"]
-RUN yarn 
+RUN yarn --pure-lockfile
 
 # install node_modules & crosslink
-COPY ["packages/gamesdb/package.json", "./packages/gamesdb/"]
-COPY ["packages/ghost/package.json", "./packages/ghost/"]
+COPY ["packages/gamesdb/package.json", "packages/gamesdb/yarn.lock", "./packages/gamesdb/"]
+COPY ["packages/ghost/package.json", "packages/ghost/yarn.lock", "./packages/ghost/"]
 COPY lerna.json .
-RUN lerna bootstrap --ignore-scripts
+RUN lerna bootstrap
 
-# post-install tasks
+# copy the rest
 COPY packages/gamesdb ./packages/gamesdb
-RUN lerna run postinstall --scope=@trulyacerbic/ttt-gamesdb
 COPY packages/ghost ./packages/ghost
-RUN lerna run postinstall --scope=ghost
 
 # compile TypeScript
-RUN cd ./packages/ghost && yarn build
+RUN lerna run build --scope="ghost"
 
 CMD cd ./packages/ghost && yarn start
 EXPOSE 3060

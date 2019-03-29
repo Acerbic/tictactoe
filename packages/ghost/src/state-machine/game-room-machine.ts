@@ -133,7 +133,7 @@ function generateMachineOptions(deps: any) {
     const gmaster_connector : GMConnector = deps.gmaster;
     const prisma_getGameBoard : PrismaGetGameBoard = deps.prisma;
 
-    return <MachineOptions<GameRoomContext, GameRoomEvent>>{
+    return <Partial<MachineOptions<GameRoomContext, GameRoomEvent>>>{
         services: {
             submachine: player_setup(),
 

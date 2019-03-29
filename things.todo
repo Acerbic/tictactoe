@@ -1,0 +1,6 @@
+☐ put client into a docker container and dockerize the run sequence
+☐ investigate lerna --hoist when Yarn Workspaces aren't used
+☐ dev setup with watchers-recompile-restart?
+☐ dev setup localhost domain instaed of "gmaster:3000"/"ghost", etc..
+☐ use env vars everywhere
+☐ lerna bootstrap - add -- --pure-lockfile to Dockerfiles

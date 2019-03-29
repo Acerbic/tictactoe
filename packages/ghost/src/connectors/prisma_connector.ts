@@ -1,5 +1,5 @@
 import { GameId } from 'ttt-db';
-import { prisma } from '@trulyacerbic/ttt-gamesdb/generated/prisma-client';
+import { prisma } from '@trulyacerbic/ttt-gamesdb';
 
 export type PrismaGetGameBoard = ( gameId: GameId ) => Promise<Array<Array<any>>>;
 

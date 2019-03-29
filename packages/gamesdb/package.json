@@ -1,12 +1,14 @@
 {
   "name": "@trulyacerbic/ttt-gamesdb",
-  "version": "1.0.20",
+  "version": "1.0.27",
   "description": "Prisma graphql database model definition",
-  "main": "generated/prisma-client/index.js",
+  "main": "generated/prisma-client",
+  "publishAccess": "public",
   "scripts": {
-    "postinstall": "npm run generate",
+    "build": "npm run generate",
     "prisma": "prisma",
     "generate": "prisma generate",
+    "deploy": "prisma generate && prisma deploy",
     "clean": "rimraf generated"
   },
   "keywords": [
@@ -19,9 +21,10 @@
   "author": "Varenov Gleb",
   "license": "ISC",
   "dependencies": {
-    "prisma": "^1.23.1"
+    "prisma-client-lib": "^1.29.1"
   },
   "devDependencies": {
+    "prisma": "^1.23.1",
     "rimraf": "^2.6.3"
   }
 }

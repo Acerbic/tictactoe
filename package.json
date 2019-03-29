@@ -1,13 +1,15 @@
 {
   "scripts": {
-    "build": "tsc -b packages/gmaster packages/ghost",
-    "start:client": "cd packages/test_client && yarn dev"
+    "build": "lerna run build",
+    "start:client": "cd packages/test_client && yarn dev",
+    "start:gmaster": "cd packages/gmaster && yarn start",
+    "start:ghost": "cd packages/ghost && yarn start"
   },
   "private": true,
   "workspaces": [
     "packages/*"
   ],
   "devDependencies": {
-    "typescript": "^3.2.2"
+    "rimraf": "^2.6.3"
   }
 }
