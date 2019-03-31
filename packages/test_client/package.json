@@ -1,5 +1,5 @@
 {
-  "name": "ttt-tst-page",
+  "name": "@trulyacerbic/ttt-test-client",
   "version": "1.0.0",
   "description": "Test game master for TicTacToe",
   "main": "index.js",
@@ -8,7 +8,7 @@
   "scripts": {
     "dev": "next -p 3030",
     "build": "next build",
-    "start": "next start",
+    "start": "next start -p 3030",
     "clean": "rimraf .next"
   },
   "dependencies": {

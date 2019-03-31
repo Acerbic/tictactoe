@@ -1,4 +1,4 @@
-☐ put client into a docker container and dockerize the run sequence
+✔ put client into a docker container and dockerize the run sequence @done (01.04.2019, 2:27:41)
 ✘ investigate lerna --hoist when Yarn Workspaces aren't used @cancelled (30.03.2019, 1:13:09)
 ☐ dev setup with watchers-recompile-restart?
 ☐ dev setup localhost domain instaed of "gmaster:3000"/"ghost", etc..

@@ -27,8 +27,8 @@ services:
 
   deployer:
     build:
-      context: ./packages/gamesdb
-      dockerfile: Dockerfile
+      dockerfile: deployer.Dockerfile
+      context: .
       args:
         PRISMA_PORT: 4466
     image: deployer:latest
@@ -53,6 +53,15 @@ services:
     ports:
       - "3060:3060"
       - "9229:9229"
+
+  client:
+    build:
+      context: .
+      dockerfile: client.Dockerfile
+    image: tttclient:latest
+    restart: always
+    ports: 
+      - "3030:3030"
 
 volumes:
   mysql:
