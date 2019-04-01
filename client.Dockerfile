@@ -13,4 +13,7 @@ RUN yarn --pure-lockfile && yarn cache clean
 # copying prisma datamodel and prisma.yml
 COPY ./packages/test_client .
 RUN yarn build
-EXPOSE 3030
+
+ARG CLIENT_PORT=3030
+ENV CLIENT_PORT=$CLIENT_PORT
+EXPOSE $CLIENT_PORT

@@ -20,4 +20,7 @@ COPY packages/gmaster ./packages/gmaster
 RUN lerna run build --scope="gmaster"
 
 CMD cd ./packages/gmaster && yarn start
-EXPOSE 3000
+
+ARG GMASTER_PORT=3000
+ENV GMASTER_PORT=$GMASTER_PORT
+EXPOSE $GMASTER_PORT

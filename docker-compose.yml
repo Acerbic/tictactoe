@@ -30,7 +30,7 @@ services:
       dockerfile: deployer.Dockerfile
       context: .
       args:
-        PRISMA_PORT: 4466
+        PRISMA_URI: prisma:4466
     image: deployer:latest
     restart: on-failure
     depends_on:
@@ -40,25 +40,38 @@ services:
     build:
       context: .
       dockerfile: gmaster.Dockerfile
+      args:
+        GMASTER_PORT: 3000
     image: gmaster:latest
+    environment: 
+      PRISMA_URI: prisma:4466
     restart: always
 
   ghost:
     build:
       context: .
       dockerfile: ghost.Dockerfile
+      args:
+        GHOST_PORT: 3060
     image: ghost:latest
+    environment: 
+      PRISMA_URI: prisma:4466
+      GMASTER_URI: gmaster:3000
     restart: always
     # command: node --inspect=0.0.0.0 index.js
     ports:
       - "3060:3060"
-      - "9229:9229"
+      # - "9229:9229"
 
   client:
     build:
       context: .
       dockerfile: client.Dockerfile
+      args:
+        CLIENT_PORT: 3030
     image: tttclient:latest
+    environment: 
+      GHOST_URI: ghost:3060
     restart: always
     ports: 
       - "3030:3030"

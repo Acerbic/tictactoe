@@ -4,3 +4,4 @@
 ☐ dev setup localhost domain instaed of "gmaster:3000"/"ghost", etc..
 ☐ use env vars everywhere
 ✔ lerna bootstrap - add -- --pure-lockfile to Dockerfiles @done (30.03.2019, 1:17:10)
+☐ Docker HEALTHCHECK

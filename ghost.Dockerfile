@@ -20,4 +20,7 @@ COPY packages/ghost ./packages/ghost
 RUN lerna run build --scope="ghost"
 
 CMD cd ./packages/ghost && yarn start
-EXPOSE 3060
+
+ARG GHOST_PORT=3060
+ENV GHOST_PORT=$GHOST_PORT
+EXPOSE $GHOST_PORT

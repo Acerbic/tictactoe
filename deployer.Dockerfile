@@ -5,7 +5,9 @@ RUN apk add yarn
 
 # need bash for the wait script
 RUN apk add bash
-CMD ["./wait-for-it.sh", "prisma:4466", "-s", "-t", "0", "--", "npm", "run", "prisma", "deploy"]
+ARG PRISMA_URI=prisma:4466
+ENV PRISMA_URI=${PRISMA_URI}
+CMD ["bash", "-c", "./wait-for-it.sh $PRISMA_URI -s -t 0 -- npx prisma deploy"]
 
 WORKDIR /app
 COPY ["./packages/gamesdb/package.json", "./packages/gamesdb/yarn.lock", "./"]
