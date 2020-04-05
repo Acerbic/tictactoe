@@ -59,8 +59,8 @@ services:
       GMASTER_URI: gmaster:3000
     restart: always
     # command: node --inspect=0.0.0.0 index.js
-    ports:
-      - "3060:3060"
+    # ports:
+      # - "3060:3060"
       # - "9229:9229"
 
   client:

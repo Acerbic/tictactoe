@@ -1,9 +1,10 @@
 {
   "scripts": {
     "build": "lerna run build",
-    "start:client": "cd packages/test_client && yarn dev",
-    "start:gmaster": "cd packages/gmaster && yarn start",
-    "start:ghost": "cd packages/ghost && yarn start"
+    "build:local" : "cross-env PRISMA_URI=localhost:4466 lerna run build",
+    "start:client:l": "cd packages/test_client && yarn dev",
+    "start:gmaster:l": "cross-env-shell PRISMA_URI=localhost:4466 \"cd packages/gmaster && yarn start\"",
+    "start:ghost:l": "cross-env-shell PRISMA_URI=localhost:4466 GMASTER_URI=localhost:3000 \"cd packages/ghost && yarn start\""
   },
   "private": true,
   "workspaces": [
@@ -11,5 +12,8 @@
   ],
   "devDependencies": {
     "rimraf": "^2.6.3"
+  },
+  "dependencies": {
+    "cross-env": "^7.0.2"
   }
 }

@@ -3,7 +3,7 @@ import { GameMasterGetRequest, GameMasterPostRequest, GameMasterResponse } from 
 import fetch from 'isomorphic-unfetch';
 
 // TODO: move to .env variable
-const gmaster_url = 'http://gmaster:3000/';
+const gmaster_url = `http://${process.env['GMASTER_URI']}/`;
 
 /**
  * Call a GMaster POST Rest command.

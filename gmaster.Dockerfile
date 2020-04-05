@@ -16,6 +16,10 @@ RUN lerna bootstrap -- --pure-lockfile
 COPY packages/gamesdb ./packages/gamesdb
 COPY packages/gmaster ./packages/gmaster
 
+# build dependence package
+ARG PRISMA_URI=prisma:4466
+RUN lerna run build --scope="@trulyacerbic/ttt-gamesdb"
+
 # compile TypeScript
 RUN lerna run build --scope="gmaster"
 

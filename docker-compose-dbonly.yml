@@ -1,0 +1,42 @@
+version: "3"
+services:
+    prisma:
+        image: prismagraphql/prisma:1.29.1
+        restart: always
+        depends_on:
+            - mysql
+        environment:
+            PRISMA_CONFIG: |
+                port: 4466
+                databases:
+                  default:
+                    connector: mysql
+                    host: mysql
+                    port: 3306
+                    user: root
+                    password: prisma
+                    migrations: true
+        ports:
+            - "4466:4466"
+
+    mysql:
+        image: mysql:5.7
+        restart: always
+        environment:
+            MYSQL_ROOT_PASSWORD: prisma
+        volumes:
+            - mysql:/var/lib/mysql
+
+    deployer:
+        build:
+            dockerfile: deployer.Dockerfile
+            context: .
+            args:
+                PRISMA_URI: prisma:4466
+        image: deployer:latest
+        restart: on-failure
+        depends_on:
+            - prisma
+
+volumes:
+    mysql:
