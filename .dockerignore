@@ -5,3 +5,4 @@ node_modules
 packages/**/node_modules
 docs
 packages/**/dist
+packages/**/generated

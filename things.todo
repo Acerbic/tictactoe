@@ -5,3 +5,4 @@
 ☐ use env vars everywhere
 ✔ lerna bootstrap - add -- --pure-lockfile to Dockerfiles @done (30.03.2019, 1:17:10)
 ☐ Docker HEALTHCHECK
+☐ investigate .gitignore in sub directory

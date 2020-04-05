@@ -51,8 +51,9 @@ Creates Prisma DB, Ghost, Gmaster containers. Client is running on localhost,
 however (not in Docker).
 
 ```bash
+lerna bootstrap --scope="@trulyacerbic/ttt-gamesdb"
+lerna run build --scope="@trulyacerbic/ttt-gamesdb"
 docker-compose up -d --build
-yarn start:client
 ```
 
 ## Running for dev ##
