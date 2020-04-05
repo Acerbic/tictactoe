@@ -4,7 +4,7 @@ FROM node:lts-alpine
 RUN apk add yarn
 
 WORKDIR /app
-COPY ["./packages/test_client/package.json", "./packages/test_client/yarn.lock", "./"]
+COPY ["./packages/test_client/package.json", "./"]
 CMD ["yarn", "start"]
 
 # installing prisma for "prisma deploy" later
