@@ -1,4 +1,4 @@
-# WHAT!? #
+# WHAT!?
 
 This is a database definition module based on Prisma.
 The purpose of this package is twofold:

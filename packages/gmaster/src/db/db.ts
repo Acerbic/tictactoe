@@ -12,25 +12,24 @@ interface DbConnector {
     /**
      * Load game record from the DB
      */
-    LoadGame( id : GameId) : Promise<Game>;
+    LoadGame(id: GameId): Promise<Game>;
 
     /**
      * Store/update game record into DB
      */
-    SaveGame( id : GameId, game : Game ) : Promise<any>;
+    SaveGame(id: GameId, game: Game): Promise<any>;
 
     /**
      * Obtain a unique unoccupied id in concurrent-safe manner
      */
-    CreateGame( game: Game ) : Promise<GameId>;
+    CreateGame(game: Game): Promise<GameId>;
 
     /**
      * Delete game
      */
-    DropGame( id : GameId ) : Promise<any>;
+    DropGame(id: GameId): Promise<any>;
 
-    HasGame( id : GameId ) : Promise<boolean>;
-};
+    HasGame(id: GameId): Promise<boolean>;
+}
 
-
-export { GameId, Game, DbConnector}
+export { GameId, Game, DbConnector };

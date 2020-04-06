@@ -1,30 +1,30 @@
-import { PlayerId } from 'ttt-db';
+import { PlayerId } from "ttt-db";
 
 export interface PlayerSetupStateSchema {
     states: {
-        wait4client: {},
-        wait4rolepick: {},
-        rolerequested: {},
-        end: {}
-    }
-};
+        wait4client: {};
+        wait4rolepick: {};
+        rolerequested: {};
+        end: {};
+    };
+}
 
 export type PlayerSetup_SocConnect_Event = {
-    type: 'SOC_CONNECT',
-    player_id : PlayerId,
-    submachine_id : 'player1' | 'player2',
-    socket: any
-}
+    type: "SOC_CONNECT";
+    player_id: PlayerId;
+    submachine_id: "player1" | "player2";
+    socket: any;
+};
 export type PlayerSetup_SocIwannabetracer_Event = {
-    type: 'SOC_IWANNABETRACER',
-    player_id : PlayerId,
-    role: 'first' | 'second'
-}
+    type: "SOC_IWANNABETRACER";
+    player_id: PlayerId;
+    role: "first" | "second";
+};
 
-export type PlayerSetupEvent = 
+export type PlayerSetupEvent =
     | PlayerSetup_SocConnect_Event
     | PlayerSetup_SocIwannabetracer_Event;
 
 export type PlayerSetupContext = {
-    parent_ctx: any
-}
+    parent_ctx: any;
+};

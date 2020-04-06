@@ -1,9 +1,9 @@
-import { GameId, Game, DbConnector } from './db.js';
-import { prisma } from '@trulyacerbic/ttt-gamesdb'; 
+import { GameId, Game, DbConnector } from "./db.js";
+import { prisma } from "@trulyacerbic/ttt-gamesdb";
 
-const PrismaConnector : DbConnector = {
+const PrismaConnector: DbConnector = {
     async LoadGame(id: GameId): Promise<Game> {
-        return prisma.gameSession( {id} )
+        return prisma.gameSession({ id });
     },
     async SaveGame(id: GameId, game: Game): Promise<any> {
         return prisma.updateGameSession({
@@ -21,12 +21,15 @@ const PrismaConnector : DbConnector = {
         return newGame.id;
     },
     async DropGame(id: GameId): Promise<any> {
-        return prisma.deleteGameSession( {id} )
+        return prisma.deleteGameSession({ id });
     },
     async HasGame(id: GameId): Promise<boolean> {
-        let games_count = await prisma.gameSessionsConnection( {where: {id}} ).aggregate().count();
+        let games_count = await prisma
+            .gameSessionsConnection({ where: { id } })
+            .aggregate()
+            .count();
         return 1 === games_count;
     }
-}
+};
 
 export = PrismaConnector;

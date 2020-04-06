@@ -2,5 +2,5 @@ endpoint: http://${env:PRISMA_URI}
 datamodel: datamodel.prisma
 
 generate:
-  - generator: javascript-client
-    output: ./generated/prisma-client/
+    - generator: javascript-client
+      output: ./generated/prisma-client/
