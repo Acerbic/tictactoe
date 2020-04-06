@@ -27,13 +27,13 @@ services:
         volumes:
             - mysql:/var/lib/mysql
 
-    deployer:
+    prisma-deployer:
         build:
-            dockerfile: deployer.Dockerfile
-            context: .
+            dockerfile: deployment/prisma-deployer.Dockerfile
+            context: ..
             args:
                 PRISMA_URI: prisma:4466
-        image: deployer:latest
+        image: prisma-deployer:latest
         restart: on-failure
         depends_on:
             - prisma

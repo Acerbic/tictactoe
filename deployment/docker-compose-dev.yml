@@ -25,21 +25,21 @@ services:
         volumes:
             - mysql:/var/lib/mysql
 
-    deployer:
+    prisma-deployer:
         build:
-            dockerfile: deployer.Dockerfile
-            context: .
+            dockerfile: deployment/prisma-deployer.Dockerfile
+            context: ..
             args:
                 PRISMA_URI: prisma:4466
-        image: deployer:latest
+        image: prisma-deployer:latest
         restart: on-failure
         depends_on:
             - prisma
 
     gmaster:
         build:
-            context: .
-            dockerfile: gmaster.Dockerfile
+            dockerfile: deployment/gmaster.Dockerfile
+            context: ..
             args:
                 GMASTER_PORT: 3000
         image: gmaster:latest
@@ -49,8 +49,8 @@ services:
 
     ghost:
         build:
-            context: .
-            dockerfile: ghost.Dockerfile
+            dockerfile: deployment/ghost.Dockerfile
+            context: ..
             args:
                 GHOST_PORT: 3060
         image: ghost:latest
@@ -65,8 +65,8 @@ services:
 
     client:
         build:
-            context: .
-            dockerfile: client.Dockerfile
+            dockerfile: deployment/client.Dockerfile
+            context: ..
             args:
                 CLIENT_PORT: 3030
         image: tttclient:latest

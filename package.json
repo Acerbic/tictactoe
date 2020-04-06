@@ -1,10 +1,16 @@
 {
   "scripts": {
-    "build": "lerna run build",
-    "build:local": "cross-env PRISMA_URI=localhost:4466 lerna run build",
-    "start:client:l": "cd packages/test_client && yarn dev",
-    "start:gmaster:l": "cross-env-shell PRISMA_URI=localhost:4466 \"cd packages/gmaster && yarn start\"",
-    "start:ghost:l": "cross-env-shell PRISMA_URI=localhost:4466 GMASTER_URI=localhost:3000 \"cd packages/ghost && yarn start\""
+    "clean": "lerna run clean && lerna clean -y && rimraf node_modules",
+    "deploy:dev:local": "bash ./deployment/deploy_dev_local.sh",
+    "down:dev:local": "sudo docker-compose --file deployment/docker-compose-prisma-only.yml down",
+    "deploy:dev": "bash ./deployment/deploy_dev.sh",
+    "down:dev": "sudo docker-compose --file deployment/docker-compose-dev.yml down",
+    "deploy": "bash ./deployment/deploy.sh",
+    "deploy:prod": "deploy",
+    "down:prod": "sudo docker-compose --file deployment/docker-compose.yml down",
+    "start:client": "cd packages/test_client && yarn dev",
+    "start:gmaster": "cross-env-shell PRISMA_URI=localhost:4466 \"cd packages/gmaster && yarn start\"",
+    "start:ghost": "cross-env-shell PRISMA_URI=localhost:4466 GMASTER_URI=localhost:3000 \"cd packages/ghost && yarn start\""
   },
   "private": true,
   "workspaces": [

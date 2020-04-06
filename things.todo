@@ -7,3 +7,4 @@
 ☐ Docker HEALTHCHECK
 ☐ investigate .gitignore in sub directory
 ☐ find a way to configure Lerna to split lock file into packages (to prevent excessive docker rebuilds on every lock change)
+☐ write production deployment script and readme
