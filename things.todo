@@ -6,3 +6,4 @@
 ✔ lerna bootstrap - add -- --pure-lockfile to Dockerfiles @done (30.03.2019, 1:17:10)
 ☐ Docker HEALTHCHECK
 ☐ investigate .gitignore in sub directory
+☐ find a way to configure Lerna to split lock file into packages (to prevent excessive docker rebuilds on every lock change)
