@@ -6,7 +6,7 @@ import { MakeMoveRequest, MakeMoveResponse } from "gmasterREST";
 const router = express.Router();
 
 import { interpret } from "xstate/lib/interpreter";
-import { GameContext, GameMachine } from "../game/game-machine";
+import { GameContext, GameMachine, GameSchema } from "../game/game-machine";
 
 router.post("/MakeMove/:gameId", function(req, res, next) {
     const gameId = req.params.gameId as GameId;
@@ -16,11 +16,11 @@ router.post("/MakeMove/:gameId", function(req, res, next) {
         .LoadGame(gameId)
         .then(game => {
             // restore the machine
-            const current_state = xstate.State.create<GameContext>(
+            const state_detached = xstate.State.create<GameContext>(
                 JSON.parse(game.state)
             );
-            const state_value = current_state.value as xstate.StateValueMap;
-            const service = interpret(GameMachine).start(current_state);
+            const state = GameMachine.resolveState(state_detached);
+            const service = interpret(GameMachine).start(state);
 
             // read request data
             const request = req.body as MakeMoveRequest;
@@ -30,18 +30,22 @@ router.post("/MakeMove/:gameId", function(req, res, next) {
 
             // Perform various checks on request data
             // if ((current_state.value as xstate.StateValueMap).game !== "wait") {
-            if (state_value.game !== "wait") {
+
+            if (!state.matches("game.wait")) {
                 const response: MakeMoveResponse = {
-                    newState: current_state.value,
+                    newState: state.value,
                     success: false,
                     errorMessage: "Game already ended",
                     errorCode: 0 // TODO: replace with a regular code
                 };
                 res.send(response);
             }
-            if (game[state_value.turn as "player1" | "player2"] !== playerId) {
+            if (
+                game[(state.value as any).turn as "player1" | "player2"] !==
+                playerId
+            ) {
                 const response: MakeMoveResponse = {
-                    newState: current_state.value,
+                    newState: state.value,
                     success: false,
                     errorMessage: "Wrong player",
                     errorCode: 0 // TODO: replace with a regular code
@@ -58,7 +62,7 @@ router.post("/MakeMove/:gameId", function(req, res, next) {
                 row > 2
             ) {
                 const response: MakeMoveResponse = {
-                    newState: current_state.value,
+                    newState: state.value,
                     success: false,
                     errorMessage: "Malformed move",
                     errorCode: 0 // TODO: replace with a regular code
@@ -66,9 +70,9 @@ router.post("/MakeMove/:gameId", function(req, res, next) {
                 res.send(response);
                 return;
             }
-            if (current_state.context.board[row][column] !== null) {
+            if (state.context.board[row][column] !== null) {
                 const response: MakeMoveResponse = {
-                    newState: current_state.value,
+                    newState: state.value,
                     success: false,
                     errorMessage: "Bad move - cell already taken",
                     errorCode: 0 // TODO: replace with a regular code

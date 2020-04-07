@@ -6,7 +6,27 @@ export interface GameContext extends xstate.DefaultContext {
     last_move: any;
 }
 
-export const GameMachine = xstate.Machine(
+export interface GameSchema extends xstate.StateSchema<GameContext> {
+    context: GameContext;
+    states: {
+        turn: {
+            states: {
+                player1: {};
+                player2: {};
+            };
+        };
+        game: {
+            states: {
+                wait: {};
+                thinking: {};
+                draw: {};
+                over: {};
+            };
+        };
+    };
+}
+
+export const GameMachine = xstate.Machine<GameContext, GameSchema>(
     {
         id: "tictactoe",
         context: {
@@ -18,7 +38,7 @@ export const GameMachine = xstate.Machine(
             // since each move creates 2 transitions, it helps to know what caused
             // it on the derived transitions
             last_move: null
-        } as GameContext,
+        },
         type: "parallel",
         states: {
             /**
@@ -145,5 +165,3 @@ function condGameOver({ board, moves_made, last_move }: GameContext) {
 function condDraw(ctx: GameContext) {
     return ctx.moves_made == 9;
 }
-
-// module.exports = GameMachine;
