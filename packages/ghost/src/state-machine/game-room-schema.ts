@@ -1,8 +1,9 @@
+import { StateSchema } from "xstate";
 import { PlayerId, GameId, Game } from "ttt-db";
 import { GameState } from "ttt-gmasterREST";
 import { PlayerSetupEvent } from "./player-setup-schema";
 
-export interface GameRoomSchema {
+export interface GameRoomSchema extends StateSchema<GameRoomContext> {
     states: {
         setup: {
             states: {
@@ -33,19 +34,19 @@ export interface GameRoomSchema {
 export interface GameRoomContext {
     // since game master operates on 'player1' and 'player2' tokens
     // we need to keep mapping of those to player ids.
-    player1: PlayerId;
-    player2: PlayerId;
+    player1?: PlayerId;
+    player2?: PlayerId;
 
     // id of the current player (the one who's turn is next)
-    current_player: PlayerId;
+    current_player?: PlayerId;
 
     // game id in gamesDB
-    game_id: GameId;
+    game_id?: GameId;
 
     // latest game state, reported after a move was accepted by game master
-    latest_game_state: GameState;
+    latest_game_state?: GameState;
 
-    players: Map<PlayerId, any>; // Map: PlayerId => PlayerContext
+    players?: Map<PlayerId, any>; // Map: PlayerId => PlayerContext
 
     // Used to synchronize calls to socket.emit (state transitions
     // could cause racing in actions, if action is delaying emit to the

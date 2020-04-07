@@ -21,6 +21,11 @@ import GMConnector from "../connectors/gmaster_connector";
 import { PrismaGetGameBoard } from "../connectors/prisma_connector";
 import { CreateGameResponse } from "ttt-gmasterREST";
 import { PlayerId } from "ttt-db";
+import {
+    PlayerSetupContext,
+    PlayerSetupStateSchema,
+    PlayerSetupEvent
+} from "./player-setup-schema";
 
 const state_machine: MachineConfig<
     GameRoomContext,
@@ -165,7 +170,7 @@ function generateMachineOptions(deps: any) {
                                 turn: "player1",
                                 game: "wait"
                             };
-                            ctx.game_id = response.gameId;
+                            ctx.game_id = response.gameId!;
                             return response;
                         } else {
                             throw response;
@@ -191,7 +196,7 @@ function generateMachineOptions(deps: any) {
                     )
                     .then((response: CreateGameResponse) => {
                         if (response.success) {
-                            ctx.latest_game_state = response.newState;
+                            ctx.latest_game_state = response.newState!;
                             return { type: "CALL_MAKEMOVE_ENDED", response };
                         } else {
                             errorlog(
@@ -213,7 +218,7 @@ function generateMachineOptions(deps: any) {
              * player's requested roles
              */
             set_current_player: ctx => {
-                const it = ctx.players.values();
+                const it = ctx.players!.values();
                 const p1 = it.next().value;
                 const p2 = it.next().value;
 
@@ -226,7 +231,7 @@ function generateMachineOptions(deps: any) {
              */
             emit_iamalreadytracer: ctx => {
                 ctx.emits_sync.then(() => {
-                    ctx.players.forEach(player_context =>
+                    ctx.players!.forEach(player_context =>
                         player_context.socket.emit("iamalreadytracer")
                     );
                 });
@@ -237,7 +242,7 @@ function generateMachineOptions(deps: any) {
              */
             emit_you_are_it: ctx => {
                 ctx.emits_sync.then(() => {
-                    ctx.players.forEach(player_context =>
+                    ctx.players!.forEach(player_context =>
                         player_context.socket.emit(
                             "you_are_it",
                             ctx.current_player == player_context.id
@@ -260,26 +265,26 @@ function generateMachineOptions(deps: any) {
              * Send 'your_turn' to a client
              */
             emit_your_turn: ctx => {
-                const socket = ctx.players.get(ctx.current_player).socket;
+                const socket = ctx.players!.get(ctx.current_player!).socket;
                 ctx.emits_sync.then(() => {
                     socket.emit("your_turn");
                 });
             },
 
             emit_opponent_moved: ctx => {
-                const it = ctx.players.values();
+                const it = ctx.players!.values();
                 const p1 = it.next().value;
                 const p2 = it.next().value;
 
                 const socket_waiting =
                     ctx.current_player == p1.id ? p2.socket : p1.socket;
-                const socket_moving = ctx.players.get(ctx.current_player)
+                const socket_moving = ctx.players!.get(ctx.current_player!)
                     .socket;
 
                 ctx.emits_sync = ctx.emits_sync.then(() =>
-                    prisma_getGameBoard(ctx.game_id)
+                    prisma_getGameBoard(ctx.game_id!)
                         .then(board => {
-                            const turn = ctx[ctx.latest_game_state.turn];
+                            const turn = ctx[ctx.latest_game_state!.turn];
                             return new Promise((resolve, reject) => {
                                 socket_waiting.emit("opponent_moved", {
                                     game_state: Object.assign(
@@ -315,26 +320,26 @@ function generateMachineOptions(deps: any) {
             },
 
             emit_gameover: ctx => {
-                let winner: PlayerId = null;
-                if (ctx.latest_game_state.game == "over") {
-                    winner = ctx[ctx.latest_game_state.turn];
+                let winner: PlayerId | null = null;
+                if (ctx.latest_game_state!.game == "over") {
+                    winner = ctx[ctx.latest_game_state!.turn] || null;
                 }
 
                 ctx.emits_sync.then(() => {
-                    ctx.players.forEach(player_context =>
+                    ctx.players!.forEach(player_context =>
                         player_context.socket.emit("gameover", { winner })
                     );
                 });
             },
 
             call_dropgame: ctx => {
-                this.deps.gmaster.post("DropGame", {}, ctx.game_id);
+                deps.gmaster.post("DropGame", {}, ctx.game_id);
             }
         },
 
         guards: {
             role_requests_conflict: (ctx, event) => {
-                const it = ctx.players.values();
+                const it = ctx.players!.values();
                 const p1 = it.next().value;
                 const p2 = it.next().value;
 
@@ -345,12 +350,12 @@ function generateMachineOptions(deps: any) {
 }
 
 const initial_context: GameRoomContext = {
-    player1: null,
-    player2: null,
-    current_player: null,
-    game_id: null,
-    latest_game_state: null,
-    players: null,
+    player1: undefined,
+    player2: undefined,
+    current_player: undefined,
+    game_id: undefined,
+    latest_game_state: undefined,
+    players: undefined,
     emits_sync: Promise.resolve()
 };
 
@@ -359,7 +364,7 @@ export class GameRoomInterpreter extends Interpreter<
     GameRoomSchema,
     GameRoomEvent
 > {
-    gmaster_connector: GMConnector;
+    // gmaster_connector: GMConnector;
 
     /**
      * starts up a separate game room to host a game
@@ -387,14 +392,14 @@ export class GameRoomInterpreter extends Interpreter<
         debuglog(`a user with id = ${player_id} connecting: ${socket.id}`);
 
         const context = this.state.context;
-        if (context.players.size >= 2) {
+        if (context.players!.size >= 2) {
             // two players have already connected to the game. reject this connection!
             errorlog("too many players %s. Refusing.", socket.id);
             socket.disconnect(true);
             return;
         }
 
-        const submachine_id = ("player" + (context.players.size + 1)) as
+        const submachine_id = ("player" + (context.players!.size + 1)) as
             | "player1"
             | "player2";
 
@@ -411,13 +416,13 @@ export class GameRoomInterpreter extends Interpreter<
 
         socket.once("iwannabetracer", (role: "first" | "second") => {
             // raise machine EVENT
-            this.sendTo(
+            this.send(
                 {
                     type: "SOC_IWANNABETRACER",
                     player_id,
                     role
                 },
-                submachine_id
+                { to: submachine_id }
             );
             statelog("New state: %O", this.state.value);
         });
@@ -428,17 +433,17 @@ export class GameRoomInterpreter extends Interpreter<
 
         // raise machine EVENT - SOC_CONNECT
         debuglog("User %s connected as %s", player_id, submachine_id);
-        this.sendTo(
+        this.send(
             {
                 type: "SOC_CONNECT",
                 player_id,
                 socket,
                 submachine_id
             },
-            submachine_id
+            { to: submachine_id }
         );
         statelog("New state: %O", this.state.value);
     }
 
-    playersCount = () => (this.state ? this.state.context.players.size : 0);
+    playersCount = () => (this.state ? this.state.context.players!.size : 0);
 }
