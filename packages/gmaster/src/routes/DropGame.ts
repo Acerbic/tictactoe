@@ -1,6 +1,6 @@
 import * as express from "express";
-import { GameId, Game, DbConnector } from "../db/db.js";
-import { DropGameRequest, DropGameResponse } from "gmasterREST";
+import { GameId, DbConnector } from "../db/db";
+import { DropGameRequest, DropGameResponse, APIResponseFailure } from "./api";
 
 const router = express.Router();
 
@@ -18,7 +18,7 @@ router.post("/DropGame/:gameId", function(req, res, next) {
             });
             // TODO: catch
         } else {
-            const response: DropGameResponse = {
+            const response: APIResponseFailure = {
                 success: false,
                 errorMessage: "Can't drop - game not found",
                 errorCode: 0 // TODO: replace with a proper code

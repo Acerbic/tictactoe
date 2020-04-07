@@ -1,12 +1,13 @@
 import * as express from "express";
 import * as xstate from "xstate";
-import { GameId, Game, DbConnector } from "../db/db.js";
-import { MakeMoveRequest, MakeMoveResponse } from "gmasterREST";
+import { GameId, DbConnector } from "../db/db";
+import { MakeMoveRequest, MakeMoveResponse, APIResponseFailure } from "./api";
 
 const router = express.Router();
 
 import { interpret } from "xstate/lib/interpreter";
-import { GameContext, GameMachine, GameSchema } from "../game/game-machine";
+import { GameContext, GameEvent } from "../game/game-schema";
+import { GameMachine } from "../game/game-machine";
 
 router.post("/MakeMove/:gameId", function(req, res, next) {
     const gameId = req.params.gameId as GameId;
@@ -16,7 +17,7 @@ router.post("/MakeMove/:gameId", function(req, res, next) {
         .LoadGame(gameId)
         .then(game => {
             // restore the machine
-            const state_detached = xstate.State.create<GameContext>(
+            const state_detached = xstate.State.create<GameContext, GameEvent>(
                 JSON.parse(game.state)
             );
             const state = GameMachine.resolveState(state_detached);
@@ -29,11 +30,8 @@ router.post("/MakeMove/:gameId", function(req, res, next) {
             const row = request.move && request.move.row;
 
             // Perform various checks on request data
-            // if ((current_state.value as xstate.StateValueMap).game !== "wait") {
-
             if (!state.matches("game.wait")) {
-                const response: MakeMoveResponse = {
-                    newState: state.value,
+                const response: APIResponseFailure = {
                     success: false,
                     errorMessage: "Game already ended",
                     errorCode: 0 // TODO: replace with a regular code
@@ -44,8 +42,7 @@ router.post("/MakeMove/:gameId", function(req, res, next) {
                 game[(state.value as any).turn as "player1" | "player2"] !==
                 playerId
             ) {
-                const response: MakeMoveResponse = {
-                    newState: state.value,
+                const response: APIResponseFailure = {
                     success: false,
                     errorMessage: "Wrong player",
                     errorCode: 0 // TODO: replace with a regular code
@@ -61,8 +58,7 @@ router.post("/MakeMove/:gameId", function(req, res, next) {
                 row < 0 ||
                 row > 2
             ) {
-                const response: MakeMoveResponse = {
-                    newState: state.value,
+                const response: APIResponseFailure = {
                     success: false,
                     errorMessage: "Malformed move",
                     errorCode: 0 // TODO: replace with a regular code
@@ -71,8 +67,7 @@ router.post("/MakeMove/:gameId", function(req, res, next) {
                 return;
             }
             if (state.context.board[row][column] !== null) {
-                const response: MakeMoveResponse = {
-                    newState: state.value,
+                const response: APIResponseFailure = {
                     success: false,
                     errorMessage: "Bad move - cell already taken",
                     errorCode: 0 // TODO: replace with a regular code
@@ -104,14 +99,12 @@ router.post("/MakeMove/:gameId", function(req, res, next) {
             return;
         })
         .catch(ex => {
-            const response: MakeMoveResponse = {
-                newState: null,
+            const response: APIResponseFailure = {
                 success: false,
                 errorMessage: "Game was not loaded from DB: " + ex,
                 errorCode: 0 // TODO: replace with a regular code
             };
             res.send(response);
-            return;
         });
 });
 

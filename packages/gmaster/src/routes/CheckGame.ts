@@ -1,7 +1,7 @@
 import * as express from "express";
 import * as xstate from "xstate";
-import { GameId, Game, DbConnector } from "../db/db.js";
-import { CheckGameRequest, CheckGameResponse } from "gmasterREST";
+import { GameId, Game, DbConnector } from "../db/db";
+import { CheckGameRequest, CheckGameResponse, APIResponseFailure } from "./api";
 
 const router = express.Router();
 
@@ -22,8 +22,7 @@ router.get("/CheckGame/:gameId", async function(req, res, next) {
             res.send(response);
         });
     } catch (ex) {
-        const response: CheckGameResponse = {
-            state: null,
+        const response: APIResponseFailure = {
             success: false,
             errorMessage: "Game not found",
             errorCode: 0 // TODO: replace with a regular code

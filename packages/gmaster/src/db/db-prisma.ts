@@ -1,4 +1,8 @@
-import { GameId, Game, DbConnector } from "./db.js";
+/**
+ * This is an implementation of GMaster <-> DBStorage connection (./db.ts) using Prisma v1.0
+ */
+
+import { GameId, Game, DbConnector } from "./db";
 import { prisma } from "@trulyacerbic/ttt-gamesdb";
 
 const PrismaConnector: DbConnector = {

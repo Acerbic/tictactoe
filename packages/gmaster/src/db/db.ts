@@ -1,11 +1,15 @@
-type GameId = string;
+/**
+ * Type definitions for GMaster <-> DBStorage connection interface
+ * (used internally in gmaster)
+ */
+import { GameId, PlayerId } from "../routes/api";
 
 interface Game {
     state: string; // JSON-serialized machine state
     board: string; // JSON-serialized board state
 
-    player1?: any;
-    player2?: any;
+    player1: PlayerId;
+    player2: PlayerId;
 }
 
 interface DbConnector {
@@ -15,9 +19,9 @@ interface DbConnector {
     LoadGame(id: GameId): Promise<Game>;
 
     /**
-     * Store/update game record into DB
+     * Update game record into DB
      */
-    SaveGame(id: GameId, game: Game): Promise<any>;
+    SaveGame(id: GameId, game: Pick<Game, "state" | "board">): Promise<any>;
 
     /**
      * Obtain a unique unoccupied id in concurrent-safe manner

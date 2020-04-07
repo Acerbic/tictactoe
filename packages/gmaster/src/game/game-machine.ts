@@ -1,32 +1,8 @@
 import * as xstate from "xstate";
 
-export interface GameContext extends xstate.DefaultContext {
-    board: Array<Array<any>>;
-    moves_made: number;
-    last_move: any;
-}
+import { GameContext, GameSchema, GameEvent } from "./game-schema";
 
-export interface GameSchema extends xstate.StateSchema<GameContext> {
-    context: GameContext;
-    states: {
-        turn: {
-            states: {
-                player1: {};
-                player2: {};
-            };
-        };
-        game: {
-            states: {
-                wait: {};
-                thinking: {};
-                draw: {};
-                over: {};
-            };
-        };
-    };
-}
-
-export const GameMachine = xstate.Machine<GameContext, GameSchema>(
+export const GameMachine = xstate.Machine<GameContext, GameSchema, GameEvent>(
     {
         id: "tictactoe",
         context: {
@@ -74,8 +50,8 @@ export const GameMachine = xstate.Machine<GameContext, GameSchema>(
                     thinking: {
                         on: {
                             KOVALSKY: [
-                                { target: "over", cond: condGameOver },
-                                { target: "draw", cond: condDraw },
+                                { target: "over", cond: "isGameOver" },
+                                { target: "draw", cond: "isGameDraw" },
                                 {
                                     target: "wait",
                                     actions: xstate.actions.raise("NEXTMOVE")
@@ -101,16 +77,18 @@ export const GameMachine = xstate.Machine<GameContext, GameSchema>(
                 moves_made: (ctx: GameContext) => ctx.moves_made + 1,
                 last_move: (ctx: GameContext, event: any) => event
             })
+        },
+        guards: {
+            isGameOver: condGameOver,
+            isGameDraw: condDraw
         }
     }
 );
 
 /**
  * Conditional guard - checks if after this move the player won and game is over
- * @param {*} ctx
- * @param {*} event
  */
-function condGameOver({ board, moves_made, last_move }: GameContext) {
+function condGameOver({ board, last_move }: GameContext) {
     const move = last_move.move;
     const currentPlayerTag = board[move.row][move.column];
     if (!currentPlayerTag) {
@@ -159,8 +137,6 @@ function condGameOver({ board, moves_made, last_move }: GameContext) {
 /**
  * Conditional transition guard.
  * Checks if the game ended in draw and there's no move moves to make.
- * @param {*} ctx
- * @param {*} event
  */
 function condDraw(ctx: GameContext) {
     return ctx.moves_made == 9;

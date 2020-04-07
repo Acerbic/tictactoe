@@ -1,8 +1,12 @@
 import * as express from "express";
-import { GameId, Game, DbConnector } from "../db/db.js";
-import { CreateGameRequest, CreateGameResponse } from "gmasterREST";
+import { Game, DbConnector } from "../db/db";
+import {
+    CreateGameRequest,
+    CreateGameResponse,
+    APIResponseFailure
+} from "./api";
 
-import { GameContext, GameMachine } from "../game/game-machine";
+import { GameMachine } from "../game/game-machine";
 
 var router = express.Router();
 
@@ -27,7 +31,7 @@ router.post("/CreateGame", function(req, res, next) {
             res.send(response);
         });
     } else {
-        const response: CreateGameResponse = {
+        const response: APIResponseFailure = {
             success: false,
             errorMessage: "Failed to create a new game",
             errorCode: 0 // TODO: replace with a proper code
