@@ -1,3 +1,9 @@
+/**
+ * Implementation of the player-setup machine. Processes player connection to the game,
+ * pre-game choices.
+ */
+
+const debuglog = require("debug")("ttt:ghost:debug");
 import { Machine, StateMachine, MachineConfig, MachineOptions } from "xstate";
 import {
     PlayerSetupContext,

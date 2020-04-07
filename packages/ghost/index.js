@@ -5,7 +5,7 @@ const io = require("socket.io")(http, {
 });
 const {
     GameRoomInterpreter
-} = require("./dist/state-machine/game-room-machine");
+} = require("./dist/state-machine/GameRoomInterpreter");
 
 const statelog = require("debug")("ttt:ghost:state-machine");
 const hostlog = require("debug")("ttt:ghost");

@@ -1,3 +1,6 @@
+/**
+ * Interfaces with Game Master proccess via http requests
+ */
 import { GameId } from "ttt-db";
 import {
     GameMasterGetRequest,

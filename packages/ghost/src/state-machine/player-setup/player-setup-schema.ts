@@ -1,3 +1,7 @@
+/**
+ * Description of player-setup machine
+ */
+
 import { PlayerId } from "ttt-db";
 
 export interface PlayerSetupStateSchema {
