@@ -23,8 +23,9 @@ RUN lerna run build --scope="@trulyacerbic/ttt-gamesdb"
 # compile TypeScript
 RUN lerna run build --scope="ghost"
 
-CMD cd ./packages/ghost && yarn start
+CMD cd ./packages/ghost && yarn dev
 
 ARG GHOST_PORT=3060
 ENV GHOST_PORT=$GHOST_PORT
 EXPOSE $GHOST_PORT
+EXPOSE 9229
