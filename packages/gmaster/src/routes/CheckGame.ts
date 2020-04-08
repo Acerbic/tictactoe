@@ -1,9 +1,9 @@
 import * as express from "express";
-import * as xstate from "xstate";
-import { GameId, Game, DbConnector } from "../db/db";
-import { CheckGameRequest, CheckGameResponse, APIResponseFailure } from "./api";
+import { State } from "xstate";
+import { DbConnector } from "../db/db";
+import { GameId, CheckGameResponse, APIResponseFailure } from "./api";
 import { GameContext, GameEvent, GameSchema } from "../game/game-schema";
-import { GameMachine, GameStateValueToApi } from "../game/game-machine";
+import { GameStateValueToApi } from "../game/game-machine";
 
 const router = express.Router();
 
@@ -16,11 +16,11 @@ router.get("/CheckGame/:gameId", async function(req, res, next) {
 
     try {
         gamesDb.LoadGame(gameId).then(game => {
-            const current_state: xstate.State<
+            const current_state: State<
                 GameContext,
                 GameEvent,
                 GameSchema
-            > = xstate.State.create(JSON.parse(game.state));
+            > = State.create(JSON.parse(game.state));
             const response: CheckGameResponse = {
                 success: true,
                 state: GameStateValueToApi(current_state)

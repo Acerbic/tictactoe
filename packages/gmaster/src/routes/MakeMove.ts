@@ -1,14 +1,19 @@
 import * as express from "express";
-import * as xstate from "xstate";
-import { GameId, DbConnector } from "../db/db";
-import { MakeMoveRequest, MakeMoveResponse, APIResponseFailure } from "./api";
-
-const router = express.Router();
-
+import { State } from "xstate";
 import { interpret } from "xstate/lib/interpreter";
-import { GameContext, GameEvent } from "../game/game-schema";
+
+import { DbConnector } from "../db/db";
+import {
+    GameId,
+    MakeMoveRequest,
+    MakeMoveResponse,
+    APIResponseFailure
+} from "./api";
+
+import { GameContext, GameEvent, GameStateValue } from "../game/game-schema";
 import { GameMachine, GameStateValueToApi } from "../game/game-machine";
 
+const router = express.Router();
 router.post("/MakeMove/:gameId", function(req, res, next) {
     const gameId = req.params.gameId as GameId;
     const gamesDb = (req.app as any).gamesDb as DbConnector;
@@ -17,7 +22,7 @@ router.post("/MakeMove/:gameId", function(req, res, next) {
         .LoadGame(gameId)
         .then(game => {
             // restore the machine
-            const state_detached = xstate.State.create<GameContext, GameEvent>(
+            const state_detached = State.create<GameContext, GameEvent>(
                 JSON.parse(game.state)
             );
             const state = GameMachine.resolveState(state_detached);
@@ -38,10 +43,8 @@ router.post("/MakeMove/:gameId", function(req, res, next) {
                 };
                 res.send(response);
             }
-            if (
-                game[(state.value as any).turn as "player1" | "player2"] !==
-                playerId
-            ) {
+            let turn_player = (state.value as GameStateValue).turn!;
+            if (game[turn_player] !== playerId) {
                 const response: APIResponseFailure = {
                     success: false,
                     errorMessage: "Wrong player",

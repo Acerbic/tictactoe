@@ -1,6 +1,6 @@
 import * as express from "express";
-import { GameId, DbConnector } from "../db/db";
-import { DropGameRequest, DropGameResponse, APIResponseFailure } from "./api";
+import { DbConnector } from "../db/db";
+import { GameId, DropGameResponse, APIResponseFailure } from "./api";
 
 const router = express.Router();
 

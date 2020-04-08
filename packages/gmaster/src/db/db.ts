@@ -4,14 +4,20 @@
  */
 import { GameId, PlayerId } from "../routes/api";
 
+/**
+ * Preserved state of a game
+ */
 interface Game {
-    state: string; // JSON-serialized machine state
-    board: string; // JSON-serialized board state
+    state: string; // JSON-serialized machine StateValue
+    board: string; // JSON-serialized board state from Context
 
     player1: PlayerId;
     player2: PlayerId;
 }
 
+/**
+ * Operates of Storage (CRUD)
+ */
 interface DbConnector {
     /**
      * Load game record from the DB
@@ -36,4 +42,4 @@ interface DbConnector {
     HasGame(id: GameId): Promise<boolean>;
 }
 
-export { GameId, Game, DbConnector };
+export { Game, DbConnector };
