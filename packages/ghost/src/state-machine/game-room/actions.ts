@@ -1,3 +1,7 @@
+/**
+ * Actions for game-room machine
+ */
+
 const errorlog = require("debug")("ttt:ghost:error");
 const debuglog = require("debug")("ttt:ghost:debug");
 
@@ -9,7 +13,7 @@ import {
     GameRoom_PlayerConnected,
     GameRoom_PlayerPickRole
 } from "./game-room-schema";
-import { PlayerId } from "ttt-db";
+import { PlayerId } from "../../connectors/gmaster_api";
 
 import {
     PlayerSetup_SocConnect_Event,

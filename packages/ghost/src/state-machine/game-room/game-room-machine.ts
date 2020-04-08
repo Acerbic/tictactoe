@@ -19,7 +19,13 @@ import {
     GameRoomEvent
 } from "./game-room-schema";
 import player_setup from "../player-setup/player-setup-machine";
-import { CreateGameResponse } from "ttt-gmasterREST";
+import {
+    CreateGameResponse,
+    APIResponseFailure,
+    MakeMoveResponse,
+    CreateGameRequest,
+    MakeMoveRequest
+} from "../../connectors/gmaster_api";
 
 export const state_machine: MachineConfig<
     GameRoomContext,
@@ -173,11 +179,11 @@ export const machine_options: Partial<MachineOptions<
             }
 
             return ctx.gm_connect
-                .post("CreateGame", {
-                    player1Id: ctx.player1,
-                    player2Id: ctx.player2
+                .post<CreateGameRequest, CreateGameResponse>("CreateGame", {
+                    player1Id: ctx.player1!,
+                    player2Id: ctx.player2!
                 })
-                .then((response: CreateGameResponse) => {
+                .then(response => {
                     if (response.success) {
                         ctx.latest_game_state = {
                             turn: "player1",
@@ -196,10 +202,10 @@ export const machine_options: Partial<MachineOptions<
          */
         invoke_make_move: (ctx, event) => {
             return ctx.gm_connect
-                .post(
+                .post<MakeMoveRequest, MakeMoveResponse>(
                     "MakeMove",
                     {
-                        playerId: ctx.current_player,
+                        playerId: ctx.current_player!,
                         move: {
                             row: event.move.row,
                             column: event.move.column
@@ -207,9 +213,9 @@ export const machine_options: Partial<MachineOptions<
                     },
                     ctx.game_id
                 )
-                .then((response: CreateGameResponse) => {
+                .then(response => {
                     if (response.success) {
-                        ctx.latest_game_state = response.newState!;
+                        ctx.latest_game_state = response.newState;
                         return { type: "CALL_MAKEMOVE_ENDED", response };
                     } else {
                         errorlog(

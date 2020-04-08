@@ -2,6 +2,8 @@ import * as express from "express";
 import * as xstate from "xstate";
 import { GameId, Game, DbConnector } from "../db/db";
 import { CheckGameRequest, CheckGameResponse, APIResponseFailure } from "./api";
+import { GameContext, GameEvent, GameSchema } from "../game/game-schema";
+import { GameMachine, GameStateValueToApi } from "../game/game-machine";
 
 const router = express.Router();
 
@@ -14,10 +16,14 @@ router.get("/CheckGame/:gameId", async function(req, res, next) {
 
     try {
         gamesDb.LoadGame(gameId).then(game => {
-            const current_state = xstate.State.create(JSON.parse(game.state));
+            const current_state: xstate.State<
+                GameContext,
+                GameEvent,
+                GameSchema
+            > = xstate.State.create(JSON.parse(game.state));
             const response: CheckGameResponse = {
                 success: true,
-                state: current_state.value
+                state: GameStateValueToApi(current_state)
             };
             res.send(response);
         });

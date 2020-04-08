@@ -5,8 +5,7 @@
  */
 
 import { StateSchema } from "xstate";
-import { PlayerId, GameId } from "ttt-db";
-import { GameState } from "ttt-gmasterREST";
+import { PlayerId, GameId, GameState } from "../../connectors/gmaster_api";
 import { PlayerSetupEvent } from "../player-setup/player-setup-schema";
 
 import GMConnector from "../../connectors/gmaster_connector";

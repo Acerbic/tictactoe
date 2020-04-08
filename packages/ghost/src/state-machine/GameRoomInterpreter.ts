@@ -12,7 +12,7 @@ const debuglog = require("debug")("ttt:ghost:debug");
 import { Machine } from "xstate";
 import { Interpreter } from "xstate/lib/interpreter";
 
-import { PlayerId } from "ttt-db";
+import { PlayerId } from "../connectors/gmaster_api";
 import GMConnector from "../connectors/gmaster_connector";
 import { PrismaGetGameBoard } from "../connectors/prisma_connector";
 

@@ -2,7 +2,7 @@
  * Connects directly to the game storage to retrieve game data (for reads unrelated to game progression)
  */
 
-import { GameId } from "ttt-db";
+import { GameId } from "./gmaster_api";
 import { prisma } from "@trulyacerbic/ttt-gamesdb";
 
 export type PrismaGetGameBoard = (gameId: GameId) => Promise<Array<Array<any>>>;

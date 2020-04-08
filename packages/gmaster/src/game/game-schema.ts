@@ -2,10 +2,10 @@
  * Schema for xstate game machine
  */
 
-import { DefaultContext, StateSchema } from "xstate";
+import { StateSchema } from "xstate";
 import { PlayerId } from "../routes/api";
 
-export interface GameContext extends DefaultContext {
+export interface GameContext {
     board: Array<Array<any>>;
     moves_made: number;
     last_move: any;
@@ -30,6 +30,8 @@ export interface GameSchema extends StateSchema<GameContext> {
         };
     };
 }
+
+//// EVENTS
 
 type GameEvent_MOVE = {
     type: "MOVE";

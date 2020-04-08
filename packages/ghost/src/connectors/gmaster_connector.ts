@@ -1,12 +1,15 @@
 /**
  * Interfaces with Game Master proccess via http requests
  */
-import { GameId } from "ttt-db";
 import {
+    GameId,
     GameMasterGetRequest,
     GameMasterPostRequest,
-    GameMasterResponse
-} from "ttt-gmasterREST";
+    GameMasterResponse,
+    APIResponse,
+    APIResponseFailure,
+    CheckGameResponse
+} from "./gmaster_api";
 import fetch from "isomorphic-unfetch";
 
 // TODO: move to .env variable
@@ -19,11 +22,14 @@ const gmaster_url = `http://${process.env["GMASTER_URI"]}/`;
  * @param {object} payload
  * @param {string} gameId id of the game instance to affect
  */
-async function gmasterPost(
+async function gmasterPost<
+    TReq extends GameMasterPostRequest,
+    TRes extends APIResponse = APIResponse
+>(
     endpoint: string,
-    payload: GameMasterPostRequest,
+    payload: TReq,
     gameId?: GameId
-): Promise<GameMasterResponse> {
+): Promise<TRes | APIResponseFailure> {
     const uri = gmaster_url + endpoint + (gameId ? "/" + gameId : "");
     const res = await fetch(uri, {
         method: "POST",
@@ -47,10 +53,10 @@ async function gmasterPost(
  * @param {string} endpoint
  * @param {string} gameId
  */
-async function gmasterGet(
-    endpoint: string,
-    gameId: GameId
-): Promise<GameMasterResponse> {
+async function gmasterGet<
+    TReq extends GameMasterGetRequest = any,
+    TRes extends APIResponse = CheckGameResponse
+>(endpoint: string, gameId: GameId): Promise<TRes | APIResponseFailure> {
     const uri = gmaster_url + endpoint + (gameId ? "/" + gameId : "");
     const res = await fetch(uri, {
         method: "GET"

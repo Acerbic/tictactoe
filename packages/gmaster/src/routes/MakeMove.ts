@@ -7,7 +7,7 @@ const router = express.Router();
 
 import { interpret } from "xstate/lib/interpreter";
 import { GameContext, GameEvent } from "../game/game-schema";
-import { GameMachine } from "../game/game-machine";
+import { GameMachine, GameStateValueToApi } from "../game/game-machine";
 
 router.post("/MakeMove/:gameId", function(req, res, next) {
     const gameId = req.params.gameId as GameId;
@@ -92,7 +92,7 @@ router.post("/MakeMove/:gameId", function(req, res, next) {
                     // send result in reply
                     const response: MakeMoveResponse = {
                         success: true,
-                        newState: new_state.value
+                        newState: GameStateValueToApi(new_state)
                     };
                     res.send(response);
                 });

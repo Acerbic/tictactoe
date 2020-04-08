@@ -2,7 +2,7 @@
  * Description of player-setup machine
  */
 
-import { PlayerId } from "ttt-db";
+import { PlayerId } from "../../connectors/gmaster_api";
 
 export interface PlayerSetupStateSchema {
     states: {

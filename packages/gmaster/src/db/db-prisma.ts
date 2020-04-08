@@ -7,7 +7,13 @@ import { prisma } from "@trulyacerbic/ttt-gamesdb";
 
 const PrismaConnector: DbConnector = {
     async LoadGame(id: GameId): Promise<Game> {
-        return prisma.gameSession({ id });
+        return prisma.gameSession({ id }).then(gs => {
+            if (gs) {
+                return gs;
+            } else {
+                throw "No such game session";
+            }
+        });
     },
     async SaveGame(id: GameId, game: Game): Promise<any> {
         return prisma.updateGameSession({

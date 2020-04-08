@@ -6,7 +6,7 @@ import {
     APIResponseFailure
 } from "./api";
 
-import { GameMachine } from "../game/game-machine";
+import { GameMachine, GameStateValueToApi } from "../game/game-machine";
 
 var router = express.Router();
 
@@ -26,7 +26,8 @@ router.post("/CreateGame", function(req, res, next) {
         gamesDb.CreateGame(game).then(gameId => {
             const response: CreateGameResponse = {
                 success: true,
-                gameId: gameId
+                gameId: gameId,
+                newState: GameStateValueToApi(GameMachine.initialState)
             };
             res.send(response);
         });

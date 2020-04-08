@@ -1,6 +1,7 @@
 import * as xstate from "xstate";
 
 import { GameContext, GameSchema, GameEvent } from "./game-schema";
+import { GameState } from "../routes/api";
 
 export const GameMachine = xstate.Machine<GameContext, GameSchema, GameEvent>(
     {
@@ -140,4 +141,18 @@ function condGameOver({ board, last_move }: GameContext) {
  */
 function condDraw(ctx: GameContext) {
     return ctx.moves_made == 9;
+}
+
+/**
+ * Converts from game machine state value to API data structure
+ */
+export function GameStateValueToApi(
+    state: xstate.State<GameContext, GameEvent, GameSchema>
+): GameState {
+    const sv = state.value;
+
+    return {
+        turn: (sv as any).turn,
+        game: (sv as any).game
+    };
 }
