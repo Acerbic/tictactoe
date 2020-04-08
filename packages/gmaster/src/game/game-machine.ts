@@ -1,6 +1,11 @@
 import * as xstate from "xstate";
 
-import { GameContext, GameSchema, GameEvent } from "./game-schema";
+import {
+    GameContext,
+    GameSchema,
+    GameEvent,
+    GameStateValue
+} from "./game-schema";
 import { GameState } from "../routes/api";
 
 export const GameMachine = xstate.Machine<GameContext, GameSchema, GameEvent>(
@@ -25,8 +30,8 @@ export const GameMachine = xstate.Machine<GameContext, GameSchema, GameEvent>(
             turn: {
                 initial: "player1",
                 states: {
-                    player1: { on: { NEXTMOVE: "player2" } },
-                    player2: { on: { NEXTMOVE: "player1" } }
+                    player1: { on: { MOVE: "player2" } },
+                    player2: { on: { MOVE: "player1" } }
                 }
             },
 
@@ -38,25 +43,17 @@ export const GameMachine = xstate.Machine<GameContext, GameSchema, GameEvent>(
                         on: {
                             MOVE: {
                                 target: "thinking",
-                                actions: [
-                                    /* change the board */
-                                    "applyMove",
-                                    /* and think of what happened */
-                                    xstate.actions.raise("KOVALSKY")
-                                ]
+                                actions: "applyMove"
                             }
                         }
                     },
 
                     thinking: {
                         on: {
-                            KOVALSKY: [
+                            "": [
                                 { target: "over", cond: "isGameOver" },
                                 { target: "draw", cond: "isGameDraw" },
-                                {
-                                    target: "wait",
-                                    actions: xstate.actions.raise("NEXTMOVE")
-                                }
+                                { target: "wait" }
                             ]
                         }
                     },
@@ -149,10 +146,10 @@ function condDraw(ctx: GameContext) {
 export function GameStateValueToApi(
     state: xstate.State<GameContext, GameEvent, GameSchema>
 ): GameState {
-    const sv = state.value;
+    const sv = state.value as GameStateValue;
 
     return {
-        turn: (sv as any).turn,
-        game: (sv as any).game
+        turn: sv.turn,
+        game: sv.game as Exclude<GameStateValue["game"], "thinking">
     };
 }

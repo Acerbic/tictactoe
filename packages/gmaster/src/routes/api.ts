@@ -3,7 +3,11 @@
  */
 
 export type GameState = {
+    // next turn belongs to...
     turn: "player1" | "player2";
+    // current game state (if "over", then `turn` field indicates the
+    // player who would've been next, if the game was to continue,
+    // i.e. the losing player)
     game: "wait" | "over" | "draw";
 };
 

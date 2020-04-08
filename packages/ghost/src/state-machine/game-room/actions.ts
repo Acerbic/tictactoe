@@ -156,7 +156,11 @@ export const switch_player: ActionF = ctx => {
 export const emit_gameover: ActionF = ctx => {
     let winner: PlayerId | null = null;
     if (ctx.latest_game_state!.game == "over") {
-        winner = ctx[ctx.latest_game_state!.turn] || null;
+        if (ctx.latest_game_state!.turn === "player1") {
+            winner = ctx.player2!;
+        } else {
+            winner = ctx.player1!;
+        }
     }
 
     ctx.emits_sync.then(() => {
