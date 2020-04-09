@@ -30,7 +30,7 @@ services:
             dockerfile: deployment/prisma-deployer.Dockerfile
             context: ..
             args:
-                PRISMA_URI: prisma:4466
+                PRISMA_HOSTPORT: prisma:4466
         image: prisma-deployer:latest
         restart: on-failure
         depends_on:
@@ -44,7 +44,7 @@ services:
                 GMASTER_PORT: 3000
         image: gmaster:latest
         environment:
-            PRISMA_URI: prisma:4466
+            PRISMA_URL: http://prisma:4466
         restart: always
 
     ghost:
@@ -55,7 +55,7 @@ services:
                 GHOST_PORT: 3060
         image: ghost:latest
         environment:
-            PRISMA_URI: prisma:4466
+            PRISMA_URL: http://prisma:4466
             GMASTER_URI: gmaster:3000
         restart: always
         # command: node --inspect=0.0.0.0 index.js

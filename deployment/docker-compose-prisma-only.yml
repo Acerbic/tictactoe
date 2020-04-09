@@ -32,7 +32,7 @@ services:
             dockerfile: deployment/prisma-deployer.Dockerfile
             context: ..
             args:
-                PRISMA_URI: prisma:4466
+                PRISMA_HOSTPORT: prisma:4466
         image: prisma-deployer:latest
         restart: on-failure
         depends_on:

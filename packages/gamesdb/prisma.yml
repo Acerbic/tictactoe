@@ -1,4 +1,4 @@
-endpoint: http://${env:PRISMA_URI}
+endpoint: ${env:PRISMA_URL}
 datamodel: datamodel.prisma
 
 generate:

@@ -6,20 +6,18 @@ WORKDIR /app
 COPY ["package.json", "yarn.lock", "./"]
 RUN yarn --pure-lockfile
 
-# install node_modules & crosslink
-COPY ["packages/gamesdb/package.json", "./packages/gamesdb/"]
+# copy prebuilt @trulyacerbic/ttt-gamesdb & crosslink
+COPY packages/gamesdb ./packages/gamesdb
 COPY ["packages/gmaster/package.json", "./packages/gmaster/"]
 COPY lerna.json .
-RUN lerna bootstrap -- --pure-lockfile
 
 # copy the rest
-COPY packages/gamesdb ./packages/gamesdb
 COPY packages/gmaster ./packages/gmaster
+RUN lerna link
 
-# build dependence package
-ARG PRISMA_URI=prisma:4466
-RUN lerna run build --scope="@trulyacerbic/ttt-gamesdb"
-
+# NOTE: seems like bootstrap doesn't scope to a single package
+#       and installs all dependencies for all packages instead
+RUN lerna bootstrap --scope="gmaster" -- --pure-lockfile
 # compile TypeScript
 RUN lerna run build --scope="gmaster"
 
