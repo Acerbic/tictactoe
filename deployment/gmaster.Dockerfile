@@ -11,13 +11,14 @@ COPY packages/gamesdb ./packages/gamesdb
 COPY ["packages/gmaster/package.json", "./packages/gmaster/"]
 COPY lerna.json .
 
+# NOTE: seems like bootstrap doesn't scope to a single package
+#       and installs all dependencies for all present workspaces
+#       at the time - i.e. installs "gmaster" and "@trulyacerbic/ttt-gamesdb"
+RUN lerna bootstrap --scope="gmaster" -- --pure-lockfile
+
 # copy the rest
 COPY packages/gmaster ./packages/gmaster
-RUN lerna link
 
-# NOTE: seems like bootstrap doesn't scope to a single package
-#       and installs all dependencies for all packages instead
-RUN lerna bootstrap --scope="gmaster" -- --pure-lockfile
 # compile TypeScript
 RUN lerna run build --scope="gmaster"
 

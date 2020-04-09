@@ -7,8 +7,8 @@ COPY ["package.json", "yarn.lock", "./"]
 RUN yarn --pure-lockfile
 
 # install node_modules & crosslink
-COPY ["packages/gamesdb/package.json", "packages/gamesdb/yarn.lock", "./packages/gamesdb/"]
-COPY ["packages/gmaster/package.json", "packages/gmaster/yarn.lock", "./packages/gmaster/"]
+COPY ["packages/gamesdb/package.json" "./packages/gamesdb/"]
+COPY ["packages/gmaster/package.json" "./packages/gmaster/"]
 COPY lerna.json .
 RUN lerna bootstrap -- --pure-lockfile
 

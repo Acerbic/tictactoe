@@ -10,14 +10,15 @@ RUN yarn --pure-lockfile
 COPY packages/gamesdb ./packages/gamesdb
 COPY ["packages/ghost/package.json", "./packages/ghost/"]
 COPY lerna.json .
-RUN lerna link
+
+# NOTE: seems like bootstrap doesn't scope to a single package
+#       and installs all dependencies for all present workspaces
+#       at the time - i.e. installs "ghost" and "@trulyacerbic/ttt-gamesdb"
+RUN lerna bootstrap --scope="ghost" -- --pure-lockfile
 
 # copy the rest
 COPY packages/ghost ./packages/ghost
 
-# NOTE: seems like bootstrap doesn't scope to a single package
-#       and installs all dependencies for all packages instead
-RUN lerna bootstrap --scope="ghost" -- --pure-lockfile
 # compile TypeScript
 RUN lerna run build --scope="ghost"
 
