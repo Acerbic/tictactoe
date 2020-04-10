@@ -39,14 +39,14 @@ waitingRoom
         ) =>
             statelog(
                 "Transition in room {%s}: (%s) -> %O",
-                r.id,
+                r.roomId,
                 event.type,
-                state.value
+                r.getDetailedStateValue()
             ))(waitingRoom)
     )
     .start();
 
-hostlog("game room created: %s", waitingRoom.id);
+hostlog("game room created: %s", waitingRoom.roomId);
 
 // attach important socket handlers
 io.on("connection", function(socket) {
@@ -76,13 +76,13 @@ io.on("connection", function(socket) {
                     ) =>
                         statelog(
                             "Transition in room {%s}: (%s) -> %O",
-                            r.id,
+                            r.roomId,
                             event.type,
-                            state.value
+                            r.getDetailedStateValue()
                         ))(waitingRoom)
                 )
                 .start();
-            hostlog("game room created: %s", waitingRoom.id);
+            hostlog("game room created: %s", waitingRoom.roomId);
         }
     }
 });

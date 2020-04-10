@@ -94,23 +94,18 @@ export const state_machine: MachineConfig<
                 "": [
                     {
                         cond: "role_requests_conflict",
-                        target: "role_requested_conflict",
-                        actions: "emit_iamalreadytracer"
+                        target: "roles_assigned",
+                        actions: [
+                            "emit_iamalreadytracer",
+                            "cointoss_roles",
+                            "emit_you_are_it"
+                        ]
                     },
                     {
                         target: "roles_assigned",
                         actions: ["set_current_player", "emit_you_are_it"]
                     }
                 ]
-            }
-        },
-        role_requested_conflict: {
-            onEntry: "cointoss_roles",
-            on: {
-                "": {
-                    target: "roles_assigned",
-                    actions: ["emit_you_are_it"]
-                }
             }
         },
         roles_assigned: {
@@ -142,15 +137,14 @@ export const state_machine: MachineConfig<
             on: {
                 "": [
                     {
-                        cond: (ctx: any) =>
-                            ctx.latest_game_state.game == "wait",
+                        cond: ctx => ctx.latest_game_state!.game == "wait",
                         target: "wait4move",
                         actions: ["switch_player", "emit_your_turn"]
                     },
                     {
-                        cond: (ctx: any) =>
-                            ctx.latest_game_state.game == "over" ||
-                            ctx.latest_game_state.game == "draw",
+                        cond: ctx =>
+                            ctx.latest_game_state!.game == "over" ||
+                            ctx.latest_game_state!.game == "draw",
                         target: "end",
                         actions: ["emit_gameover", "call_dropgame"]
                     }

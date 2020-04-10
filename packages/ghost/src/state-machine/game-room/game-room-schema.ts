@@ -31,7 +31,6 @@ export interface GameRoomSchema extends StateSchema<GameRoomContext> {
             };
         };
         role_requests_taken: {};
-        role_requested_conflict: {};
         roles_assigned: {};
         wait4move: {};
         game_move: {};

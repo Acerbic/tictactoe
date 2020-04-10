@@ -170,6 +170,6 @@ export const emit_gameover: ActionF = ctx => {
     });
 };
 
-export const all_dropgame: ActionF = ctx => {
+export const call_dropgame: ActionF = ctx => {
     ctx.gm_connect.post("DropGame", {}, ctx.game_id);
 };

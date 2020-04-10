@@ -7,8 +7,8 @@
   "private": false,
   "scripts": {
     "build": "tsc",
-    "start": "cross-env DEBUG=*,-engine*,-express:router,-socket.io-parser node ./dist/index.js",
-    "dev": "cross-env DEBUG=*,-engine*,-express:router,-socket.io-parser node --inspect=0.0.0.0 ./dist/index.js",
+    "start": "cross-env DEBUG=*,-engine*,-express:router,-binding,-socket.io* node ./dist/index.js",
+    "dev": "cross-env DEBUG=*,-engine*,-express:router,-binding,-socket.io* node --inspect=0.0.0.0 ./dist/index.js",
     "clean": "rimraf dist"
   },
   "dependencies": {

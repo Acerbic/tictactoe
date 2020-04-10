@@ -9,7 +9,7 @@ const statelog = require("debug")("ttt:ghost:state-machine");
 const errorlog = require("debug")("ttt:ghost:error");
 const debuglog = require("debug")("ttt:ghost:debug");
 
-import { Machine } from "xstate";
+import { Machine, Actor } from "xstate";
 import { Interpreter } from "xstate/lib/interpreter";
 
 import { PlayerId } from "../connectors/gmaster_api";
@@ -22,16 +22,21 @@ import {
     GameRoomEvent
 } from "./game-room/game-room-schema";
 import { state_machine, machine_options } from "./game-room/game-room-machine";
+import { Socket } from "socket.io";
 
 export type GameRoomInterpreterDependencies = {
     gmaster: GMConnector;
     prisma: PrismaGetGameBoard;
 };
+
+let roomCount = 1;
 export class GameRoomInterpreter extends Interpreter<
     GameRoomContext,
     GameRoomSchema,
     GameRoomEvent
 > {
+    roomId: string;
+
     /**
      * starts up a separate game room to host a game
      */
@@ -45,6 +50,42 @@ export class GameRoomInterpreter extends Interpreter<
                 getBoard: deps.prisma
             })
         );
+        this.roomId = "#" + roomCount;
+        roomCount++;
+    }
+
+    // add_player(player_id: PlayerId, socket: Socket): "player1" | "player2" {
+    //     if (this.playersCount() >= 2) {
+    //         throw "Can't join a room with 2 players already";
+    //     }
+
+    //     let submachine_id: "player1" | "player2" | null = null;
+    //     if (this.machine.context?.player1 === undefined) {
+    //         submachine_id = "player1";
+    //     } else if (this.machine.context?.player2 === undefined) {
+    //         submachine_id = "player2";
+    //     } else {
+    //         throw "Both player slots already defined. Logic error beep-boop.";
+    //     }
+
+    //     this.send({
+    //         type: "SOC_CONNECT",
+    //         player_id,
+    //         socket,
+    //         submachine_id
+    //     });
+    //     return submachine_id;
+    // }
+
+    getDetailedStateValue() {
+        return {
+            value: this.state.value,
+            children: Array.from(this.children.entries()).map(
+                ([name, machine]: [string | number, Actor]) => ({
+                    [name]: machine?.state?.value
+                })
+            )
+        };
     }
 
     on_socket_connection(socket: any) {
@@ -88,7 +129,6 @@ export class GameRoomInterpreter extends Interpreter<
                 role,
                 submachine_id
             });
-            statelog("New state: %O", this.state.value);
         });
 
         socket.on("move", (move: any) => {
@@ -103,7 +143,6 @@ export class GameRoomInterpreter extends Interpreter<
             socket,
             submachine_id
         });
-        statelog("New state: %O", this.state.value);
     }
 
     playersCount = () => (this.state ? this.state.context.players.size : 0);
