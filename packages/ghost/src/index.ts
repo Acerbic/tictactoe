@@ -1,32 +1,42 @@
-const app = require("express")();
-const http = require("http").Server(app);
-const io = require("socket.io")(http, {
+import debug from "debug";
+import express from "express";
+import { createServer } from "http";
+import socketio, { Socket } from "socket.io";
+import { State } from "xstate";
+
+import { GameRoomInterpreter } from "./state-machine/GameRoomInterpreter";
+import GmasterConnector from "./connectors/gmaster_connector";
+import { GetGameBoard } from "./connectors/prisma_connector";
+import { PlayerId } from "./connectors/gmaster_api";
+import {
+    GameRoomEvent,
+    GameRoomContext,
+    GameRoomSchema
+} from "./state-machine/game-room/game-room-schema";
+
+const statelog = debug("ttt:ghost:state-machine");
+const hostlog = debug("ttt:ghost");
+
+const app = express();
+const http = createServer(app);
+const io = socketio(http, {
     pingTimeout: process.env.NODE_ENV == "production" ? 3000 : 1000000
 });
-const {
-    GameRoomInterpreter
-} = require("./dist/state-machine/GameRoomInterpreter");
-
-const statelog = require("debug")("ttt:ghost:state-machine");
-const hostlog = require("debug")("ttt:ghost");
-
-const gs = require("global-singleton");
 
 const deps = {
-    gmaster: new (require("./dist/connectors/gmaster_connector"))(),
-    prisma: require("./dist/connectors/prisma_connector").GetGameBoard
+    gmaster: new GmasterConnector(),
+    prisma: GetGameBoard
 };
 
-// safe singletons
-// let gameRoomsCounter = gs('ghost.GameRoomsCounter', function () { return 1; });
-const GameRooms = gs("ghost.GameRooms", function() {
-    return new Map();
-});
+const GameRooms = new Map<PlayerId, GameRoomInterpreter>();
 
 let waitingRoom = new GameRoomInterpreter(deps);
 waitingRoom
     .onTransition(
-        (r => (state, event) =>
+        (r => (
+            state: State<GameRoomContext, GameRoomEvent, GameRoomSchema>,
+            event: GameRoomEvent
+        ) =>
             statelog(
                 "Transition in room {%s}: (%s) -> %O",
                 r.id,
@@ -56,7 +66,14 @@ io.on("connection", function(socket) {
             waitingRoom = new GameRoomInterpreter(deps);
             waitingRoom
                 .onTransition(
-                    (r => (state, event) =>
+                    (r => (
+                        state: State<
+                            GameRoomContext,
+                            GameRoomEvent,
+                            GameRoomSchema
+                        >,
+                        event: GameRoomEvent
+                    ) =>
                         statelog(
                             "Transition in room {%s}: (%s) -> %O",
                             r.id,
