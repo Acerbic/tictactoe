@@ -56,7 +56,7 @@ const player_setup_machine_options: Partial<MachineOptions<
                 ctx.parent_ctx.players.set(player_id, {
                     id: player_id,
                     socket,
-                    role_request: null,
+                    role_request: "first", // default
                     submachine_id
                 });
 
@@ -65,14 +65,14 @@ const player_setup_machine_options: Partial<MachineOptions<
         },
         emit_choose_role: (ctx, event: PlayerSetupEvent) => {
             if (event.type === "SOC_CONNECT") {
-                const socket = ctx.parent_ctx.players.get(event.player_id)
+                const socket = ctx.parent_ctx.players.get(event.player_id)!
                     .socket;
                 socket.emit("choose_role");
             }
         },
         store_role_requested: (ctx, event: PlayerSetupEvent) => {
             if (event.type === "SOC_IWANNABETRACER") {
-                ctx.parent_ctx.players.get(event.player_id).role_request =
+                ctx.parent_ctx.players.get(event.player_id)!.role_request =
                     event.role;
             }
         }

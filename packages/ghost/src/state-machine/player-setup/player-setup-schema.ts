@@ -3,6 +3,7 @@
  */
 
 import { PlayerId } from "../../connectors/gmaster_api";
+import { GameRoomContext } from "../game-room/game-room-schema";
 
 export interface PlayerSetupStateSchema {
     states: {
@@ -30,5 +31,5 @@ export type PlayerSetupEvent =
     | PlayerSetup_SocIwannabetracer_Event;
 
 export type PlayerSetupContext = {
-    parent_ctx: any;
+    parent_ctx: GameRoomContext;
 };

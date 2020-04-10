@@ -106,7 +106,7 @@ export const cointoss_roles: ActionF = ctx => {
  * Send 'your_turn' to a client
  */
 export const emit_your_turn: ActionF = ctx => {
-    const socket = ctx.players.get(ctx.current_player!).socket;
+    const socket = ctx.players.get(ctx.current_player!)!.socket;
     ctx.emits_sync.then(() => {
         socket.emit("your_turn");
     });
@@ -118,7 +118,7 @@ export const emit_opponent_moved: ActionF = ctx => {
     const p2 = it.next().value;
 
     const socket_waiting = ctx.current_player == p1.id ? p2.socket : p1.socket;
-    const socket_moving = ctx.players.get(ctx.current_player!).socket;
+    const socket_moving = ctx.players.get(ctx.current_player!)!.socket;
 
     ctx.emits_sync = ctx.emits_sync.then(() =>
         ctx

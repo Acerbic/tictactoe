@@ -5,6 +5,7 @@
  */
 
 import { StateSchema } from "xstate";
+import { Socket } from "socket.io";
 import { PlayerId, GameId, GameState } from "../../connectors/gmaster_api";
 import { PlayerSetupEvent } from "../player-setup/player-setup-schema";
 
@@ -39,6 +40,13 @@ export interface GameRoomSchema extends StateSchema<GameRoomContext> {
     };
 }
 
+export interface PlayerInfo {
+    id: PlayerId;
+    socket: Socket;
+    role_request: "first" | "second";
+    submachine_id: "player1" | "player2";
+}
+
 export interface GameRoomContext {
     // since game master operates on 'player1' and 'player2' tokens
     // we need to keep mapping of those to player ids.
@@ -54,7 +62,7 @@ export interface GameRoomContext {
     // latest game state, reported after a move was accepted by game master
     latest_game_state?: GameState;
 
-    players: Map<PlayerId, any>; // Map: PlayerId => PlayerContext
+    players: Map<PlayerId, PlayerInfo>;
 
     // Used to synchronize calls to socket.emit (state transitions
     // could cause racing in actions, if action is delaying emit to the
