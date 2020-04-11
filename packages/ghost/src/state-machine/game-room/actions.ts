@@ -11,7 +11,8 @@ import {
     GameRoomContext,
     GameRoomEvent,
     GameRoom_PlayerConnected,
-    GameRoom_PlayerPickRole
+    GameRoom_PlayerPickRole,
+    PlayerInfo
 } from "./game-room-schema";
 import { PlayerId } from "../../connectors/gmaster_api";
 
@@ -19,6 +20,26 @@ import {
     PlayerSetup_SocConnect_Event,
     PlayerSetup_SocIwannabetracer_Event
 } from "../player-setup/player-setup-schema";
+
+type PromiseOnFulfill<T> = Promise<T>["then"] extends (
+    onfulfilled: infer A
+) => any
+    ? A
+    : never;
+type PromiseOnReject<T> = Promise<T>["then"] extends (
+    onfulfilled: any,
+    onrejected: infer A
+) => any
+    ? A
+    : never;
+
+function chain_promise<F = any, R = any>(
+    ctx: GameRoomContext,
+    onfulfilled: PromiseOnFulfill<F>,
+    onrejected?: PromiseOnReject<R>
+) {
+    ctx.emits_sync = ctx.emits_sync.then(onfulfilled, onrejected);
+}
 
 // shortcut
 type ActionF = ActionFunction<GameRoomContext, GameRoomEvent>;
@@ -113,14 +134,14 @@ export const emit_your_turn: ActionF = ctx => {
 };
 
 export const emit_opponent_moved: ActionF = ctx => {
-    const it = ctx.players.values();
+    const it: Iterator<PlayerInfo, PlayerInfo> = ctx.players.values();
     const p1 = it.next().value;
     const p2 = it.next().value;
 
     const socket_waiting = ctx.current_player == p1.id ? p2.socket : p1.socket;
     const socket_moving = ctx.players.get(ctx.current_player!)!.socket;
 
-    ctx.emits_sync = ctx.emits_sync.then(() =>
+    chain_promise(ctx, () =>
         ctx
             .getBoard(ctx.game_id!)
             .then(board => {

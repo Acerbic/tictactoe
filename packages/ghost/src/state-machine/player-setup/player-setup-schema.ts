@@ -9,7 +9,6 @@ export interface PlayerSetupStateSchema {
     states: {
         wait4client: {};
         wait4rolepick: {};
-        rolerequested: {};
         end: {};
     };
 }

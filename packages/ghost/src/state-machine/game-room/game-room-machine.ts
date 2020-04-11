@@ -47,16 +47,6 @@ export const state_machine: MachineConfig<
                                 src: "player-setup-machine",
                                 data: { parent_ctx: (ctx: any) => ctx },
                                 onDone: "player_setup_done"
-                            },
-                            on: {
-                                // passing down events to appopriate player-setup submachines
-                                // this counts as self-transition for game-room machine
-                                SOC_CONNECT: {
-                                    actions: pass_setup_player_connect
-                                },
-                                SOC_IWANNABETRACER: {
-                                    actions: pass_setup_player_pick
-                                }
                             }
                         },
                         player_setup_done: { type: "final" }
@@ -71,20 +61,20 @@ export const state_machine: MachineConfig<
                                 src: "player-setup-machine",
                                 data: { parent_ctx: (ctx: any) => ctx },
                                 onDone: "player_setup_done"
-                            },
-                            on: {
-                                // passing down events to appopriate player-setup submachines
-                                // this counts as self-transition for game-room machine
-                                SOC_CONNECT: {
-                                    actions: pass_setup_player_connect
-                                },
-                                SOC_IWANNABETRACER: {
-                                    actions: pass_setup_player_pick
-                                }
                             }
                         },
                         player_setup_done: { type: "final" }
                     }
+                }
+            },
+            on: {
+                // passing down events to appopriate player-setup submachines
+                // this counts as self-transition for game-room machine
+                SOC_CONNECT: {
+                    actions: pass_setup_player_connect
+                },
+                SOC_IWANNABETRACER: {
+                    actions: pass_setup_player_pick
                 }
             },
             onDone: "role_requests_taken"
@@ -94,7 +84,7 @@ export const state_machine: MachineConfig<
                 "": [
                     {
                         cond: "role_requests_conflict",
-                        target: "roles_assigned",
+                        target: "creating_game",
                         actions: [
                             "emit_iamalreadytracer",
                             "cointoss_roles",
@@ -102,13 +92,13 @@ export const state_machine: MachineConfig<
                         ]
                     },
                     {
-                        target: "roles_assigned",
+                        target: "creating_game",
                         actions: ["set_current_player", "emit_you_are_it"]
                     }
                 ]
             }
         },
-        roles_assigned: {
+        creating_game: {
             invoke: {
                 src: "invoke_create_game",
                 onDone: {
@@ -120,33 +110,33 @@ export const state_machine: MachineConfig<
         wait4move: {
             on: {
                 SOC_MOVE: {
-                    target: "game_move"
+                    target: "making_move"
                 }
             }
         },
-        game_move: {
+        making_move: {
             invoke: {
                 src: "invoke_make_move",
-                onDone: {
-                    target: "move_result",
-                    actions: "emit_opponent_moved"
-                }
-            }
-        },
-        move_result: {
-            on: {
-                "": [
+                onDone: [
                     {
                         cond: ctx => ctx.latest_game_state!.game == "wait",
                         target: "wait4move",
-                        actions: ["switch_player", "emit_your_turn"]
+                        actions: [
+                            "emit_opponent_moved",
+                            "switch_player",
+                            "emit_your_turn"
+                        ]
                     },
                     {
                         cond: ctx =>
                             ctx.latest_game_state!.game == "over" ||
                             ctx.latest_game_state!.game == "draw",
                         target: "end",
-                        actions: ["emit_gameover", "call_dropgame"]
+                        actions: [
+                            "emit_opponent_moved",
+                            "emit_gameover",
+                            "call_dropgame"
+                        ]
                     }
                 ]
             }
@@ -162,7 +152,7 @@ export const machine_options: Partial<MachineOptions<
     GameRoomEvent
 >> = {
     services: {
-        "player-setup-machine": player_setup(),
+        "player-setup-machine": () => player_setup(),
 
         /**
          * call CreateGame Rest API on game master

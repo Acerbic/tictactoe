@@ -31,10 +31,9 @@ export interface GameRoomSchema extends StateSchema<GameRoomContext> {
             };
         };
         role_requests_taken: {};
-        roles_assigned: {};
+        creating_game: {};
         wait4move: {};
-        game_move: {};
-        move_result: {};
+        making_move: {};
         end: {};
     };
 }
@@ -49,6 +48,8 @@ export interface PlayerInfo {
 export interface GameRoomContext {
     // since game master operates on 'player1' and 'player2' tokens
     // we need to keep mapping of those to player ids.
+    // these fields can be undefined during a game's setup, but after that
+    // will be holding permanent values
     player1?: PlayerId;
     player2?: PlayerId;
 
@@ -61,6 +62,7 @@ export interface GameRoomContext {
     // latest game state, reported after a move was accepted by game master
     latest_game_state?: GameState;
 
+    // this also tracks player's socket for disconnection/reconnection
     players: Map<PlayerId, PlayerInfo>;
 
     // Used to synchronize calls to socket.emit (state transitions

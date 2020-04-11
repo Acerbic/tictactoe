@@ -29,14 +29,9 @@ const player_setup_machine_config: MachineConfig<
         wait4rolepick: {
             on: {
                 SOC_IWANNABETRACER: {
-                    target: "rolerequested",
+                    target: "end",
                     actions: "store_role_requested"
                 }
-            }
-        },
-        rolerequested: {
-            after: {
-                0: "end"
             }
         },
         end: {
