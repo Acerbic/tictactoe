@@ -5,21 +5,29 @@
 const errorlog = require("debug")("ttt:ghost:error");
 const debuglog = require("debug")("ttt:ghost:debug");
 
-import { send, SendExpr, ActionFunction } from "xstate";
+import {
+    ActionFunction,
+    assign,
+    AnyEventObject,
+    spawn,
+    forwardTo,
+    Spawnable,
+    Actor,
+    AssignAction
+} from "xstate";
+import { Socket } from "socket.io";
 
 import {
     GameRoomContext,
     GameRoomEvent,
-    GameRoom_PlayerConnected,
-    GameRoom_PlayerPickRole,
-    PlayerInfo
+    PlayerInfo,
+    PlayerSetupMachineInfo,
+    GameRoom_PlayerDropped,
+    GameRoom_Start
 } from "./game-room-schema";
 import { PlayerId } from "../../connectors/gmaster_api";
 
-import {
-    PlayerSetup_SocConnect_Event,
-    PlayerSetup_SocIwannabetracer_Event
-} from "../player-setup/player-setup-schema";
+import player_setup from "../player-setup/player-setup-machine";
 
 type PromiseOnFulfill<T> = Promise<T>["then"] extends (
     onfulfilled: infer A
@@ -44,49 +52,12 @@ function chain_promise<F = any, R = any>(
 // shortcut
 type ActionF = ActionFunction<GameRoomContext, GameRoomEvent>;
 
-const translate_setup_player_connect: SendExpr<
-    GameRoomContext,
-    GameRoom_PlayerConnected
-> = (ctx, event): PlayerSetup_SocConnect_Event => event;
-
-// NOTE: xstate a bit broken, only allows functional mapping in xstate.send()
-// from an event type to itself
-const translate_setup_player_pick: SendExpr<
-    GameRoomContext,
-    any /*GameRoom_PlayerPickRole*/
-> = (
-    ctx,
-    { type, player_id, role }
-): any /*PlayerSetup_SocIwannabetracer_Event*/ => ({
-    type,
-    player_id,
-    role
-});
-
-/**
- * Transform/pass event to an invoked service
- * GameRoom_PlayerConnected -> PlayerSetup_SocConnect_Event
- */
-export const pass_setup_player_connect = send(translate_setup_player_connect, {
-    to: (_, event) => event.submachine_id
-});
-
-/**
- * Transform/pass event to an invoked service
- * GameRoom_PlayerPickRole -> PlayerSetup_SocIwannabetracer_Event
- */
-export const pass_setup_player_pick = send(translate_setup_player_pick, {
-    to: (_, event) => event.submachine_id
-});
-
 /**
  * Initialize "current_player" context property based on
  * player's requested roles
  */
 export const set_current_player: ActionF = ctx => {
-    const it = ctx.players.values();
-    const p1 = it.next().value;
-    const p2 = it.next().value;
+    const [p1, p2] = ctx.players.values();
 
     ctx.current_player = p1.role_request == "second" ? p2.id : p1.id;
 };
@@ -134,9 +105,7 @@ export const emit_your_turn: ActionF = ctx => {
 };
 
 export const emit_opponent_moved: ActionF = ctx => {
-    const it: Iterator<PlayerInfo, PlayerInfo> = ctx.players.values();
-    const p1 = it.next().value;
-    const p2 = it.next().value;
+    const [p1, p2] = ctx.players.values();
 
     const socket_waiting = ctx.current_player == p1.id ? p2.socket : p1.socket;
     const socket_moving = ctx.players.get(ctx.current_player!)!.socket;
@@ -194,3 +163,96 @@ export const emit_gameover: ActionF = ctx => {
 export const call_dropgame: ActionF = ctx => {
     ctx.gm_connect.post("DropGame", {}, ctx.game_id);
 };
+
+export const spawn_player_setup_machines = assign<GameRoomContext>(() => {
+    debuglog("action: spawn_player_setup_machines");
+    return {
+        player_setup_machines: new Set<PlayerSetupMachineInfo>()
+            .add({
+                id: "player1setup",
+                occupiedBy: null,
+                ref: spawn(player_setup() as Spawnable, "player1setup")
+            })
+            .add({
+                id: "player2setup",
+                occupiedBy: null,
+                ref: spawn(player_setup() as Spawnable, "player2setup")
+            })
+    };
+});
+
+function findSetupMachine(
+    ctx: GameRoomContext,
+    id: Socket["id"] | null
+): PlayerSetupMachineInfo | null {
+    for (let psm of ctx.player_setup_machines) {
+        if (psm.occupiedBy === id) {
+            return psm;
+        }
+    }
+    return null;
+}
+
+/**
+ * If this returns "" - it means something went wrong
+ */
+export const forward_soc_event = forwardTo<GameRoomContext, GameRoomEvent>(
+    (ctx, event) => {
+        if (event.type === "SOC_CONNECT") {
+            let free = findSetupMachine(ctx, null);
+            if (free) {
+                free.occupiedBy = event.socket.id;
+                return free.ref as Actor<any, AnyEventObject>;
+            }
+        }
+        if (event.type === "SOC_DISCONNECT") {
+            let existing = findSetupMachine(ctx, event.socket.id);
+            return (existing?.ref as Actor<any, AnyEventObject>) || "";
+        }
+        if (event.type === "SOC_IWANNABETRACER") {
+            let existing = findSetupMachine(ctx, event.socket.id);
+            return (existing?.ref as Actor<any, AnyEventObject>) || "";
+        }
+        return "";
+    }
+);
+
+export const store_player_info: ActionF = (ctx, event) => {
+    if (event.type == "PLAYER_READY") {
+        const { player_id, socket, desired_role } = event;
+        ctx.players.set(player_id, {
+            id: player_id,
+            socket,
+            role_request: desired_role
+        });
+    }
+};
+
+/**
+ * Delete from players list and free player-setup machine
+ */
+export const remove_player_info = <ActionF>((
+    ctx,
+    event: GameRoom_PlayerDropped
+) => {
+    let pl_info = ctx.players.get(event.player_id);
+    if (pl_info) {
+        let machine_info = findSetupMachine(ctx, pl_info.socket.id);
+        if (machine_info) {
+            machine_info.occupiedBy = null;
+        }
+        ctx.players.delete(event.player_id);
+    }
+});
+
+export const __assign_ctx_players = assign<GameRoomContext, GameRoom_Start>(
+    ctx => {
+        let [p1, p2] = ctx.players.values();
+
+        return {
+            player1: p1.id,
+            player2: p2.id,
+            current_player: p1.id
+        };
+    }
+) as AssignAction<GameRoomContext, GameRoomEvent>;

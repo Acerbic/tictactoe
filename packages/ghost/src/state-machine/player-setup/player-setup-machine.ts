@@ -4,12 +4,21 @@
  */
 
 const debuglog = require("debug")("ttt:ghost:debug");
-import { Machine, StateMachine, MachineConfig, MachineOptions } from "xstate";
+import {
+    Machine,
+    StateMachine,
+    MachineConfig,
+    MachineOptions,
+    assign,
+    AssignAction,
+    sendParent
+} from "xstate";
 import {
     PlayerSetupContext,
     PlayerSetupStateSchema,
     PlayerSetupEvent
 } from "./player-setup-schema";
+import { GameRoom_PlayerConnected } from "../game-room/game-room-schema";
 
 const player_setup_machine_config: MachineConfig<
     PlayerSetupContext,
@@ -29,14 +38,26 @@ const player_setup_machine_config: MachineConfig<
         wait4rolepick: {
             on: {
                 SOC_IWANNABETRACER: {
-                    target: "end",
+                    target: "ready2play",
                     actions: "store_role_requested"
+                },
+                SOC_DISCONNECT: {
+                    target: "wait4client",
+                    actions: assign<PlayerSetupContext, PlayerSetupEvent>({
+                        player_id: undefined,
+                        socket: undefined,
+                        desired_role: "first"
+                    })
                 }
             }
         },
-        end: {
-            type: "final"
+        ready2play: {
+            type: "final",
+            onEntry: "announce_player_ready"
         }
+    },
+    context: {
+        desired_role: "first"
     }
 };
 
@@ -45,32 +66,36 @@ const player_setup_machine_options: Partial<MachineOptions<
     PlayerSetupEvent
 >> = {
     actions: {
-        add_player: (ctx, event: PlayerSetupEvent) => {
-            if (event.type === "SOC_CONNECT") {
-                const { player_id, submachine_id, socket } = event;
-                ctx.parent_ctx.players.set(player_id, {
-                    id: player_id,
-                    socket,
-                    role_request: "first", // default
-                    submachine_id
-                });
+        add_player: assign<PlayerSetupContext, GameRoom_PlayerConnected>(
+            (_, { player_id, socket }) => ({
+                player_id,
+                socket,
+                desired_role: "first"
+            })
+        ) as AssignAction<PlayerSetupContext, PlayerSetupEvent>,
 
-                ctx.parent_ctx[submachine_id] = player_id;
-            }
-        },
-        emit_choose_role: (ctx, event: PlayerSetupEvent) => {
+        emit_choose_role: (ctx, event) => {
             if (event.type === "SOC_CONNECT") {
-                const socket = ctx.parent_ctx.players.get(event.player_id)!
-                    .socket;
-                socket.emit("choose_role");
+                event.socket.emit("choose_role");
             }
         },
-        store_role_requested: (ctx, event: PlayerSetupEvent) => {
+
+        store_role_requested: assign((ctx, event) => {
             if (event.type === "SOC_IWANNABETRACER") {
-                ctx.parent_ctx.players.get(event.player_id)!.role_request =
-                    event.role;
+                return { desired_role: event.role };
+            } else {
+                return {};
             }
-        }
+        }),
+
+        announce_player_ready: sendParent(
+            ({ player_id, socket, desired_role }: PlayerSetupContext) => ({
+                type: "PLAYER_READY",
+                player_id,
+                socket,
+                desired_role
+            })
+        )
     }
 };
 
@@ -84,5 +109,6 @@ type PlayerSetupMachine = StateMachine<
  * Generate a machine for player setup
  */
 export = function player_setup(): PlayerSetupMachine {
+    debuglog("player_setup() called!");
     return Machine(player_setup_machine_config, player_setup_machine_options);
 };

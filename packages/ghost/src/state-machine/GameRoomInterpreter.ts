@@ -54,29 +54,6 @@ export class GameRoomInterpreter extends Interpreter<
         roomCount++;
     }
 
-    // add_player(player_id: PlayerId, socket: Socket): "player1" | "player2" {
-    //     if (this.playersCount() >= 2) {
-    //         throw "Can't join a room with 2 players already";
-    //     }
-
-    //     let submachine_id: "player1" | "player2" | null = null;
-    //     if (this.machine.context?.player1 === undefined) {
-    //         submachine_id = "player1";
-    //     } else if (this.machine.context?.player2 === undefined) {
-    //         submachine_id = "player2";
-    //     } else {
-    //         throw "Both player slots already defined. Logic error beep-boop.";
-    //     }
-
-    //     this.send({
-    //         type: "SOC_CONNECT",
-    //         player_id,
-    //         socket,
-    //         submachine_id
-    //     });
-    //     return submachine_id;
-    // }
-
     getDetailedStateValue() {
         return {
             value: this.state.value,
@@ -88,7 +65,7 @@ export class GameRoomInterpreter extends Interpreter<
         };
     }
 
-    on_socket_connection(socket: any) {
+    on_socket_connection(socket: Socket) {
         // check connection query arguments
         const player_id: PlayerId = socket.handshake.query.playerId;
         if (!player_id) {
@@ -111,12 +88,16 @@ export class GameRoomInterpreter extends Interpreter<
             | "player2";
 
         // attach variety of socket event handlers
-        socket.on("disconnect", function() {
+        socket.on("disconnect", () => {
             debuglog(
                 "user disconnected (id=%s), socket=%s",
                 player_id,
                 socket.id
             );
+            this.send({
+                type: "SOC_DISCONNECT",
+                socket
+            });
         });
 
         // listen for further socket messages
@@ -125,9 +106,8 @@ export class GameRoomInterpreter extends Interpreter<
             // raise machine EVENT
             this.send({
                 type: "SOC_IWANNABETRACER",
-                player_id,
-                role,
-                submachine_id
+                socket,
+                role
             });
         });
 
@@ -140,8 +120,7 @@ export class GameRoomInterpreter extends Interpreter<
         this.send({
             type: "SOC_CONNECT",
             player_id,
-            socket,
-            submachine_id
+            socket
         });
     }
 

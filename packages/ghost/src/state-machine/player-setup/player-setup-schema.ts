@@ -3,32 +3,29 @@
  */
 
 import { PlayerId } from "../../connectors/gmaster_api";
-import { GameRoomContext } from "../game-room/game-room-schema";
+import {
+    GameRoom_PlayerConnected,
+    GameRoom_PlayerDisconnected,
+    GameRoom_PlayerPickRole
+} from "../game-room/game-room-schema";
+import { Socket } from "socket.io";
 
 export interface PlayerSetupStateSchema {
     states: {
         wait4client: {};
         wait4rolepick: {};
-        end: {};
+        ready2play: {};
     };
 }
 
-export type PlayerSetup_SocConnect_Event = {
-    type: "SOC_CONNECT";
-    player_id: PlayerId;
-    submachine_id: "player1" | "player2";
-    socket: any;
-};
-export type PlayerSetup_SocIwannabetracer_Event = {
-    type: "SOC_IWANNABETRACER";
-    player_id: PlayerId;
-    role: "first" | "second";
-};
-
+// accept events forwarded from parent machine
 export type PlayerSetupEvent =
-    | PlayerSetup_SocConnect_Event
-    | PlayerSetup_SocIwannabetracer_Event;
+    | GameRoom_PlayerConnected
+    | GameRoom_PlayerDisconnected
+    | GameRoom_PlayerPickRole;
 
 export type PlayerSetupContext = {
-    parent_ctx: GameRoomContext;
+    socket?: Socket;
+    player_id?: PlayerId;
+    desired_role: "first" | "second";
 };
