@@ -24,25 +24,12 @@ import { PrismaGetGameBoard } from "../../connectors/prisma_connector";
 
 export interface GameRoomSchema extends StateSchema<GameRoomContext> {
     states: {
-        players: {
-            states: {
-                boot: {};
-                setup: {};
-                player_ready: {};
-                game_in_progress: {};
-                end: {};
-            };
-        };
-        game: {
-            states: {
-                setup: {};
-                role_requests_taken: {};
-                creating_game: {};
-                wait4move: {};
-                making_move: {};
-                end: {};
-            };
-        };
+        players_setup: {};
+        roles_setup: {};
+        creating_game: {};
+        wait4move: {};
+        making_move: {};
+        end: {};
     };
 }
 
@@ -53,14 +40,14 @@ export interface PlayerInfo {
     role_request: "first" | "second";
 }
 
-export interface PlayerSetupMachineInfo {
-    id: string;
-    ref: Actor<PlayerSetupContext, PlayerSetupEvent>;
-    occupiedBy: Socket["id"] | null;
-}
-
 export interface GameRoomContext {
-    player_setup_machines: Set<PlayerSetupMachineInfo>;
+    // this holds spawned submachines during players setup phase
+    // size of this set shows number of parallel players going
+    // (or finished) player setup
+    player_setup_machines: Map<
+        Socket["id"],
+        Actor<PlayerSetupContext, PlayerSetupEvent>
+    >;
     // since game master operates on 'player1' and 'player2' tokens
     // we need to keep mapping of those to player ids.
     // these fields can be undefined during a game's setup, but after that
@@ -77,7 +64,9 @@ export interface GameRoomContext {
     // latest game state, reported after a move was accepted by game master
     latest_game_state?: GameState;
 
+    // holds records for players who finished setup and ready to play.
     // this also tracks player's socket for disconnection/reconnection
+    // during the game
     players: Map<PlayerId, PlayerInfo>;
 
     // Used to synchronize calls to socket.emit (state transitions
@@ -99,14 +88,15 @@ export type GameRoom_PlayerConnected = {
 
 export type GameRoom_PlayerDisconnected = {
     type: "SOC_DISCONNECT";
+    player_id: PlayerId;
     socket: Socket;
 };
 
-export interface GameRoom_PlayerPickRole extends AnyEventObject {
+export type GameRoom_PlayerPickRole = {
     type: "SOC_IWANNABETRACER";
     socket: Socket;
     role: "first" | "second";
-}
+};
 
 export type GameRoom_PlayerReady = {
     type: "PLAYER_READY";
@@ -115,21 +105,9 @@ export type GameRoom_PlayerReady = {
     desired_role: "first" | "second";
 };
 
-export type GameRoom_PlayerDropped = {
-    type: "PLAYER_DROPPED";
-    player_id: PlayerId;
-};
-
-export type GameRoom_Start = {
-    type: "START_THE_GAME";
-};
-
 export type GameRoomEvent =
     | GameRoom_PlayerConnected
     | GameRoom_PlayerDisconnected
     | GameRoom_PlayerReady
-    | GameRoom_PlayerDropped
     | GameRoom_PlayerPickRole
-    | GameRoom_Start
-    | { type: "SOC_MOVE"; move: { row: number; column: number } }
-    | PlayerSetupEvent;
+    | { type: "SOC_MOVE"; move: { row: number; column: number } };

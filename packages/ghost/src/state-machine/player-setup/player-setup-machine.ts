@@ -4,6 +4,8 @@
  */
 
 const debuglog = require("debug")("ttt:ghost:debug");
+const actionlog = require("debug")("ttt:ghost:action");
+
 import {
     Machine,
     StateMachine,
@@ -25,35 +27,24 @@ const player_setup_machine_config: MachineConfig<
     PlayerSetupStateSchema,
     PlayerSetupEvent
 > = {
-    initial: "wait4client",
+    initial: "wait4rolepick",
     states: {
-        wait4client: {
-            on: {
-                SOC_CONNECT: {
-                    target: "wait4rolepick",
-                    actions: ["add_player", "emit_choose_role"]
-                }
-            }
-        },
         wait4rolepick: {
+            onEntry: "emit_choose_role",
             on: {
                 SOC_IWANNABETRACER: {
                     target: "ready2play",
                     actions: "store_role_requested"
                 },
-                SOC_DISCONNECT: {
-                    target: "wait4client",
-                    actions: assign<PlayerSetupContext, PlayerSetupEvent>({
-                        player_id: undefined,
-                        socket: undefined,
-                        desired_role: "first"
-                    })
-                }
+                SOC_DISCONNECT: "aborted"
             }
         },
         ready2play: {
             type: "final",
             onEntry: "announce_player_ready"
+        },
+        aborted: {
+            type: "final"
         }
     },
     context: {
@@ -66,21 +57,13 @@ const player_setup_machine_options: Partial<MachineOptions<
     PlayerSetupEvent
 >> = {
     actions: {
-        add_player: assign<PlayerSetupContext, GameRoom_PlayerConnected>(
-            (_, { player_id, socket }) => ({
-                player_id,
-                socket,
-                desired_role: "first"
-            })
-        ) as AssignAction<PlayerSetupContext, PlayerSetupEvent>,
-
-        emit_choose_role: (ctx, event) => {
-            if (event.type === "SOC_CONNECT") {
-                event.socket.emit("choose_role");
-            }
+        emit_choose_role: ctx => {
+            actionlog(ctx.player_id, "emit_choose_role");
+            ctx.socket!.emit("choose_role");
         },
 
         store_role_requested: assign((ctx, event) => {
+            actionlog(ctx.player_id, "store_role_requested");
             if (event.type === "SOC_IWANNABETRACER") {
                 return { desired_role: event.role };
             } else {
@@ -89,12 +72,15 @@ const player_setup_machine_options: Partial<MachineOptions<
         }),
 
         announce_player_ready: sendParent(
-            ({ player_id, socket, desired_role }: PlayerSetupContext) => ({
-                type: "PLAYER_READY",
-                player_id,
-                socket,
-                desired_role
-            })
+            ({ player_id, socket, desired_role }: PlayerSetupContext) => {
+                actionlog(player_id, "announce_player_ready");
+                return {
+                    type: "PLAYER_READY",
+                    player_id,
+                    socket,
+                    desired_role
+                };
+            }
         )
     }
 };
@@ -108,7 +94,12 @@ type PlayerSetupMachine = StateMachine<
 /**
  * Generate a machine for player setup
  */
-export = function player_setup(): PlayerSetupMachine {
-    debuglog("player_setup() called!");
-    return Machine(player_setup_machine_config, player_setup_machine_options);
+export = function player_setup(
+    initialCtx?: PlayerSetupContext
+): PlayerSetupMachine {
+    const m: PlayerSetupMachine = Machine(
+        player_setup_machine_config,
+        player_setup_machine_options
+    );
+    return initialCtx ? m.withContext(initialCtx) : m;
 };

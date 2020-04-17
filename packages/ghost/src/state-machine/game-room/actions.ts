@@ -4,26 +4,17 @@
 
 const errorlog = require("debug")("ttt:ghost:error");
 const debuglog = require("debug")("ttt:ghost:debug");
+const actionlog = require("debug")("ttt:ghost:action");
 
-import {
-    ActionFunction,
-    assign,
-    AnyEventObject,
-    spawn,
-    forwardTo,
-    Spawnable,
-    Actor,
-    AssignAction
-} from "xstate";
-import { Socket } from "socket.io";
+import { ActionFunction, assign, spawn, forwardTo, Spawnable } from "xstate";
 
 import {
     GameRoomContext,
     GameRoomEvent,
-    PlayerInfo,
-    PlayerSetupMachineInfo,
-    GameRoom_PlayerDropped,
-    GameRoom_Start
+    GameRoom_PlayerConnected,
+    GameRoom_PlayerDisconnected,
+    GameRoom_PlayerReady,
+    GameRoom_PlayerPickRole
 } from "./game-room-schema";
 import { PlayerId } from "../../connectors/gmaster_api";
 
@@ -49,23 +40,17 @@ function chain_promise<F = any, R = any>(
     ctx.emits_sync = ctx.emits_sync.then(onfulfilled, onrejected);
 }
 
-// shortcut
-type ActionF = ActionFunction<GameRoomContext, GameRoomEvent>;
-
-/**
- * Initialize "current_player" context property based on
- * player's requested roles
- */
-export const set_current_player: ActionF = ctx => {
-    const [p1, p2] = ctx.players.values();
-
-    ctx.current_player = p1.role_request == "second" ? p2.id : p1.id;
-};
+// shortcut to ActionFunction signature
+type ActionF<E extends GameRoomEvent = GameRoomEvent> = ActionFunction<
+    GameRoomContext,
+    E
+>;
 
 /**
  * Send 'iamalreadytracer' to both clients
  */
 export const emit_iamalreadytracer: ActionF = ctx => {
+    actionlog("emit_iamalreadytracer");
     ctx.emits_sync.then(() => {
         ctx.players.forEach(player_context =>
             player_context.socket.emit("iamalreadytracer")
@@ -77,6 +62,7 @@ export const emit_iamalreadytracer: ActionF = ctx => {
  * Send 'you_are_it' to both clients
  */
 export const emit_you_are_it: ActionF = ctx => {
+    actionlog("emit_you_are_it");
     ctx.emits_sync.then(() => {
         ctx.players.forEach(player_context =>
             player_context.socket.emit(
@@ -88,16 +74,10 @@ export const emit_you_are_it: ActionF = ctx => {
 };
 
 /**
- * Toss a coin and decide who has the first turn
- */
-export const cointoss_roles: ActionF = ctx => {
-    ctx.current_player = Math.random() > 0.5 ? ctx.player1 : ctx.player2;
-};
-
-/**
  * Send 'your_turn' to a client
  */
 export const emit_your_turn: ActionF = ctx => {
+    actionlog("emit_your_turn");
     const socket = ctx.players.get(ctx.current_player!)!.socket;
     ctx.emits_sync.then(() => {
         socket.emit("your_turn");
@@ -138,7 +118,22 @@ export const emit_opponent_moved: ActionF = ctx => {
     );
 };
 
+export const finalize_setup: ActionF = ctx => {
+    actionlog("finalize_setup");
+    const [p1, p2] = ctx.players.values();
+    ctx.player1 = p1.id;
+    ctx.player2 = p2.id;
+
+    if (p1.role_request === p2.role_request) {
+        // role request conflict -> cointoss
+        ctx.current_player = Math.random() > 0.5 ? p1.id : p2.id;
+    } else {
+        ctx.current_player = p1.role_request == "second" ? p2.id : p1.id;
+    }
+};
+
 export const switch_player: ActionF = ctx => {
+    actionlog("switch_player");
     ctx.current_player =
         ctx.current_player == ctx.player1 ? ctx.player2 : ctx.player1;
 };
@@ -164,95 +159,53 @@ export const call_dropgame: ActionF = ctx => {
     ctx.gm_connect.post("DropGame", {}, ctx.game_id);
 };
 
-export const spawn_player_setup_machines = assign<GameRoomContext>(() => {
-    debuglog("action: spawn_player_setup_machines");
+export const spawn_player_setup_actor = assign<
+    GameRoomContext,
+    GameRoom_PlayerConnected
+>((ctx, { player_id, socket }) => {
     return {
-        player_setup_machines: new Set<PlayerSetupMachineInfo>()
-            .add({
-                id: "player1setup",
-                occupiedBy: null,
-                ref: spawn(player_setup() as Spawnable, "player1setup")
-            })
-            .add({
-                id: "player2setup",
-                occupiedBy: null,
-                ref: spawn(player_setup() as Spawnable, "player2setup")
-            })
+        player_setup_machines: ctx.player_setup_machines.set(
+            socket.id,
+            spawn(
+                player_setup({
+                    player_id,
+                    socket,
+                    desired_role: "first"
+                }) as Spawnable
+            )
+        )
     };
 });
-
-function findSetupMachine(
-    ctx: GameRoomContext,
-    id: Socket["id"] | null
-): PlayerSetupMachineInfo | null {
-    for (let psm of ctx.player_setup_machines) {
-        if (psm.occupiedBy === id) {
-            return psm;
-        }
-    }
-    return null;
-}
 
 /**
  * If this returns "" - it means something went wrong
  */
-export const forward_soc_event = forwardTo<GameRoomContext, GameRoomEvent>(
-    (ctx, event) => {
-        if (event.type === "SOC_CONNECT") {
-            let free = findSetupMachine(ctx, null);
-            if (free) {
-                free.occupiedBy = event.socket.id;
-                return free.ref as Actor<any, AnyEventObject>;
-            }
-        }
-        if (event.type === "SOC_DISCONNECT") {
-            let existing = findSetupMachine(ctx, event.socket.id);
-            return (existing?.ref as Actor<any, AnyEventObject>) || "";
-        }
-        if (event.type === "SOC_IWANNABETRACER") {
-            let existing = findSetupMachine(ctx, event.socket.id);
-            return (existing?.ref as Actor<any, AnyEventObject>) || "";
-        }
-        return "";
-    }
-);
+export const forward_soc_event = forwardTo<
+    GameRoomContext,
+    GameRoom_PlayerDisconnected | GameRoom_PlayerPickRole
+>((ctx, event) => ctx.player_setup_machines.get(event.socket.id) as any);
 
-export const store_player_info: ActionF = (ctx, event) => {
-    if (event.type == "PLAYER_READY") {
-        const { player_id, socket, desired_role } = event;
-        ctx.players.set(player_id, {
-            id: player_id,
-            socket,
-            role_request: desired_role
-        });
-    }
+export const add_ready_player: ActionF<GameRoom_PlayerReady> = (
+    ctx,
+    { player_id, socket, desired_role }
+) => {
+    actionlog("add_ready_player");
+    ctx.players.set(player_id, {
+        id: player_id,
+        socket,
+        role_request: desired_role
+    });
 };
 
 /**
  * Delete from players list and free player-setup machine
  */
-export const remove_player_info = <ActionF>((
+export const clear_player_setup: ActionF<GameRoom_PlayerDisconnected> = (
     ctx,
-    event: GameRoom_PlayerDropped
+    event
 ) => {
-    let pl_info = ctx.players.get(event.player_id);
-    if (pl_info) {
-        let machine_info = findSetupMachine(ctx, pl_info.socket.id);
-        if (machine_info) {
-            machine_info.occupiedBy = null;
-        }
-        ctx.players.delete(event.player_id);
-    }
-});
-
-export const __assign_ctx_players = assign<GameRoomContext, GameRoom_Start>(
-    ctx => {
-        let [p1, p2] = ctx.players.values();
-
-        return {
-            player1: p1.id,
-            player2: p2.id,
-            current_player: p1.id
-        };
-    }
-) as AssignAction<GameRoomContext, GameRoomEvent>;
+    const actor = ctx.player_setup_machines.get(event.socket.id);
+    actor && actor.stop && actor.stop();
+    ctx.player_setup_machines.delete(event.socket.id);
+    ctx.players.delete(event.player_id);
+};

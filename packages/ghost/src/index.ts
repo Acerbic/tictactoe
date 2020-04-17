@@ -33,10 +33,7 @@ const GameRooms = new Map<PlayerId, GameRoomInterpreter>();
 let waitingRoom = new GameRoomInterpreter(deps);
 waitingRoom
     .onTransition(
-        (r => (
-            state: State<GameRoomContext, GameRoomEvent, GameRoomSchema>,
-            event: GameRoomEvent
-        ) =>
+        (r => (_: any, event: GameRoomEvent) =>
             statelog(
                 "Transition in room {%s}: (%s) -> %O",
                 r.roomId,
@@ -58,7 +55,7 @@ io.on("connection", function(socket) {
         // TODO:
     } else {
         // connect the player to existing room
-        waitingRoom.on_socket_connection(socket);
+        waitingRoom.onSocketConnection(socket);
         GameRooms.set(player_id, waitingRoom);
 
         // if the room is full, create a new room for future players
@@ -66,14 +63,7 @@ io.on("connection", function(socket) {
             waitingRoom = new GameRoomInterpreter(deps);
             waitingRoom
                 .onTransition(
-                    (r => (
-                        state: State<
-                            GameRoomContext,
-                            GameRoomEvent,
-                            GameRoomSchema
-                        >,
-                        event: GameRoomEvent
-                    ) =>
+                    (r => (_: any, event: GameRoomEvent) =>
                         statelog(
                             "Transition in room {%s}: (%s) -> %O",
                             r.roomId,

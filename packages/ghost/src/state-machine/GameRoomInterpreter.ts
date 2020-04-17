@@ -36,6 +36,7 @@ export class GameRoomInterpreter extends Interpreter<
     GameRoomEvent
 > {
     roomId: string;
+    promiseChain: Promise<any>;
 
     /**
      * starts up a separate game room to host a game
@@ -43,6 +44,7 @@ export class GameRoomInterpreter extends Interpreter<
     constructor(deps: GameRoomInterpreterDependencies) {
         super(
             Machine(state_machine, machine_options, <GameRoomContext>{
+                player_setup_machines: new Map(),
                 players: new Map(),
                 emits_sync: Promise.resolve(),
 
@@ -52,6 +54,7 @@ export class GameRoomInterpreter extends Interpreter<
         );
         this.roomId = "#" + roomCount;
         roomCount++;
+        this.promiseChain = Promise.resolve();
     }
 
     getDetailedStateValue() {
@@ -65,7 +68,7 @@ export class GameRoomInterpreter extends Interpreter<
         };
     }
 
-    on_socket_connection(socket: Socket) {
+    onSocketConnection(socket: Socket) {
         // check connection query arguments
         const player_id: PlayerId = socket.handshake.query.playerId;
         if (!player_id) {
@@ -96,7 +99,8 @@ export class GameRoomInterpreter extends Interpreter<
             );
             this.send({
                 type: "SOC_DISCONNECT",
-                socket
+                socket,
+                player_id
             });
         });
 
@@ -125,4 +129,14 @@ export class GameRoomInterpreter extends Interpreter<
     }
 
     playersCount = () => (this.state ? this.state.context.players.size : 0);
+
+    isRoomFull = () =>
+        this.state ? this.state.context.player_setup_machines.size >= 2 : true;
+
+    isGameInProgress = () =>
+        this.state
+            ? this.playersCount() >= 2 &&
+              !this.state.matches("setup") &&
+              !this.state.done
+            : false;
 }
