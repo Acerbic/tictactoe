@@ -6,7 +6,7 @@ const errorlog = require("debug")("ttt:ghost:error");
 const debuglog = require("debug")("ttt:ghost:debug");
 const actionlog = require("debug")("ttt:ghost:action");
 
-import { ActionFunction, assign, spawn, forwardTo, Spawnable } from "xstate";
+import { ActionFunction, assign, spawn, Spawnable } from "xstate";
 
 import {
     GameRoomContext,
@@ -178,12 +178,18 @@ export const spawn_player_setup_actor = assign<
 });
 
 /**
- * If this returns "" - it means something went wrong
+ * Conditionally forwards event to a child actor
+ * (actor must be not in final state)
  */
-export const forward_soc_event = forwardTo<
-    GameRoomContext,
+export const forward_soc_event: ActionF<
     GameRoom_PlayerDisconnected | GameRoom_PlayerPickRole
->((ctx, event) => ctx.player_setup_machines.get(event.socket.id) as any);
+> = (ctx, event) => {
+    actionlog("forward_soc_event", event.socket.id);
+    const actor = ctx.player_setup_machines.get(event.socket.id);
+    if (actor?.state && !actor.state.done) {
+        actor.send(event);
+    }
+};
 
 export const add_ready_player: ActionF<GameRoom_PlayerReady> = (
     ctx,
@@ -204,8 +210,9 @@ export const clear_player_setup: ActionF<GameRoom_PlayerDisconnected> = (
     ctx,
     event
 ) => {
+    actionlog("clear_player_setup");
     const actor = ctx.player_setup_machines.get(event.socket.id);
-    actor && actor.stop && actor.stop();
+    actor?.stop?.();
     ctx.player_setup_machines.delete(event.socket.id);
     ctx.players.delete(event.player_id);
 };

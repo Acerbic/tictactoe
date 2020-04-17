@@ -19,6 +19,7 @@ import {
     CreateGameRequest,
     MakeMoveRequest
 } from "../../connectors/gmaster_api";
+import { log } from "xstate/lib/actions";
 
 export const state_machine: MachineConfig<
     GameRoomContext,
@@ -103,6 +104,11 @@ export const state_machine: MachineConfig<
         end: {
             type: "final"
         }
+    },
+    on: {
+        // might be overtaken by deeper (more specific) states transitions
+        SOC_CONNECT: { actions: log("Top-state connect") },
+        SOC_DISCONNECT: { actions: log("Top-state disconnect") }
     }
 };
 
