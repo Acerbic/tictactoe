@@ -14,7 +14,6 @@ export default class TestPage extends React.Component {
             gameId: null,
             playerId: null,
             board: Array(Array(3), Array(3), Array(3)),
-            currentPlayer: "player1",
             step: "initial",
             statusMessage: "Ready to connect to the game"
         };
@@ -54,6 +53,7 @@ export default class TestPage extends React.Component {
                 this.setState({ socket });
 
                 socket.once("choose_role", () => this.s_choose_role());
+                socket.once("reconnection", data => this.s_reconnection(data));
             }
         })();
     }
@@ -66,6 +66,27 @@ export default class TestPage extends React.Component {
 
         this.state.socket.emit("move", { row, column });
         this.setState({ step: "meme_review", statusMessage: "Move sent." });
+    }
+
+    // reconnect to an existing game
+    s_reconnection(data) {
+        this.setState({
+            gameId: data.gameId,
+            step: data.step,
+            board: data.board,
+            statusMessage:
+                data.step === "my-turn"
+                    ? "Your turn! Destroy them!"
+                    : "Enemy is trying to not lose..."
+        });
+        this.state.socket.on("your_turn", () => this.s_your_turn());
+        this.state.socket.on("meme_accepted", data =>
+            this.s_meme_accepted(data)
+        );
+        this.state.socket.on("opponent_moved", data =>
+            this.s_opponent_moved(data)
+        );
+        this.state.socket.on("gameover", data => this.s_gameover(data));
     }
 
     // received 'choose_role' message

@@ -107,8 +107,10 @@ export const state_machine: MachineConfig<
     },
     on: {
         // might be overtaken by deeper (more specific) states transitions
-        SOC_CONNECT: { actions: log("Top-state connect") },
-        SOC_DISCONNECT: { actions: log("Top-state disconnect") }
+        SOC_CONNECT: { actions: [log("Top-state connect"), "top_reconnect"] },
+        SOC_DISCONNECT: {
+            actions: [log("Top-state disconnect"), "top_disconnect"]
+        }
     }
 };
 

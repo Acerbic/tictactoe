@@ -216,3 +216,33 @@ export const clear_player_setup: ActionF<GameRoom_PlayerDisconnected> = (
     ctx.player_setup_machines.delete(event.socket.id);
     ctx.players.delete(event.player_id);
 };
+
+export const top_disconnect: ActionF<GameRoom_PlayerDisconnected> = (
+    ctx,
+    event
+) => {
+    // disconnect during game in progress - don't drop the game,
+    // await reconnection instead
+    // TODO: inform players of disconnect
+};
+
+export const top_reconnect: ActionF<GameRoom_PlayerDisconnected> = (
+    ctx,
+    event
+) => {
+    // reconnection during game in progress - update socket
+
+    ctx.players.get(event.player_id)!.socket = event.socket;
+
+    ctx.getBoard(ctx.game_id!).then(board => {
+        // update reconnected player's knowledge
+        event.socket.emit("reconnection", {
+            gameId: ctx.game_id,
+            board,
+            step:
+                ctx.current_player === event.player_id
+                    ? "my-turn"
+                    : "opponents-turn"
+        });
+    });
+};

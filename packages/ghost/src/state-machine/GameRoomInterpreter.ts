@@ -10,7 +10,7 @@ const errorlog = require("debug")("ttt:ghost:error");
 const debuglog = require("debug")("ttt:ghost:debug");
 
 import { Machine, Actor } from "xstate";
-import { Interpreter } from "xstate/lib/interpreter";
+import { Interpreter, StateListener } from "xstate/lib/interpreter";
 
 import { PlayerId } from "../connectors/gmaster_api";
 import GMConnector from "../connectors/gmaster_connector";
@@ -27,16 +27,28 @@ import { Socket } from "socket.io";
 export type GameRoomInterpreterDependencies = {
     gmaster: GMConnector;
     prisma: PrismaGetGameBoard;
+    promoteRoom: (room: GameRoomInterpreter) => void;
+    dropRoom: (room: GameRoomInterpreter) => void;
 };
 
 let roomCount = 1;
+
+type sendType = Interpreter<
+    GameRoomContext,
+    GameRoomSchema,
+    GameRoomEvent
+>["send"];
+
 export class GameRoomInterpreter extends Interpreter<
     GameRoomContext,
     GameRoomSchema,
     GameRoomEvent
 > {
-    roomId: string;
-    promiseChain: Promise<any>;
+    public roomId: string;
+    promiseChain: Promise<any>; // TODO: unused
+    public socketsInUse: Set<Socket["id"]>; // TODO: unused
+    deps: GameRoomInterpreterDependencies;
+    private superSend: sendType;
 
     /**
      * starts up a separate game room to host a game
@@ -53,11 +65,22 @@ export class GameRoomInterpreter extends Interpreter<
             })
         );
         this.roomId = "#" + roomCount;
+        this.deps = deps;
         roomCount++;
         this.promiseChain = Promise.resolve();
+        this.socketsInUse = new Set();
+
+        // only send events if not in final state
+        this.superSend = this.send;
+        this.send = (...args) => {
+            if (!this.state.done) {
+                return this.superSend(...args);
+            }
+            return this.state;
+        };
     }
 
-    getDetailedStateValue() {
+    public getDetailedStateValue() {
         return {
             value: this.state.value,
             children: Array.from(this.children.entries()).map(
@@ -78,17 +101,7 @@ export class GameRoomInterpreter extends Interpreter<
         }
         debuglog(`a user with id = ${player_id} connecting: ${socket.id}`);
 
-        const context = this.state.context;
-        if (context.players.size >= 2) {
-            // two players have already connected to the game. reject this connection!
-            errorlog("too many players %s. Refusing.", socket.id);
-            socket.disconnect(true);
-            return;
-        }
-
-        const submachine_id = ("player" + (context.players.size + 1)) as
-            | "player1"
-            | "player2";
+        this.socketsInUse.add(socket.id);
 
         // attach variety of socket event handlers
         socket.on("disconnect", () => {
@@ -102,12 +115,12 @@ export class GameRoomInterpreter extends Interpreter<
                 socket,
                 player_id
             });
+            this.socketsInUse.delete(socket.id);
         });
 
         // listen for further socket messages
 
         socket.once("iwannabetracer", (role: "first" | "second") => {
-            // raise machine EVENT
             this.send({
                 type: "SOC_IWANNABETRACER",
                 socket,
@@ -119,8 +132,22 @@ export class GameRoomInterpreter extends Interpreter<
             this.send({ type: "SOC_MOVE", move });
         });
 
+        const promoter: StateListener<
+            GameRoomContext,
+            GameRoomEvent
+        > = state => {
+            if (!state.matches("players_setup")) {
+                this.deps.promoteRoom(this);
+                this.off(promoter); // self-remove ("once")
+            }
+        };
+        this.onTransition(promoter);
+        this.onDone(e => {
+            this.deps.dropRoom(this);
+        });
+
         // raise machine EVENT - SOC_CONNECT
-        debuglog("User %s connected as %s", player_id, submachine_id);
+        debuglog("User %s connected", player_id);
         this.send({
             type: "SOC_CONNECT",
             player_id,

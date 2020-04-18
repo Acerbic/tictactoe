@@ -4,13 +4,7 @@
  * players to join, be in progress, or be finished
  */
 
-import {
-    StateSchema,
-    Actor,
-    Interpreter,
-    EventObject,
-    AnyEventObject
-} from "xstate";
+import { StateSchema, Actor } from "xstate";
 import { Socket } from "socket.io";
 import { PlayerId, GameId, GameState } from "../../connectors/gmaster_api";
 import {

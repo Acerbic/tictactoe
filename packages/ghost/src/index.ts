@@ -25,57 +25,83 @@ const io = socketio(http, {
 
 const deps = {
     gmaster: new GmasterConnector(),
-    prisma: GetGameBoard
+    prisma: GetGameBoard,
+    // TODO: if game-room machine is implemented as actor in higher-order
+    //       ghost machine, these would be events to the parent
+    promoteRoom: (room: GameRoomInterpreter) => {
+        awaitingGameRooms = [...awaitingGameRooms.filter(r => r !== room)];
+        for (let playerId of room.state.context.players.keys()) {
+            activeGameRooms.set(playerId, room);
+        }
+    },
+    dropRoom: (room: GameRoomInterpreter) => {
+        activeGameRooms.delete(room.state.context.player1!);
+        activeGameRooms.delete(room.state.context.player2!);
+    }
 };
 
-const GameRooms = new Map<PlayerId, GameRoomInterpreter>();
+// rooms awaiting players to join
+let awaitingGameRooms: Array<GameRoomInterpreter> = [];
 
-let waitingRoom = new GameRoomInterpreter(deps);
-waitingRoom
-    .onTransition(
-        (r => (_: any, event: GameRoomEvent) =>
-            statelog(
-                "Transition in room {%s}: (%s) -> %O",
-                r.roomId,
-                event.type,
-                r.getDetailedStateValue()
-            ))(waitingRoom)
-    )
-    .start();
-
-hostlog("game room created: %s", waitingRoom.roomId);
+// Rooms with games in progress (for reconnect)
+const activeGameRooms = new Map<PlayerId, GameRoomInterpreter>();
 
 // attach important socket handlers
 io.on("connection", function(socket) {
     // TODO: auth
     const player_id = socket.handshake.query.playerId;
 
-    if (GameRooms.has(player_id)) {
-        // reconnection to the game
-        // TODO:
-    } else {
-        // connect the player to existing room
-        waitingRoom.onSocketConnection(socket);
-        GameRooms.set(player_id, waitingRoom);
+    const room = getRoomForSocketEvent(socket.id, player_id);
 
-        // if the room is full, create a new room for future players
-        if (waitingRoom.playersCount() >= 2) {
-            waitingRoom = new GameRoomInterpreter(deps);
-            waitingRoom
-                .onTransition(
-                    (r => (_: any, event: GameRoomEvent) =>
-                        statelog(
-                            "Transition in room {%s}: (%s) -> %O",
-                            r.roomId,
-                            event.type,
-                            r.getDetailedStateValue()
-                        ))(waitingRoom)
-                )
-                .start();
-            hostlog("game room created: %s", waitingRoom.roomId);
-        }
-    }
+    hostlog(
+        "On-connection for player %s, dropping to room: %s",
+        player_id,
+        room.roomId
+    );
+    room.onSocketConnection(socket);
 });
+
+function getRoomForSocketEvent(
+    socketId: Socket["id"],
+    playerId: string
+): GameRoomInterpreter {
+    hostlog("getting room for player %s", playerId);
+    hostlog(
+        "awaiting: ",
+        awaitingGameRooms.map(r => r.roomId)
+    );
+    hostlog(
+        "active: ",
+        [...activeGameRooms.entries()].map(([p, r]) => `${p} => ${r.roomId}`)
+    );
+
+    // if there's an active room for this player ID, treat this as reconnect
+    if (activeGameRooms.has(playerId)) {
+        return activeGameRooms.get(playerId)!;
+    }
+
+    // if there are waiting rooms in the queue, pick one from the queue
+    if (awaitingGameRooms.length > 0) {
+        return awaitingGameRooms[0];
+    }
+
+    // create a fresh new room
+    const newRoom = new GameRoomInterpreter(deps);
+    newRoom
+        .onTransition(
+            (r => (_: any, event: GameRoomEvent) =>
+                statelog(
+                    "Transition in room {%s}: (%s) -> %O",
+                    r.roomId,
+                    event.type,
+                    r.getDetailedStateValue()
+                ))(newRoom)
+        )
+        .start();
+    hostlog("game room created: %s", newRoom.roomId);
+    awaitingGameRooms.push(newRoom);
+    return newRoom;
+}
 
 // start listening for connections
 http.listen(3060, function() {
