@@ -1,4 +1,11 @@
-export default ({ board, onCellClick }) => (
+import React from "react";
+
+interface GameBoardProps {
+    board: Array<Array<string>>;
+    onCellClick: (i: number, j: number) => void;
+}
+
+export const GameBoard: React.FC<GameBoardProps> = ({ board, onCellClick }) => (
     <div id="board">
         {[0, 1, 2].map(i =>
             [0, 1, 2].map(j => (
@@ -34,3 +41,5 @@ export default ({ board, onCellClick }) => (
         `}</style>
     </div>
 );
+
+export default GameBoard;

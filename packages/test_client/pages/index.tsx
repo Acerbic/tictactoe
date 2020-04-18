@@ -3,25 +3,30 @@ import React from "react";
 import io from "socket.io-client";
 
 import GameBoard from "../components/GameBoard";
+
+// TODO: generalize
 const game_host_uri = "http://localhost:3060";
 
 export default class TestPage extends React.Component {
+    state = {
+        socket: null,
+        gameId: null,
+        playerId: null,
+        board: Array(Array(3), Array(3), Array(3)),
+        step: "initial",
+        statusMessage: "Ready to connect to the game"
+    };
+
     constructor(props) {
         super(props);
-
-        this.state = {
-            socket: null,
-            gameId: null,
-            playerId: null,
-            board: Array(Array(3), Array(3), Array(3)),
-            step: "initial",
-            statusMessage: "Ready to connect to the game"
-        };
     }
 
     btnConnect() {
         console.log("New game button pressed");
-        const playerId = document.getElementsByName("pid")[0].value;
+        const playerId = (document.getElementsByName(
+            "pid"
+        )[0] as HTMLInputElement).value;
+
         if (!playerId) {
             // alert("Players' ids must be set!");
             this.setState({
