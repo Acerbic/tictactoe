@@ -20,7 +20,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({ board, onCellClick }) => (
                 </div>
             ))
         )}
-        <style jsx global>{`
+        <style jsx>{`
             #board {
                 transform: perspective(1000px) rotateY(15deg);
                 width: 14em;

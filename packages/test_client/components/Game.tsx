@@ -1,12 +1,13 @@
 import io from "socket.io-client";
 import React, { useState } from "react";
-import { interpret } from "xstate";
 import { useMachine } from "@xstate/react";
 
 import GameBoard from "./GameBoard";
 import RoleBtns from "./RoleBtns";
 import ConnectGroup from "./ConnectGroup";
 import { clientMachine } from "../state-machine/state-machine";
+
+import styles from "./Game.module.css";
 
 // TODO: generalize
 interface P {
@@ -173,15 +174,15 @@ export const Game: React.FC<P> = props => {
     const statusMessage = sm;
     return (
         <>
-            <section className="content">
-                <div id="game">
+            <section className={styles.content}>
+                <div id={styles.game}>
                     <GameBoard
                         board={board}
                         onCellClick={(i, j) => cellClicked(i, j)}
                     />
                     <h1>{statusMessage}</h1>
                 </div>
-                <div id="controls" className="container-fluid">
+                <div id={styles.controls} className="container-fluid">
                     <div className="row">
                         <form className="col">
                             <ConnectGroup
@@ -196,49 +197,6 @@ export const Game: React.FC<P> = props => {
                     </div>
                 </div>
             </section>
-            <style jsx global>{`
-                #page {
-                    background-color: bisque;
-                    position: absolute;
-                    top: 0;
-                    bottom: 0;
-                    left: 0;
-                    right: 0;
-                }
-
-                section.content {
-                    height: 100%;
-                    display: flex;
-                    align-content: stretch;
-                }
-                #game {
-                    width: 70%;
-                    display: flex;
-                    flex-wrap: wrap;
-                    justify-content: center;
-                    align-items: center;
-                    align-content: center;
-                    /* height: 100%; */
-                }
-                #game h1 {
-                    width: 100%;
-                    text-align: center;
-                }
-                #controls {
-                    background-color: darkkhaki;
-                    width: 30%;
-                }
-                #controls .row {
-                    align-items: center;
-                    height: 100%;
-                }
-                #step-role {
-                    margin: 2em 0;
-                }
-                #step-role button {
-                    margin-right: 1em;
-                }
-            `}</style>
         </>
     );
 };

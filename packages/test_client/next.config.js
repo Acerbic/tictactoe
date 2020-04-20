@@ -1,2 +1,5 @@
-const withCSS = require("@zeit/next-css");
-module.exports = withCSS();
+module.exports = {
+    env: {
+        game_host_url: process.env.GHOST_URL
+    }
+};

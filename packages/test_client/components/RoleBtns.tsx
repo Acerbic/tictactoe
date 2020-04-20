@@ -1,12 +1,14 @@
 import React from "react";
 
+import styles from "./RoleBtns.module.css";
+
 interface P {
     disabled: boolean;
     btnClick: (role: string) => void;
 }
 
 export const RoleBtns: React.FC<P> = props => (
-    <div id="step-role">
+    <div className={styles["step-role"]}>
         <button
             id="btnFirst"
             type="button"

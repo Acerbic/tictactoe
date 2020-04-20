@@ -8,7 +8,7 @@
     "deploy": "echo ~Not Implemented~",
     "deploy:prod": "deploy",
     "down:prod": "echo ~Not Implemented~",
-    "start:client": "cd packages/test_client && yarn dev",
+    "start:client": "cross-env-shell GHOST_URL=http://localhost:3060 \"cd packages/test_client && yarn dev\"",
     "start:gmaster": "cross-env-shell PRISMA_URL=http://localhost:4466 \"cd packages/gmaster && yarn start\"",
     "start:ghost": "cross-env-shell PRISMA_URL=http://localhost:4466 GMASTER_URI=localhost:3000 \"cd packages/ghost && yarn start\""
   },
