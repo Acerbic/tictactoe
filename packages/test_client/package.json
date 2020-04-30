@@ -24,6 +24,7 @@
   },
   "devDependencies": {
     "@types/react": "^16.9.34",
+    "@types/socket.io-client": "^1.4.32",
     "rimraf": "^3.0.2"
   }
 }

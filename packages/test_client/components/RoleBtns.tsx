@@ -4,7 +4,7 @@ import styles from "./RoleBtns.module.css";
 
 interface P {
     disabled: boolean;
-    btnClick: (role: string) => void;
+    chooseRole: (role: string) => void;
 }
 
 export const RoleBtns: React.FC<P> = props => (
@@ -14,7 +14,7 @@ export const RoleBtns: React.FC<P> = props => (
             type="button"
             className="btn btn-primary"
             disabled={props.disabled || null}
-            onClick={() => props.btnClick("first")}
+            onClick={() => props.chooseRole("first")}
         >
             First
         </button>
@@ -23,7 +23,7 @@ export const RoleBtns: React.FC<P> = props => (
             type="button"
             className="btn btn-primary"
             disabled={props.disabled || null}
-            onClick={() => props.btnClick("second")}
+            onClick={() => props.chooseRole("second")}
         >
             Second
         </button>

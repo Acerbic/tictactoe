@@ -1,0 +1,17 @@
+#board {
+    transform: perspective(1000px) rotateY(15deg);
+    width: 14em;
+    height: 14em;
+    justify-content: space-around;
+    display: flex;
+    flex-wrap: wrap;
+}
+.board-cell {
+    flex-grow: 0;
+    height: 4em;
+    width: 4em;
+    border: solid 3px darkslategrey;
+    box-sizing: border-box;
+    line-height: 3em;
+    text-align: center;
+}
