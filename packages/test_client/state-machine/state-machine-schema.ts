@@ -23,6 +23,11 @@ export interface ClientSchema extends StateSchema<ClientContext> {
 type ConnectedEvent = {
     type: "CONNECTED";
 };
+export type ReconnectedEvent = {
+    type: "RECONNECTED";
+    isMyTurn: boolean;
+};
+
 type RoomDroppedEvent = {
     type: "ROOM_DROPPED";
 };
@@ -44,6 +49,7 @@ export type GameEndEvent = {
 export type ClientEvent =
     | RoomDroppedEvent
     | ConnectedEvent
+    | ReconnectedEvent
     | RolePicked
     | GameStartEvent
     | NextTurnEvent

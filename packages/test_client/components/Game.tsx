@@ -18,8 +18,8 @@ interface P {
 
 export const Game: React.FC<P> = props => {
     const [socket, setSocket] = useState(null);
-    const [gameId, setGameId] = useState(null);
-    const [playerId, setPlayerId] = useState(null);
+    // const [gameId, setGameId] = useState(null);
+    // const [playerId, setPlayerId] = useState(null);
     const [board, setBoard] = useState<GameBoardProps["board"]>([
         [undefined, undefined, undefined],
         [undefined, undefined, undefined],
@@ -28,7 +28,7 @@ export const Game: React.FC<P> = props => {
     const [state, send] = useMachine(clientMachine);
 
     const btnConnect = (playerId: string) => {
-        setPlayerId(playerId);
+        // setPlayerId(playerId);
 
         console.log("Opening socket");
         const socket = io(props.game_host_uri, {

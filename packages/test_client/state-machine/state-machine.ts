@@ -2,10 +2,11 @@ import {
     ClientSchema,
     ClientContext,
     ClientEvent,
+    ReconnectedEvent,
     GameStartEvent,
     GameEndEvent
 } from "./state-machine-schema";
-import { Machine, EventObject } from "xstate";
+import { Machine } from "xstate";
 
 export const clientMachine = Machine<ClientContext, ClientSchema, ClientEvent>(
     {
@@ -14,7 +15,16 @@ export const clientMachine = Machine<ClientContext, ClientSchema, ClientEvent>(
         states: {
             initial: {
                 on: {
-                    CONNECTED: "role_picking"
+                    CONNECTED: "role_picking",
+                    RECONNECTED: [
+                        {
+                            cond: "reconnected_our_turn",
+                            target: "game.our_turn"
+                        },
+                        {
+                            target: "game.their_turn"
+                        }
+                    ]
                 }
             },
             role_picking: {
@@ -51,7 +61,10 @@ export const clientMachine = Machine<ClientContext, ClientSchema, ClientEvent>(
                 on: {
                     GAME_END: [
                         { cond: "draw", target: "end_draw" },
-                        { cond: "victory", target: "end_victory" },
+                        {
+                            cond: "victory",
+                            target: "end_victory"
+                        },
                         { target: "end_defeat" }
                     ]
                 }
@@ -64,10 +77,10 @@ export const clientMachine = Machine<ClientContext, ClientSchema, ClientEvent>(
     },
     {
         guards: {
-            started_with_our_turn: (ctx, event: GameStartEvent) =>
-                event.role === "first",
-            draw: (ctx, event: GameEndEvent) => event.outcome === "meh",
-            victory: (ctx, event: GameEndEvent) => event.outcome === "win"
+            reconnected_our_turn: (_, e: ReconnectedEvent) => e.isMyTurn,
+            started_with_our_turn: (_, e: GameStartEvent) => e.role === "first",
+            draw: (_, e: GameEndEvent) => e.outcome === "meh",
+            victory: (_, e: GameEndEvent) => e.outcome === "win"
         }
     },
     {}
