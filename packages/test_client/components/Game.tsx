@@ -16,19 +16,21 @@ interface P {
     game_host_uri: string;
 }
 
+const initialBoard: GameBoardProps["board"] = [
+    [undefined, undefined, undefined],
+    [undefined, undefined, undefined],
+    [undefined, undefined, undefined]
+];
+
 export const Game: React.FC<P> = props => {
-    const [socket, setSocket] = useState(null);
+    const [socket, setSocket] = useState<SocketIOClient.Socket>(null);
     // const [gameId, setGameId] = useState(null);
-    // const [playerId, setPlayerId] = useState(null);
-    const [board, setBoard] = useState<GameBoardProps["board"]>([
-        [undefined, undefined, undefined],
-        [undefined, undefined, undefined],
-        [undefined, undefined, undefined]
-    ]);
+    const [playerId, setPlayerId] = useState(null);
+    const [board, setBoard] = useState(initialBoard);
     const [state, send] = useMachine(clientMachine);
 
-    const btnConnect = (playerId: string) => {
-        // setPlayerId(playerId);
+    const openSocket2Ghost = (playerId: string) => {
+        setPlayerId(playerId);
 
         console.log("Opening socket");
         const socket = io(props.game_host_uri, {
@@ -67,10 +69,7 @@ export const Game: React.FC<P> = props => {
         <>
             <section className={styles.content}>
                 <div id={styles.game}>
-                    <GameBoard
-                        board={board}
-                        onCellClick={(i, j) => cellClicked(i, j)}
-                    />
+                    <GameBoard board={board} onCellClick={cellClicked} />
                     <h1>
                         <StateMessage state={state} />
                     </h1>
@@ -80,12 +79,34 @@ export const Game: React.FC<P> = props => {
                         <form className="col">
                             <ConnectGroup
                                 disabled={!state.matches("initial")}
-                                connectBtn={btnConnect}
+                                connectBtn={playerId => {
+                                    send({
+                                        type: "CONNECTION_INITIATED"
+                                    });
+                                    openSocket2Ghost(playerId);
+                                }}
                             />
                             <RoleBtns
                                 disabled={!state.matches("role_picking")}
                                 chooseRole={chooseRole}
                             />
+                            {state.matches("end") && (
+                                <button
+                                    type="button"
+                                    className="btn btn-primary"
+                                    onClick={() => {
+                                        socket.close();
+                                        setBoard(initialBoard);
+                                        setSocket(null);
+                                        send({
+                                            type: "NEW_GAME"
+                                        });
+                                        openSocket2Ghost(playerId);
+                                    }}
+                                >
+                                    Another Game
+                                </button>
+                            )}
                         </form>
                     </div>
                 </div>

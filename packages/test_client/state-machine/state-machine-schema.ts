@@ -5,6 +5,7 @@ export interface ClientContext {}
 export interface ClientSchema extends StateSchema<ClientContext> {
     states: {
         initial: {};
+        awaiting_connection: {};
         role_picking: {};
         waiting4opponent: {};
         game: {
@@ -14,9 +15,13 @@ export interface ClientSchema extends StateSchema<ClientContext> {
             };
         };
 
-        end_draw: {};
-        end_victory: {};
-        end_defeat: {};
+        end: {
+            states: {
+                draw: {};
+                victory: {};
+                defeat: {};
+            };
+        };
     };
 }
 
@@ -46,11 +51,25 @@ export type GameEndEvent = {
     outcome: "win" | "fail" | "meh";
 };
 
+type NewGameEvent = {
+    type: "NEW_GAME";
+};
+// as if page reset, disconnecting
+type ResetEvent = {
+    type: "RESET";
+};
+type ConnectionInitiatedEvent = {
+    type: "CONNECTION_INITIATED";
+};
+
 export type ClientEvent =
     | RoomDroppedEvent
+    | ConnectionInitiatedEvent
     | ConnectedEvent
     | ReconnectedEvent
     | RolePicked
     | GameStartEvent
     | NextTurnEvent
-    | GameEndEvent;
+    | GameEndEvent
+    | NewGameEvent
+    | ResetEvent;

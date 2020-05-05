@@ -15,6 +15,11 @@ export const clientMachine = Machine<ClientContext, ClientSchema, ClientEvent>(
         states: {
             initial: {
                 on: {
+                    CONNECTION_INITIATED: "awaiting_connection"
+                }
+            },
+            awaiting_connection: {
+                on: {
                     CONNECTED: "role_picking",
                     RECONNECTED: [
                         {
@@ -60,19 +65,26 @@ export const clientMachine = Machine<ClientContext, ClientSchema, ClientEvent>(
                 },
                 on: {
                     GAME_END: [
-                        { cond: "draw", target: "end_draw" },
+                        { cond: "draw", target: "end.draw" },
                         {
                             cond: "victory",
-                            target: "end_victory"
+                            target: "end.victory"
                         },
-                        { target: "end_defeat" }
+                        { target: "end.defeat" }
                     ]
                 }
             },
 
-            end_draw: { type: "final" },
-            end_victory: { type: "final" },
-            end_defeat: { type: "final" }
+            end: {
+                states: {
+                    draw: {},
+                    victory: {},
+                    defeat: {}
+                },
+                on: {
+                    NEW_GAME: "awaiting_connection"
+                }
+            }
         }
     },
     {

@@ -18,6 +18,8 @@ my hand on a number of exciting technologies.
 
 ## Install prerequisites
 
+Docker, Docker Compose,
+
 ```bash
 npm i -g yarn lerna
 ```
