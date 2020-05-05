@@ -6,6 +6,7 @@ import { GameBoard, GameBoardProps } from "./GameBoard";
 import RoleBtns from "./RoleBtns";
 import ConnectGroup from "./ConnectGroup";
 import StateMessage from "./StateMessage";
+import NewGameButton from "./NewGameButton";
 import { clientMachine } from "../state-machine/state-machine";
 import { attachListeners } from "./socket_handlers";
 
@@ -65,6 +66,16 @@ export const Game: React.FC<P> = props => {
         send({ type: "ROLE_PICKED" });
     };
 
+    const newGameClick = () => {
+        socket.close();
+        setBoard(initialBoard);
+        setSocket(null);
+        send({
+            type: "NEW_GAME"
+        });
+        openSocket2Ghost(playerId);
+    };
+
     return (
         <>
             <section className={styles.content}>
@@ -91,21 +102,7 @@ export const Game: React.FC<P> = props => {
                                 chooseRole={chooseRole}
                             />
                             {state.matches("end") && (
-                                <button
-                                    type="button"
-                                    className="btn btn-primary"
-                                    onClick={() => {
-                                        socket.close();
-                                        setBoard(initialBoard);
-                                        setSocket(null);
-                                        send({
-                                            type: "NEW_GAME"
-                                        });
-                                        openSocket2Ghost(playerId);
-                                    }}
-                                >
-                                    Another Game
-                                </button>
+                                <NewGameButton onClick={newGameClick} />
                             )}
                         </form>
                     </div>
