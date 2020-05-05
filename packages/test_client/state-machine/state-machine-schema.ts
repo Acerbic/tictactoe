@@ -1,6 +1,8 @@
-import { StateSchema, AnyEventObject } from "xstate";
+import { StateSchema } from "xstate";
 
-export interface ClientContext {}
+export interface ClientContext {
+    socket: SocketIOClient.Socket | null;
+}
 
 export interface ClientSchema extends StateSchema<ClientContext> {
     states: {
@@ -38,6 +40,7 @@ type RoomDroppedEvent = {
 };
 type RolePicked = {
     type: "ROLE_PICKED";
+    role: "first" | "second";
 };
 export type GameStartEvent = {
     type: "GAME_START";
@@ -53,6 +56,7 @@ export type GameEndEvent = {
 
 type NewGameEvent = {
     type: "NEW_GAME";
+    socket: SocketIOClient.Socket;
 };
 // as if page reset, disconnecting
 type ResetEvent = {
@@ -60,6 +64,7 @@ type ResetEvent = {
 };
 type ConnectionInitiatedEvent = {
     type: "CONNECTION_INITIATED";
+    socket: SocketIOClient.Socket;
 };
 
 export type ClientEvent =

@@ -6,7 +6,10 @@ import {
     GameStartEvent,
     GameEndEvent
 } from "./state-machine-schema";
-import { Machine } from "xstate";
+import { attachListeners } from "./socket_handlers";
+
+import { Machine, Interpreter, assign } from "xstate";
+import io from "socket.io-client";
 
 export const clientMachine = Machine<ClientContext, ClientSchema, ClientEvent>(
     {
@@ -15,7 +18,10 @@ export const clientMachine = Machine<ClientContext, ClientSchema, ClientEvent>(
         states: {
             initial: {
                 on: {
-                    CONNECTION_INITIATED: "awaiting_connection"
+                    CONNECTION_INITIATED: {
+                        target: "awaiting_connection",
+                        actions: assign({ socket: (ctx, e) => e.socket })
+                    }
                 }
             },
             awaiting_connection: {
@@ -35,7 +41,13 @@ export const clientMachine = Machine<ClientContext, ClientSchema, ClientEvent>(
             role_picking: {
                 on: {
                     ROOM_DROPPED: "initial",
-                    ROLE_PICKED: "waiting4opponent"
+                    ROLE_PICKED: {
+                        target: "waiting4opponent",
+                        actions: [
+                            (ctx, e) =>
+                                ctx.socket.emit("iwannabetracer", e.role)
+                        ]
+                    }
                 }
             },
             waiting4opponent: {
@@ -82,7 +94,10 @@ export const clientMachine = Machine<ClientContext, ClientSchema, ClientEvent>(
                     defeat: {}
                 },
                 on: {
-                    NEW_GAME: "awaiting_connection"
+                    NEW_GAME: {
+                        target: "awaiting_connection",
+                        actions: assign({ socket: (ctx, e) => e.socket })
+                    }
                 }
             }
         }
@@ -95,5 +110,63 @@ export const clientMachine = Machine<ClientContext, ClientSchema, ClientEvent>(
             victory: (_, e: GameEndEvent) => e.outcome === "win"
         }
     },
-    {}
+    {
+        socket: null
+    }
 );
+
+/**
+ * While raising specific xstate events, this class opens a websocket and
+ * configures it to listen and raise xstate events as a result of socket messages.
+ */
+export class SocketedInterpreter extends Interpreter<
+    ClientContext,
+    ClientSchema,
+    ClientEvent
+> {
+    game_host_uri: string;
+    setBoard: Function;
+
+    constructor(game_host_uri: string, setBoard: Function) {
+        super(clientMachine);
+        this.game_host_uri = game_host_uri;
+        this.setBoard = setBoard;
+    }
+
+    private reopenSocket(playerId: string): SocketIOClient.Socket {
+        if (this.state.context.socket !== null) {
+            this.state.context.socket.close();
+        }
+        console.log("Opening socket");
+        const socket = io(this.game_host_uri, {
+            timeout: 20000000,
+            reconnection: false,
+            query: {
+                playerId
+            }
+        });
+        if (!socket) {
+            console.error("Failed to open a socket");
+            throw "Failed to open a socket";
+        } else {
+            console.log("Opened socket");
+
+            attachListeners(socket, this.send, playerId, this.setBoard as any);
+            return socket;
+        }
+    }
+
+    raise_player_connect(playerId: string) {
+        this.send({
+            type: "CONNECTION_INITIATED",
+            socket: this.reopenSocket(playerId)
+        });
+    }
+
+    raise_new_game(playerId: string) {
+        this.send({
+            type: "NEW_GAME",
+            socket: this.reopenSocket(playerId)
+        });
+    }
+}

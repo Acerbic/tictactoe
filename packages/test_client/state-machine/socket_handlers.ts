@@ -8,7 +8,7 @@ import {
     ClientContext,
     ClientEvent,
     ClientSchema
-} from "../state-machine/state-machine-schema";
+} from "./state-machine-schema";
 
 // I feel dirty
 // @see https://stackoverflow.com/questions/51740472/typescript-returntype-of-a-generic-function-not-working

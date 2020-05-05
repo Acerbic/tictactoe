@@ -1,14 +1,16 @@
-import io from "socket.io-client";
 import React, { useState } from "react";
-import { useMachine } from "@xstate/react";
+import { useService } from "@xstate/react";
 
 import { GameBoard, GameBoardProps } from "./GameBoard";
 import RoleBtns from "./RoleBtns";
 import ConnectGroup from "./ConnectGroup";
 import StateMessage from "./StateMessage";
 import NewGameButton from "./NewGameButton";
-import { clientMachine } from "../state-machine/state-machine";
-import { attachListeners } from "./socket_handlers";
+import {
+    ClientEvent,
+    ClientContext
+} from "../state-machine/state-machine-schema";
+import { SocketedInterpreter } from "../state-machine/state-machine";
 
 import styles from "./Game.module.css";
 
@@ -24,56 +26,39 @@ const initialBoard: GameBoardProps["board"] = [
 ];
 
 export const Game: React.FC<P> = props => {
-    const [socket, setSocket] = useState<SocketIOClient.Socket>(null);
     // const [gameId, setGameId] = useState(null);
     const [playerId, setPlayerId] = useState(null);
     const [board, setBoard] = useState(initialBoard);
-    const [state, send] = useMachine(clientMachine);
 
-    const openSocket2Ghost = (playerId: string) => {
-        setPlayerId(playerId);
+    // persisting instance in the state, so it is not recreated on
+    // every render
+    const [interpr] = useState(
+        new SocketedInterpreter(props.game_host_uri, setBoard)
+    );
+    if (!interpr.initialized) {
+        // to prevent reinitilization during re-rendering
+        interpr.start();
+    }
+    const [state, send] = useService<ClientContext, ClientEvent>(interpr);
 
-        console.log("Opening socket");
-        const socket = io(props.game_host_uri, {
-            timeout: 20000000,
-            reconnection: false,
-            query: {
-                playerId
-            }
-        });
-        if (!socket) {
-            console.error("Failed to open a socket");
-        } else {
-            console.log("Opened socket");
-            setSocket(socket);
-
-            attachListeners(socket, send, playerId, setBoard);
-        }
-    };
-
+    // FIXME: submitting incorrect move (occupied cells)
     const cellClicked = (row, column) => {
         console.log(`clicked ${row} - ${column}`);
         if (!state.matches("game.our_turn")) {
             return;
         }
 
-        socket.emit("move", { row, column });
+        state.context.socket.emit("move", { row, column });
     };
 
     const chooseRole = role => {
         console.log("Requested to be " + role);
-        socket.emit("iwannabetracer", role);
-        send({ type: "ROLE_PICKED" });
+        send({ type: "ROLE_PICKED", role });
     };
 
     const newGameClick = () => {
-        socket.close();
         setBoard(initialBoard);
-        setSocket(null);
-        send({
-            type: "NEW_GAME"
-        });
-        openSocket2Ghost(playerId);
+        interpr.raise_new_game(playerId);
     };
 
     return (
@@ -91,10 +76,8 @@ export const Game: React.FC<P> = props => {
                             <ConnectGroup
                                 disabled={!state.matches("initial")}
                                 connectBtn={playerId => {
-                                    send({
-                                        type: "CONNECTION_INITIATED"
-                                    });
-                                    openSocket2Ghost(playerId);
+                                    setPlayerId(playerId);
+                                    interpr.raise_player_connect(playerId);
                                 }}
                             />
                             <RoleBtns
