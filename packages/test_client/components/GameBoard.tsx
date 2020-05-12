@@ -1,7 +1,9 @@
 import React, { useRef } from "react";
-import styles from "./GameBoard.module.css";
-
 import { useSpring, animated } from "react-spring";
+
+import GameBoardCell from "./GameBoardCell";
+
+import styles from "./GameBoard.module.css";
 
 const calc = (x, y, ref: React.MutableRefObject<HTMLElement>) => {
     const rect = ref.current.getBoundingClientRect();
@@ -40,15 +42,12 @@ export const GameBoard: React.FC<GameBoardProps> = ({ board, onCellClick }) => {
         >
             {[0, 1, 2].map(i =>
                 [0, 1, 2].map(j => (
-                    <div
+                    <GameBoardCell
                         key={`${i}${j}`}
-                        data-row={i}
-                        data-column={j}
-                        className={styles["board-cell"]}
                         onClick={() => onCellClick(i, j)}
                     >
                         {board[i][j]}
-                    </div>
+                    </GameBoardCell>
                 ))
             )}
         </animated.div>
