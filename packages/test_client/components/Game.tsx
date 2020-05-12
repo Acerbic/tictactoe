@@ -6,16 +6,11 @@ import RoleBtns from "./RoleBtns";
 import ConnectGroup from "./ConnectGroup";
 import StateMessage from "./StateMessage";
 import NewGameButton from "./NewGameButton";
-import {
-    ClientEvent,
-    ClientContext
-} from "../state-machine/state-machine-schema";
 import { clientMachine } from "../state-machine/state-machine";
 import { SocketGameConnector } from "../state-machine/SocketGameConnector";
 
 import styles from "./Game.module.css";
 
-// TODO: generalize
 interface P {
     game_host_uri: string;
 }
@@ -31,7 +26,7 @@ export const Game: React.FC<P> = props => {
     const [playerId, setPlayerId] = useState(null);
     const [board, setBoard] = useState(initialBoard);
 
-    const [state, send] = useMachine<ClientContext, ClientEvent>(clientMachine);
+    const [state, send] = useMachine(clientMachine);
 
     // FIXME: submitting incorrect move (occupied cells)
     const cellClicked = (row, column) => {

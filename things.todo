@@ -1,10 +1,10 @@
 ✔ put client into a docker container and dockerize the run sequence @done (01.04.2019, 2:27:41)
 ✘ investigate lerna --hoist when Yarn Workspaces aren't used @cancelled (30.03.2019, 1:13:09)
 ☐ dev setup with watchers-recompile-restart?
-☐ dev setup localhost domain instaed of "gmaster:3000"/"ghost", etc..
+✔ dev setup localhost domain instaed of "gmaster:3000"/"ghost", etc.. @done(20-05-13 01:16)
 ☐ use env vars everywhere
 ✔ lerna bootstrap - add -- --pure-lockfile to Dockerfiles @done (30.03.2019, 1:17:10)
 ☐ Docker HEALTHCHECK
-☐ investigate .gitignore in sub directory
+✘ investigate .gitignore in sub directory @cancelled(20-05-13 01:16)
 ☐ find a way to configure Lerna to split lock file into packages (to prevent excessive docker rebuilds on every lock change)
 ☐ write production deployment script and readme

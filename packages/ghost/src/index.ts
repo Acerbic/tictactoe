@@ -26,7 +26,7 @@ const io = socketio(http, {
 const deps = {
     gmaster: new GmasterConnector(),
     prisma: GetGameBoard,
-    // TODO: if game-room machine is implemented as actor in higher-order
+    // NOTE: if game-room machine is implemented as actor in higher-order
     //       ghost machine, these would be events to the parent
     promoteRoom: (room: GameRoomInterpreter) => {
         awaitingGameRooms = [...awaitingGameRooms.filter(r => r !== room)];
@@ -66,10 +66,7 @@ function getRoomForSocketEvent(
     playerId: string
 ): GameRoomInterpreter {
     hostlog("getting room for player %s", playerId);
-    hostlog(
-        "awaiting: ",
-        awaitingGameRooms.map(r => r.roomId)
-    );
+    hostlog("awaiting: ", awaitingGameRooms.map(r => r.roomId));
     hostlog(
         "active: ",
         [...activeGameRooms.entries()].map(([p, r]) => `${p} => ${r.roomId}`)
