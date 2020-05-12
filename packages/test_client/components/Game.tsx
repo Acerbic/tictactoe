@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useService } from "@xstate/react";
+import { useMachine } from "@xstate/react";
 
 import { GameBoard, GameBoardProps } from "./GameBoard";
 import RoleBtns from "./RoleBtns";
@@ -10,7 +10,8 @@ import {
     ClientEvent,
     ClientContext
 } from "../state-machine/state-machine-schema";
-import { SocketedInterpreter } from "../state-machine/state-machine";
+import { clientMachine } from "../state-machine/state-machine";
+import { SocketGameConnector } from "../state-machine/SocketGameConnector";
 
 import styles from "./Game.module.css";
 
@@ -30,16 +31,7 @@ export const Game: React.FC<P> = props => {
     const [playerId, setPlayerId] = useState(null);
     const [board, setBoard] = useState(initialBoard);
 
-    // persisting instance in the state, so it is not recreated on
-    // every render
-    const [interpr] = useState(
-        new SocketedInterpreter(props.game_host_uri, setBoard)
-    );
-    if (!interpr.initialized) {
-        // to prevent reinitilization during re-rendering
-        interpr.start();
-    }
-    const [state, send] = useService<ClientContext, ClientEvent>(interpr);
+    const [state, send] = useMachine<ClientContext, ClientEvent>(clientMachine);
 
     // FIXME: submitting incorrect move (occupied cells)
     const cellClicked = (row, column) => {
@@ -48,7 +40,7 @@ export const Game: React.FC<P> = props => {
             return;
         }
 
-        state.context.socket.emit("move", { row, column });
+        send({ type: "MOVE_CHOSEN", row, column });
     };
 
     const chooseRole = role => {
@@ -56,9 +48,22 @@ export const Game: React.FC<P> = props => {
         send({ type: "ROLE_PICKED", role });
     };
 
-    const newGameClick = () => {
+    const startNewGame = (playerId: string) => {
         setBoard(initialBoard);
-        interpr.raise_new_game(playerId);
+
+        // initiate new connection to game server
+        const con = new SocketGameConnector(
+            props.game_host_uri,
+            setBoard,
+            send,
+            playerId
+        );
+
+        // switch state to a new game start
+        send({
+            type: "NEW_GAME",
+            connection: con
+        });
     };
 
     return (
@@ -77,7 +82,7 @@ export const Game: React.FC<P> = props => {
                                 disabled={!state.matches("initial")}
                                 connectBtn={playerId => {
                                     setPlayerId(playerId);
-                                    interpr.raise_player_connect(playerId);
+                                    startNewGame(playerId);
                                 }}
                             />
                             <RoleBtns
@@ -85,7 +90,9 @@ export const Game: React.FC<P> = props => {
                                 chooseRole={chooseRole}
                             />
                             {state.matches("end") && (
-                                <NewGameButton onClick={newGameClick} />
+                                <NewGameButton
+                                    onClick={() => startNewGame(playerId)}
+                                />
                             )}
                         </form>
                     </div>

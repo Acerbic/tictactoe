@@ -1,7 +1,27 @@
-import { StateSchema } from "xstate";
+/**
+ * Definitions for state machine
+ */
+
+import { State, StateSchema } from "xstate";
+
+type RoleChoice = "first" | "second";
+
+/**
+ * Abstraction that uses xstate actions to send signals to the game server and
+ * uses signals back as xstate events
+ */
+export interface GameConnector {
+    actions: {
+        emit_iwannabetracer: (role: RoleChoice) => void;
+        emit_move: (row: number, column: number) => void;
+
+        // emit_connect: (playerId: string) => void;
+        emit_dropgame: () => void;
+    };
+}
 
 export interface ClientContext {
-    socket: SocketIOClient.Socket | null;
+    gameConnector: GameConnector | null;
 }
 
 export interface ClientSchema extends StateSchema<ClientContext> {
@@ -12,7 +32,12 @@ export interface ClientSchema extends StateSchema<ClientContext> {
         waiting4opponent: {};
         game: {
             states: {
-                our_turn: {};
+                our_turn: {
+                    states: {
+                        thinking: {};
+                        moved: {};
+                    };
+                };
                 their_turn: {};
             };
         };
@@ -38,13 +63,18 @@ export type ReconnectedEvent = {
 type RoomDroppedEvent = {
     type: "ROOM_DROPPED";
 };
-type RolePicked = {
+export type RolePickedEvent = {
     type: "ROLE_PICKED";
     role: "first" | "second";
 };
 export type GameStartEvent = {
     type: "GAME_START";
     role: "first" | "second";
+};
+export type MoveChosenEvent = {
+    type: "MOVE_CHOSEN";
+    row: number;
+    column: number;
 };
 type NextTurnEvent = {
     type: "NEXT_TURN";
@@ -54,27 +84,32 @@ export type GameEndEvent = {
     outcome: "win" | "fail" | "meh";
 };
 
-type NewGameEvent = {
+export type NewGameEvent = {
     type: "NEW_GAME";
-    socket: SocketIOClient.Socket;
+    connection: GameConnector;
 };
 // as if page reset, disconnecting
 type ResetEvent = {
     type: "RESET";
 };
-type ConnectionInitiatedEvent = {
-    type: "CONNECTION_INITIATED";
-    socket: SocketIOClient.Socket;
-};
+// type ConnectionInitiatedEvent = {
+//     type: "CONNECTION_INITIATED";
+//     socket: SocketIOClient.Socket | ServerCommunicator;
+// };
 
 export type ClientEvent =
     | RoomDroppedEvent
-    | ConnectionInitiatedEvent
+    // | ConnectionInitiatedEvent
     | ConnectedEvent
     | ReconnectedEvent
-    | RolePicked
+    | RolePickedEvent
     | GameStartEvent
+    | MoveChosenEvent
     | NextTurnEvent
     | GameEndEvent
     | NewGameEvent
     | ResetEvent;
+
+export type ClientEventSender = (
+    e: ClientEvent
+) => State<ClientContext, ClientEvent, ClientSchema>;
