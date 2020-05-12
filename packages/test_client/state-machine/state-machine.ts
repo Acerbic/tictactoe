@@ -2,12 +2,12 @@ import {
     ClientSchema,
     ClientContext,
     ClientEvent,
-    ReconnectedEvent,
-    GameStartEvent,
-    GameEndEvent,
-    NewGameEvent,
-    RolePickedEvent,
-    MoveChosenEvent
+    S_ReconnectedEvent,
+    S_GameStartEvent,
+    S_GameEndEvent,
+    UI_NewGameEvent,
+    UI_RolePickedEvent,
+    UI_MoveChosenEvent
 } from "./state-machine-schema";
 
 import { Machine, assign } from "xstate";
@@ -22,7 +22,7 @@ export const clientMachine = Machine<ClientContext, ClientSchema, ClientEvent>(
         states: {
             initial: {
                 on: {
-                    NEW_GAME: {
+                    UI_NEW_GAME: {
                         target: "awaiting_connection",
                         actions: "store_connection"
                     }
@@ -30,8 +30,8 @@ export const clientMachine = Machine<ClientContext, ClientSchema, ClientEvent>(
             },
             awaiting_connection: {
                 on: {
-                    CONNECTED: "role_picking",
-                    RECONNECTED: [
+                    S_CONNECTED: "role_picking",
+                    S_RECONNECTED: [
                         {
                             cond: "reconnected_our_turn",
                             target: "game.our_turn"
@@ -44,8 +44,8 @@ export const clientMachine = Machine<ClientContext, ClientSchema, ClientEvent>(
             },
             role_picking: {
                 on: {
-                    ROOM_DROPPED: "initial",
-                    ROLE_PICKED: {
+                    // ROOM_DROPPED: "initial",
+                    UI_ROLE_PICKED: {
                         target: "waiting4opponent",
                         actions: "emit_iwannabetracer"
                     }
@@ -53,8 +53,8 @@ export const clientMachine = Machine<ClientContext, ClientSchema, ClientEvent>(
             },
             waiting4opponent: {
                 on: {
-                    ROOM_DROPPED: "initial",
-                    GAME_START: [
+                    // ROOM_DROPPED: "initial",
+                    S_GAME_START: [
                         {
                             cond: "started_with_our_turn",
                             target: "game.our_turn"
@@ -70,7 +70,7 @@ export const clientMachine = Machine<ClientContext, ClientSchema, ClientEvent>(
                         states: {
                             thinking: {
                                 on: {
-                                    MOVE_CHOSEN: {
+                                    UI_MOVE_CHOSEN: {
                                         target: "moved",
                                         actions: "emit_move"
                                     }
@@ -78,19 +78,19 @@ export const clientMachine = Machine<ClientContext, ClientSchema, ClientEvent>(
                             },
                             moved: {
                                 on: {
-                                    NEXT_TURN: "their_turn"
+                                    S_NEXT_TURN: "#game-client.game.their_turn"
                                 }
                             }
                         }
                     },
                     their_turn: {
                         on: {
-                            NEXT_TURN: "our_turn"
+                            S_NEXT_TURN: "our_turn"
                         }
                     }
                 },
                 on: {
-                    GAME_END: [
+                    S_GAME_END: [
                         { cond: "draw", target: "end.draw" },
                         {
                             cond: "victory",
@@ -108,7 +108,7 @@ export const clientMachine = Machine<ClientContext, ClientSchema, ClientEvent>(
                     defeat: {}
                 },
                 on: {
-                    NEW_GAME: {
+                    UI_NEW_GAME: {
                         target: "awaiting_connection",
                         actions: "store_connection"
                     }
@@ -118,18 +118,19 @@ export const clientMachine = Machine<ClientContext, ClientSchema, ClientEvent>(
     },
     {
         guards: {
-            reconnected_our_turn: (_, e: ReconnectedEvent) => e.isMyTurn,
-            started_with_our_turn: (_, e: GameStartEvent) => e.role === "first",
-            draw: (_, e: GameEndEvent) => e.outcome === "meh",
-            victory: (_, e: GameEndEvent) => e.outcome === "win"
+            reconnected_our_turn: (_, e: S_ReconnectedEvent) => e.isMyTurn,
+            started_with_our_turn: (_, e: S_GameStartEvent) =>
+                e.role === "first",
+            draw: (_, e: S_GameEndEvent) => e.outcome === "meh",
+            victory: (_, e: S_GameEndEvent) => e.outcome === "win"
         },
         actions: {
-            emit_iwannabetracer: (ctx, e: RolePickedEvent) =>
+            emit_iwannabetracer: (ctx, e: UI_RolePickedEvent) =>
                 ctx.gameConnector.actions.emit_iwannabetracer(e.role),
-            emit_move: (ctx, e: MoveChosenEvent) =>
+            emit_move: (ctx, e: UI_MoveChosenEvent) =>
                 ctx.gameConnector.actions.emit_move(e.row, e.column),
             store_connection: assign({
-                gameConnector: (_, e: NewGameEvent) => e.connection
+                gameConnector: (_, e: UI_NewGameEvent) => e.connection
             })
         }
     },

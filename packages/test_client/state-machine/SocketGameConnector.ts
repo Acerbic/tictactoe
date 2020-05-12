@@ -68,7 +68,7 @@ export class SocketGameConnector implements GameConnector {
         // this one will be received if we are joining a new game
         this.socket.once("choose_role", () =>
             this.send({
-                type: "CONNECTED"
+                type: "S_CONNECTED"
             })
         );
         // this one will be received (instead of "choose_role") if we
@@ -90,14 +90,14 @@ export class SocketGameConnector implements GameConnector {
     private s_reconnection = r => {
         this.setBoard(r.board);
         this.send({
-            type: "RECONNECTED",
+            type: "S_RECONNECTED",
             isMyTurn: r.step === "my-turn"
         });
     };
 
     // received 'choose_role' message
     private s_you_are_it = (role: "first" | "second") => {
-        this.send({ type: "GAME_START", role });
+        this.send({ type: "S_GAME_START", role });
     };
 
     private s_iamalreadytracer = () => {
@@ -109,18 +109,18 @@ export class SocketGameConnector implements GameConnector {
     };
 
     private s_move_accepted = response => {
-        this.send({ type: "NEXT_TURN" });
+        this.send({ type: "S_NEXT_TURN" });
         this.setBoard(response.board);
     };
 
     private s_opponent_moved = response => {
-        this.send({ type: "NEXT_TURN" });
+        this.send({ type: "S_NEXT_TURN" });
         this.setBoard(response.board);
     };
 
     private s_gameover = response => {
         this.send({
-            type: "GAME_END",
+            type: "S_GAME_END",
             outcome: response.winner
                 ? response.winner == this.playerId
                     ? "win"

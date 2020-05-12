@@ -52,63 +52,68 @@ export interface ClientSchema extends StateSchema<ClientContext> {
     };
 }
 
-type ConnectedEvent = {
-    type: "CONNECTED";
+export type S_ConnectedEvent = {
+    type: "S_CONNECTED";
 };
-export type ReconnectedEvent = {
-    type: "RECONNECTED";
+export type S_ReconnectedEvent = {
+    type: "S_RECONNECTED";
     isMyTurn: boolean;
 };
 
-type RoomDroppedEvent = {
-    type: "ROOM_DROPPED";
-};
-export type RolePickedEvent = {
-    type: "ROLE_PICKED";
+// export type S_RoomDroppedEvent = {
+//     type: "ROOM_DROPPED";
+// };
+export type UI_RolePickedEvent = {
+    type: "UI_ROLE_PICKED";
     role: "first" | "second";
 };
-export type GameStartEvent = {
-    type: "GAME_START";
+export type S_GameStartEvent = {
+    type: "S_GAME_START";
     role: "first" | "second";
 };
-export type MoveChosenEvent = {
-    type: "MOVE_CHOSEN";
+export type UI_MoveChosenEvent = {
+    type: "UI_MOVE_CHOSEN";
     row: number;
     column: number;
 };
-type NextTurnEvent = {
-    type: "NEXT_TURN";
+export type S_NextTurnEvent = {
+    type: "S_NEXT_TURN";
 };
-export type GameEndEvent = {
-    type: "GAME_END";
+export type S_GameEndEvent = {
+    type: "S_GAME_END";
     outcome: "win" | "fail" | "meh";
 };
 
-export type NewGameEvent = {
-    type: "NEW_GAME";
+export type UI_NewGameEvent = {
+    type: "UI_NEW_GAME";
     connection: GameConnector;
 };
 // as if page reset, disconnecting
-type ResetEvent = {
-    type: "RESET";
-};
-// type ConnectionInitiatedEvent = {
-//     type: "CONNECTION_INITIATED";
-//     socket: SocketIOClient.Socket | ServerCommunicator;
+// export type ResetEvent = {
+//     type: "RESET";
 // };
 
-export type ClientEvent =
-    | RoomDroppedEvent
-    // | ConnectionInitiatedEvent
-    | ConnectedEvent
-    | ReconnectedEvent
-    | RolePickedEvent
-    | GameStartEvent
-    | MoveChosenEvent
-    | NextTurnEvent
-    | GameEndEvent
-    | NewGameEvent
-    | ResetEvent;
+/**
+ * Grouping of events that come from React
+ * (due to user interactions)
+ */
+export type UI_Event =
+    | UI_NewGameEvent
+    | UI_RolePickedEvent
+    | UI_MoveChosenEvent;
+
+/**
+ * Events originating from the game server messages
+ */
+export type Server_Event =
+    // | S_RoomDroppedEvent
+    | S_ConnectedEvent
+    | S_ReconnectedEvent
+    | S_GameStartEvent
+    | S_NextTurnEvent
+    | S_GameEndEvent;
+
+export type ClientEvent = UI_Event | Server_Event;
 
 export type ClientEventSender = (
     e: ClientEvent

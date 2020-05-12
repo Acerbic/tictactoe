@@ -40,12 +40,12 @@ export const Game: React.FC<P> = props => {
             return;
         }
 
-        send({ type: "MOVE_CHOSEN", row, column });
+        send({ type: "UI_MOVE_CHOSEN", row, column });
     };
 
     const chooseRole = role => {
         console.log("Requested to be " + role);
-        send({ type: "ROLE_PICKED", role });
+        send({ type: "UI_ROLE_PICKED", role });
     };
 
     const startNewGame = (playerId: string) => {
@@ -61,7 +61,7 @@ export const Game: React.FC<P> = props => {
 
         // switch state to a new game start
         send({
-            type: "NEW_GAME",
+            type: "UI_NEW_GAME",
             connection: con
         });
     };
