@@ -1,33 +1,50 @@
 import React from "react";
 
 interface P {
-    disabled: boolean;
-    connectBtn: (id: string) => void;
+    playerId: string;
+    setPlayerId: (n: string) => void;
+    /**
+     * False if connection is not yet established
+     * (input field then is available)
+     */
+    connected: boolean;
+    connectBtn: () => void;
+    disconnectBtn: () => void;
 }
 
 export const ConnectGroup: React.FC<P> = props => {
-    const [username, changeUsername] = React.useState("");
+    // const [username, changeUsername] = React.useState(props.playerId);
     return (
         <div>
             <div className="form-group">
-                <label htmlFor="pid">Player id</label>
+                <label htmlFor="pid">Player ID</label>
                 <input
                     className="form-control"
                     name="pid"
-                    value={username}
-                    disabled={props.disabled || null}
-                    onChange={e => changeUsername(e.target.value)}
+                    value={props.playerId}
+                    disabled={props.connected || null}
+                    onChange={e => props.setPlayerId(e.target.value)}
                 />
             </div>
-            <button
-                id="btnConnect"
-                type="button"
-                className="btn btn-primary"
-                disabled={props.disabled || username.length == 0}
-                onClick={() => props.connectBtn(username)}
-            >
-                Connect
-            </button>
+            {!props.connected ? (
+                <button
+                    id="btnConnect"
+                    type="button"
+                    className="btn btn-primary"
+                    disabled={props.connected || props.playerId.length == 0}
+                    onClick={() => props.connectBtn()}
+                >
+                    Connect
+                </button>
+            ) : (
+                <button
+                    type="button"
+                    className="btn btn-danger"
+                    onClick={props.disconnectBtn}
+                >
+                    Disconnect
+                </button>
+            )}
         </div>
     );
 };

@@ -23,7 +23,7 @@ const initialBoard: GameBoardProps["board"] = [
 
 export const Game: React.FC<P> = props => {
     // const [gameId, setGameId] = useState(null);
-    const [playerId, setPlayerId] = useState(null);
+    const [playerId, setPlayerId] = useState("");
     const [board, setBoard] = useState(initialBoard);
 
     const [state, send] = useMachine(clientMachine);
@@ -43,7 +43,7 @@ export const Game: React.FC<P> = props => {
         send({ type: "UI_ROLE_PICKED", role });
     };
 
-    const startNewGame = (playerId: string) => {
+    const startNewGame = () => {
         setBoard(initialBoard);
 
         // initiate new connection to game server
@@ -61,6 +61,11 @@ export const Game: React.FC<P> = props => {
         });
     };
 
+    const dropGameConnection = () => {
+        setPlayerId("");
+        send({ type: "UI_RESET" });
+    };
+
     return (
         <>
             <section className={styles.content}>
@@ -74,20 +79,20 @@ export const Game: React.FC<P> = props => {
                     <div className="row">
                         <form className="col">
                             <ConnectGroup
-                                disabled={!state.matches("initial")}
-                                connectBtn={playerId => {
-                                    setPlayerId(playerId);
-                                    startNewGame(playerId);
-                                }}
+                                playerId={playerId}
+                                setPlayerId={setPlayerId}
+                                connected={!state.matches("initial")}
+                                connectBtn={startNewGame}
+                                disconnectBtn={dropGameConnection}
                             />
-                            <RoleBtns
-                                disabled={!state.matches("role_picking")}
-                                chooseRole={chooseRole}
-                            />
-                            {state.matches("end") && (
-                                <NewGameButton
-                                    onClick={() => startNewGame(playerId)}
+                            {state.matches("role_picking") && (
+                                <RoleBtns
+                                    disabled={!state.matches("role_picking")}
+                                    chooseRole={chooseRole}
                                 />
+                            )}
+                            {state.matches("end") && (
+                                <NewGameButton onClick={startNewGame} />
                             )}
                         </form>
                     </div>

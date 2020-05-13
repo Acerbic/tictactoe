@@ -114,6 +114,12 @@ export const clientMachine = Machine<ClientContext, ClientSchema, ClientEvent>(
                     }
                 }
             }
+        },
+        on: {
+            UI_RESET: {
+                target: "initial",
+                actions: "emit_dropgame"
+            }
         }
     },
     {
@@ -129,6 +135,10 @@ export const clientMachine = Machine<ClientContext, ClientSchema, ClientEvent>(
                 ctx.gameConnector.actions.emit_iwannabetracer(e.role),
             emit_move: (ctx, e: UI_MoveChosenEvent) =>
                 ctx.gameConnector.actions.emit_move(e.row, e.column),
+            emit_dropgame: ctx => {
+                ctx.gameConnector.actions.emit_dropgame();
+                ctx.gameConnector = null;
+            },
             store_connection: assign({
                 gameConnector: (_, e: UI_NewGameEvent) => e.connection
             })

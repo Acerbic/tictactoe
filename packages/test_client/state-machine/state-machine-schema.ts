@@ -88,16 +88,18 @@ export type UI_NewGameEvent = {
     type: "UI_NEW_GAME";
     connection: GameConnector;
 };
-// as if page reset, disconnecting
-// export type ResetEvent = {
-//     type: "RESET";
-// };
+// as if page was refreshed, disconnecting
+// from existing game and resetting relevant states.
+export type UI_ResetEvent = {
+    type: "UI_RESET";
+};
 
 /**
  * Grouping of events that come from React
  * (due to user interactions)
  */
 export type UI_Event =
+    | UI_ResetEvent
     | UI_NewGameEvent
     | UI_RolePickedEvent
     | UI_MoveChosenEvent;
