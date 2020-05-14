@@ -1,3 +1,7 @@
+/**
+ * Node Express application
+ */
+
 const express = require("express");
 var morgan = require("morgan");
 
