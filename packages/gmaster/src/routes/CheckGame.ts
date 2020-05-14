@@ -4,6 +4,7 @@ import { DbConnector } from "../db/db";
 import { GameId, CheckGameResponse, APIResponseFailure } from "./api";
 import { GameContext, GameEvent, GameSchema } from "../game/game-schema";
 import { GameStateValueToApi } from "../game/game-machine";
+import { makeFailureResponse } from "./utils";
 
 const router = express.Router();
 
@@ -14,8 +15,9 @@ router.get("/CheckGame/:gameId", async function(req, res, next) {
     const gameId = req.params.gameId as GameId;
     const gamesDb = req.app.get("gamesDb") as DbConnector;
 
-    try {
-        gamesDb.LoadGame(gameId).then(game => {
+    gamesDb
+        .LoadGame(gameId)
+        .then(game => {
             const current_state: State<
                 GameContext,
                 GameEvent,
@@ -26,15 +28,16 @@ router.get("/CheckGame/:gameId", async function(req, res, next) {
                 state: GameStateValueToApi(current_state)
             };
             res.send(response);
+        })
+        .catch(err => {
+            // TODO: replace with a proper error code
+            const response: APIResponseFailure = makeFailureResponse(
+                err,
+                "Game not found",
+                0
+            );
+            res.send(response);
         });
-    } catch (ex) {
-        const response: APIResponseFailure = {
-            success: false,
-            errorMessage: "Game not found",
-            errorCode: 0 // TODO: replace with a regular code
-        };
-        res.send(response);
-    }
 });
 
 export default router;

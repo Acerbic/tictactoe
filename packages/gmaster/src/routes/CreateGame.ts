@@ -5,6 +5,7 @@ import {
     CreateGameResponse,
     APIResponseFailure
 } from "./api";
+import { makeFailureResponse } from "./utils";
 
 import { GameMachine, GameStateValueToApi } from "../game/game-machine";
 
@@ -34,22 +35,21 @@ router.post("/CreateGame", function(req, res, next) {
                 res.send(response);
             })
             .catch(err => {
-                const response: APIResponseFailure = {
-                    success: false,
-                    errorMessage: "Failed to create a new game",
-                    errorCode: 0 // TODO: replace with a proper code
-                };
-                if (err instanceof Error) {
-                    response.errorMessage = err.message;
-                }
+                // TODO: replace with a proper error code
+                const response = makeFailureResponse(
+                    err,
+                    "Failed to create a new game",
+                    0
+                );
                 res.send(response);
             });
     } else {
-        const response: APIResponseFailure = {
-            success: false,
-            errorMessage: "Invalid arguments to create a new game",
-            errorCode: 0 // TODO: replace with a proper code
-        };
+        // TODO: replace with a proper error code
+        const response = makeFailureResponse(
+            undefined,
+            "Invalid arguments to create a new game",
+            0
+        );
         res.send(response);
     }
 });

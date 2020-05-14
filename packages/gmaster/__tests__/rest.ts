@@ -7,9 +7,6 @@ import generateApp from "../src/app";
 
 import * as api from "../src/routes/api";
 
-// TODO: test gmaster responses when it is ran without PRISMA_URL var.
-// TODO: test gmaster responses when PRISMA_URL is set, but prisma unresponsive.
-
 /**
  * If provided string endpoint (in the form of URI like
  * "http://localhost:3000"), use it. Otherwise, instantiate a new web

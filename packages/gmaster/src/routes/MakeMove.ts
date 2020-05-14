@@ -12,6 +12,7 @@ import {
 
 import { GameContext, GameEvent, GameStateValue } from "../game/game-schema";
 import { GameMachine, GameStateValueToApi } from "../game/game-machine";
+import { makeFailureResponse } from "./utils";
 
 const router = express.Router();
 router.post("/MakeMove/:gameId", function(req, res, next) {
@@ -98,8 +99,16 @@ router.post("/MakeMove/:gameId", function(req, res, next) {
                         newState: GameStateValueToApi(new_state)
                     };
                     res.send(response);
+                })
+                .catch(err => {
+                    // TODO: replace with a proper error code
+                    const response = makeFailureResponse(
+                        err,
+                        "Failed to save the new game state",
+                        0
+                    );
+                    res.send(response);
                 });
-            return;
         })
         .catch(ex => {
             const response: APIResponseFailure = {
