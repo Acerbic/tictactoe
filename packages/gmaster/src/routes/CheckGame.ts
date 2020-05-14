@@ -12,7 +12,7 @@ const router = express.Router();
  */
 router.get("/CheckGame/:gameId", async function(req, res, next) {
     const gameId = req.params.gameId as GameId;
-    const gamesDb = (req.app as any).gamesDb as DbConnector; // faceplum
+    const gamesDb = req.app.get("gamesDb") as DbConnector;
 
     try {
         gamesDb.LoadGame(gameId).then(game => {
@@ -37,4 +37,4 @@ router.get("/CheckGame/:gameId", async function(req, res, next) {
     }
 });
 
-export = router;
+export default router;

@@ -16,7 +16,7 @@ import { GameMachine, GameStateValueToApi } from "../game/game-machine";
 const router = express.Router();
 router.post("/MakeMove/:gameId", function(req, res, next) {
     const gameId = req.params.gameId as GameId;
-    const gamesDb = (req.app as any).gamesDb as DbConnector;
+    const gamesDb = req.app.get("gamesDb") as DbConnector;
 
     gamesDb
         .LoadGame(gameId)
@@ -111,4 +111,4 @@ router.post("/MakeMove/:gameId", function(req, res, next) {
         });
 });
 
-module.exports = router;
+export default router;

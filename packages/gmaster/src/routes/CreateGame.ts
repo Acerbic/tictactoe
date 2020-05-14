@@ -8,11 +8,11 @@ import {
 
 import { GameMachine, GameStateValueToApi } from "../game/game-machine";
 
-var router = express.Router();
+const router = express.Router();
 
 router.post("/CreateGame", function(req, res, next) {
     const { player1Id, player2Id } = req.body as CreateGameRequest;
-    const gamesDb = (req.app as any).gamesDb as DbConnector;
+    const gamesDb = req.app.get("gamesDb") as DbConnector;
 
     if (player1Id && player2Id) {
         const game: Game = {
@@ -41,4 +41,4 @@ router.post("/CreateGame", function(req, res, next) {
     }
 });
 
-module.exports = router;
+export default router;

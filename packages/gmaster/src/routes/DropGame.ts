@@ -6,7 +6,7 @@ const router = express.Router();
 
 router.post("/DropGame/:gameId", function(req, res, next) {
     const gameId = req.params.gameId as GameId;
-    const gamesDb = (req.app as any).gamesDb as DbConnector;
+    const gamesDb = req.app.get("gamesDb") as DbConnector;
 
     gamesDb.HasGame(gameId).then(hasgame => {
         if (hasgame) {
@@ -28,4 +28,4 @@ router.post("/DropGame/:gameId", function(req, res, next) {
     });
 });
 
-module.exports = router;
+export default router;
