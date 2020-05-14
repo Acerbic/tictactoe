@@ -2,30 +2,43 @@
  * Node Express application
  */
 
-import express from "express";
+import express, { ErrorRequestHandler, Response } from "express";
 import morgan from "morgan";
 
-import gamesDb from "./db/db-prisma";
+import GamesDbConnector from "./db/db-prisma";
 
 import CreateGame from "./routes/CreateGame";
 import CheckGame from "./routes/CheckGame";
 import DropGame from "./routes/DropGame";
 import MakeMove from "./routes/MakeMove";
+import { APIResponseFailure } from "./routes/api";
 
-const app = express();
+const generateApp = () => {
+    const app = express();
 
-if (process.env.NODE_ENV !== "test") {
-    app.use(morgan("dev"));
-}
-app.use(express.json());
+    if (process.env.NODE_ENV !== "test") {
+        app.use(morgan("dev"));
+    }
+    app.use(express.json());
 
-// DB connection to be reused by all API calls
-app.set("gamesDb", gamesDb);
+    // this will throw if PRISMA_URL is undefined or incorrect
+    new URL(process.env.PRISMA_URL!);
+    // DB connection to be reused by all API calls
+    app.set("gamesDb", new GamesDbConnector({endpoint: process.env.PRISMA_URL!}));
 
-// Rest API
-app.use(CheckGame);
-app.use(CreateGame);
-app.use(DropGame);
-app.use(MakeMove);
+    // Rest API
+    app.use(CheckGame);
+    app.use(CreateGame);
+    app.use(DropGame);
+    app.use(MakeMove);
 
-export default app;
+    // Catch-all error handler
+    app.use(<ErrorRequestHandler>((err, req, res : Response<APIResponseFailure>, next) => {
+        const errorCode = err?.code || 0;
+        const errorMessage = err?.message || err?.toString?.() || "Unknown error";
+        res.send({success: false, errorCode, errorMessage})
+    }));
+
+    return app;
+};
+export default generateApp;

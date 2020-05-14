@@ -3,7 +3,7 @@
  */
 
 import supertest from "supertest";
-import app from "../src/app";
+import generateApp from "../src/app";
 
 import * as api from "../src/routes/api";
 
@@ -19,7 +19,7 @@ import * as api from "../src/routes/api";
 const agent_app =
     "string" === typeof process.env.ENDPOINT && process.env.ENDPOINT.length > 0
         ? process.env.ENDPOINT
-        : app;
+        : generateApp();
 const agent: ReturnType<typeof supertest.agent> = supertest
     .agent(agent_app)
     .type("json") as any; // :( bad type definitions in @types/supertest

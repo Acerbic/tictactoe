@@ -4,9 +4,11 @@
  * Module dependencies.
  */
 
-var app = require("../dist/app").default;
+var generateApp = require("../dist/app").default;
 var debug = require("debug")("gmaster:server");
 var http = require("http");
+
+var app = generateApp();
 
 /**
  * Get port from environment and store in Express.
