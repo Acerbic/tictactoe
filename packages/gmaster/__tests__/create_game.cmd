@@ -1,1 +1,0 @@
-curl -X POST -H "Content-Type: application/json" localhost:3000/CreateGame -d {\"player1Id\":\"111\",\"player2Id\":\"222\"}

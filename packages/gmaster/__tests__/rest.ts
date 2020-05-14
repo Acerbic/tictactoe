@@ -42,4 +42,62 @@ describe("REST apis", () => {
         expect(typeof res.gameId).toBe("string");
         expect(res.gameId.length).toBeGreaterThan(1);
     });
+
+    it("can drop an existing game", async () => {
+        const res_c: api.CreateGameResponse = (await agent
+            .post("/CreateGame")
+            .send(<api.CreateGameRequest>{
+                player1Id: "p1",
+                player2Id: "p2"
+            })).body;
+
+        const res_d: api.DropGameResponse = (await agent
+            .post(`/DropGame/${res_c.gameId}`)
+            .send(<api.DropGameRequest>{})
+            .expect(200)).body;
+
+        expect(res_d.success).toBeTruthy();
+    });
+
+    it("can check state of an existing game", async () => {
+        const res_c: api.CreateGameResponse = (await agent
+            .post("/CreateGame")
+            .send(<api.CreateGameRequest>{
+                player1Id: "p1",
+                player2Id: "p2"
+            })).body;
+
+        const res: api.CheckGameResponse = (await agent
+            .get(`/CheckGame/${res_c.gameId}`)
+            .expect(200)).body;
+
+        expect(res.success).toBeTruthy();
+        expect(res.state).toEqual(<api.GameState>{
+            turn: "player1",
+            game: "wait"
+        });
+    });
+
+    it("can make a game move", async () => {
+        const res_c: api.CreateGameResponse = (await agent
+            .post("/CreateGame")
+            .send(<api.CreateGameRequest>{
+                player1Id: "p1",
+                player2Id: "p2"
+            })).body;
+
+        const res: api.MakeMoveResponse = (await agent
+            .post(`/MakeMove/${res_c.gameId}`)
+            .send(<api.MakeMoveRequest>{
+                playerId: "p1",
+                move: { row: 1, column: 1 }
+            })
+            .expect(200)).body;
+
+        expect(res.success).toBeTruthy();
+        expect(res.newState).toEqual(<api.GameState>{
+            turn: "player2",
+            game: "wait"
+        });
+    });
 });

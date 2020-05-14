@@ -7,7 +7,9 @@ var morgan = require("morgan");
 
 var app = express();
 
-app.use(morgan("dev"));
+if (process.env.NODE_ENV !== "test") {
+    app.use(morgan("dev"));
+}
 app.use(express.json());
 
 // DB connection to be reused by all API calls

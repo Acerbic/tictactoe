@@ -1,1 +1,0 @@
-curl -X POST -H "Content-Type: application/json" localhost:3000/MakeMove/1 -d {\"playerId\":\"111\",\"move\":{\"row\":\"1\",\"column\":\"2\"}}
