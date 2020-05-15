@@ -1,5 +1,9 @@
 /**
  * Testing various modes of failure
+ *
+ * Must provide with env variable `ENDPOINT` to test a remote host running
+ * gmaster, or variable `PRISMA_URL` to instantiate the application from source
+ * code.
  */
 import supertest from "supertest";
 import generateApp from "../src/app";
