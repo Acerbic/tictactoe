@@ -15,35 +15,13 @@ router.post("/CreateGame", function(req, res, next) {
     const { player1Id, player2Id } = req.body as CreateGameRequest;
     const gamesDb = req.app.get("gamesDb") as DbConnector;
 
-    if (player1Id && player2Id) {
-        const game: Game = {
-            state: JSON.stringify(GameMachine.initialState),
-            player1: player1Id,
-            player2: player2Id,
-
-            board: JSON.stringify(GameMachine.initialState.context.board)
-        };
-
-        gamesDb
-            .CreateGame(game)
-            .then(gameId => {
-                const response: CreateGameResponse = {
-                    success: true,
-                    gameId: gameId,
-                    newState: GameStateValueToApi(GameMachine.initialState)
-                };
-                res.send(response);
-            })
-            .catch(err => {
-                // TODO: replace with a proper error code
-                const response = makeFailureResponse(
-                    err,
-                    "Failed to create a new game",
-                    0
-                );
-                res.send(response);
-            });
-    } else {
+    if (
+        typeof player1Id !== "string" ||
+        typeof player2Id !== "string" ||
+        player1Id.length < 1 ||
+        player2Id.length < 1 ||
+        player2Id === player1Id
+    ) {
         // TODO: replace with a proper error code
         const response = makeFailureResponse(
             undefined,
@@ -51,7 +29,36 @@ router.post("/CreateGame", function(req, res, next) {
             0
         );
         res.send(response);
+        return;
     }
+
+    const game: Game = {
+        state: JSON.stringify(GameMachine.initialState),
+        player1: player1Id,
+        player2: player2Id,
+
+        board: JSON.stringify(GameMachine.initialState.context.board)
+    };
+
+    gamesDb
+        .CreateGame(game)
+        .then(gameId => {
+            const response: CreateGameResponse = {
+                success: true,
+                gameId: gameId,
+                newState: GameStateValueToApi(GameMachine.initialState)
+            };
+            res.send(response);
+        })
+        .catch(err => {
+            // TODO: replace with a proper error code
+            const response = makeFailureResponse(
+                err,
+                "Failed to create a new game",
+                0
+            );
+            res.send(response);
+        });
 });
 
 export default router;

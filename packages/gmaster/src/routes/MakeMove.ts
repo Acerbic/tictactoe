@@ -32,8 +32,8 @@ router.post("/MakeMove/:gameId", function(req, res, next) {
             // read request data
             const request = req.body as MakeMoveRequest;
             const playerId = request.playerId;
-            const column = request.move && request.move.column;
-            const row = request.move && request.move.row;
+            const column = request.move?.column;
+            const row = request.move?.row;
 
             // Perform various checks on request data
             if (!state.matches("game.wait")) {
@@ -43,6 +43,7 @@ router.post("/MakeMove/:gameId", function(req, res, next) {
                     errorCode: 0 // TODO: replace with a regular code
                 };
                 res.send(response);
+                return;
             }
             let turn_player = (state.value as GameStateValue).turn!;
             if (game[turn_player] !== playerId) {
