@@ -69,4 +69,4 @@ class GMConnector {
     get = gmasterGet;
 }
 
-export = GMConnector;
+export default GMConnector;
