@@ -4,10 +4,7 @@
 
 import { Game, DbConnector } from "./db";
 import { GameId } from "../routes/api";
-import {
-    prisma,
-    Prisma
-} from "@trulyacerbic/ttt-gamesdb/generated/prisma-ts-client";
+import { prisma, Prisma } from "@trulyacerbic/ttt-gamesdb";
 import { BaseClientOptions } from "prisma-client-lib";
 
 class PrismaConnector implements DbConnector {
