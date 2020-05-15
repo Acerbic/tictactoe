@@ -33,15 +33,15 @@ it("should error if prisma storage is unavailable", async () => {
 });
 
 describe("Logical errors", () => {
-    /**
-     * If provided string endpoint (in the form of URI like
-     * "http://localhost:3000"), use it. Otherwise, instantiate a new web
-     * application from source code (in this case, don't forget to set up PRISMA_URL
-     * env variable to point to prisma storage)
-     */
-
     let agent: ReturnType<typeof supertest.agent>;
+
     beforeAll(() => {
+        /**
+         * If provided string endpoint (in the form of URI like
+         * "http://localhost:3000"), use it. Otherwise, instantiate a new web
+         * application from source code (in this case, don't forget to set up PRISMA_URL
+         * env variable to point to prisma storage)
+         */
         const agent_app =
             "string" === typeof process.env.ENDPOINT &&
             process.env.ENDPOINT.length > 0
@@ -76,6 +76,8 @@ describe("Logical errors", () => {
 
         expect(res2.success).toBe(false);
     });
+
+    it.todo("should fail attempt at droping non-existant game");
 
     describe(".. during a match", () => {
         const player1Id = "p1";
@@ -185,6 +187,62 @@ describe("Logical errors", () => {
             expect(m2_res.success).toBe(false);
         });
 
-        it.todo("should reject a move to a game that is already finished");
+        it("should reject a move to a game that is already finished", async () => {
+            // p1 and p2 are making moves
+            await agent
+                .post("/MakeMove/" + gameId)
+                .send(<api.MakeMoveRequest>{
+                    playerId: player1Id,
+                    move: { row: 0, column: 0 }
+                })
+                .expect(200);
+
+            await agent
+                .post("/MakeMove/" + gameId)
+                .send(<api.MakeMoveRequest>{
+                    playerId: player2Id,
+                    move: { row: 1, column: 0 }
+                })
+                .expect(200);
+
+            await agent
+                .post("/MakeMove/" + gameId)
+                .send(<api.MakeMoveRequest>{
+                    playerId: player1Id,
+                    move: { row: 0, column: 1 }
+                })
+                .expect(200);
+
+            await agent
+                .post("/MakeMove/" + gameId)
+                .send(<api.MakeMoveRequest>{
+                    playerId: player2Id,
+                    move: { row: 1, column: 1 }
+                })
+                .expect(200);
+
+            const res_mov: api.MakeMoveResponse = (await agent
+                .post("/MakeMove/" + gameId)
+                .send(<api.MakeMoveRequest>{
+                    playerId: player1Id,
+                    move: { row: 0, column: 2 }
+                })
+                .expect(200)).body;
+
+            // make sure last move brings victory
+            expect(res_mov.success).toBe(true);
+            expect(res_mov.newState.game).toBe("over");
+            expect(res_mov.newState.turn).toBe("player2");
+
+            const res_mov2: api.APIResponseFailure = (await agent
+                .post("/MakeMove/" + gameId)
+                .send(<api.MakeMoveRequest>{
+                    playerId: player1Id,
+                    move: { row: 2, column: 2 }
+                })
+                .expect(200)).body;
+
+            expect(res_mov2.success).toBe(false);
+        });
     });
 });
