@@ -1,0 +1,76 @@
+/**
+ * Sample implementation of socket testing
+ * @see https://medium.com/@tozwierz/testing-socket-io-with-jest-on-backend-node-js-f71f7ec7010f
+ */
+
+import io from "socket.io-client";
+import http from "http";
+import ioBack from "socket.io";
+import { AddressInfo } from "net";
+
+let socket: SocketIOClient.Socket;
+let httpServer: http.Server;
+let httpServerAddr: AddressInfo;
+let ioServer: ioBack.Server;
+
+/**
+ * Setup WS & HTTP servers
+ */
+beforeAll(done => {
+    httpServer = http.createServer().listen();
+    // NOTE: potential problem as `httpServer.address()` is said to also return
+    // `string` in some cases
+    httpServerAddr = httpServer.address() as AddressInfo;
+    ioServer = ioBack(httpServer);
+
+    // note: (not in official documentation tho, may change)
+    (ioServer as any).httpServer === httpServer;
+
+    done();
+});
+
+/**
+ *  Cleanup WS & HTTP servers
+ */
+afterAll(done => {
+    ioServer.close();
+    httpServer.close();
+    done();
+});
+
+/**
+ * Run before each test
+ */
+beforeEach(done => {
+    // Setup
+    // Do not hardcode server port and address, square brackets are used for IPv6
+    socket = io(`http://[${httpServerAddr.address}]:${httpServerAddr.port}`, {
+        reconnectionDelay: 0,
+        forceNew: true,
+        transports: ["websocket"]
+    });
+    socket.on("connect", done);
+});
+
+/**
+ * Run after each test
+ */
+afterEach(done => {
+    // Cleanup
+    if (socket.connected) {
+        socket.disconnect();
+    }
+    done();
+});
+
+describe("basic socket.io example", () => {
+    test("should communicate", done => {
+        // once connected, emit Hello World
+        ioServer.emit("echo", "Hello World");
+        socket.once("echo", (message: any) => {
+            // Check that the message matches
+            expect(message).toBe("Hello World");
+            done();
+        });
+    });
+});
