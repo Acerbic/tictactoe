@@ -7,7 +7,8 @@
  * GameRoomInterperter, to which it forwards the new opened socket.
  */
 
-import debug from "debug";
+import { statelog, hostlog, errorlog, debuglog } from "./utils";
+
 import { Socket, Server as SocServer } from "socket.io";
 
 import { GameRoomInterpreter } from "./state-machine/GameRoomInterpreter";
@@ -15,9 +16,6 @@ import GmasterConnector from "./connectors/gmaster_connector";
 import { GetGameBoard } from "./connectors/prisma_connector";
 import { PlayerId } from "./connectors/gmaster_api";
 import { GameRoomEvent } from "./state-machine/game-room/game-room-schema";
-
-const statelog = debug("ttt:ghost:state-machine");
-const hostlog = debug("ttt:ghost");
 
 export class SocketDispatcher {
     /**
@@ -55,8 +53,8 @@ export class SocketDispatcher {
         playerId: string
     ): GameRoomInterpreter {
         hostlog("getting room for player %s", playerId);
-        hostlog("awaiting: ", this.awaitingGameRooms.map(r => r.roomId));
-        hostlog(
+        debuglog("awaiting: ", this.awaitingGameRooms.map(r => r.roomId));
+        debuglog(
             "active: ",
             [...this.activeGameRooms.entries()].map(
                 ([p, r]) => `${p} => ${r.roomId}`
@@ -68,8 +66,15 @@ export class SocketDispatcher {
             return this.activeGameRooms.get(playerId)!;
         }
 
-        // if there are waiting rooms in the queue, pick one from the queue
+        // if there are waiting rooms in the queue, check that the player is not
+        // already listed as waiting in one of the rooms and then pick the first
+        // from the queue
         if (this.awaitingGameRooms.length > 0) {
+            for (let r of this.awaitingGameRooms) {
+                if (r.hasPlayer(playerId)) {
+                    throw "Only permitted one connection per player";
+                }
+            }
             return this.awaitingGameRooms[0];
         }
 
@@ -97,14 +102,23 @@ export class SocketDispatcher {
             // TODO: auth
             const player_id = socket.handshake.query.playerId;
 
-            const room = this.getRoomForSocketEvent(socket.id, player_id);
+            try {
+                const room = this.getRoomForSocketEvent(socket.id, player_id);
 
-            hostlog(
-                "On-connection for player %s, dropping to room: %s",
-                player_id,
-                room.roomId
-            );
-            room.onSocketConnection(socket);
+                hostlog(
+                    "On-connection for player %s, dropping to room: %s",
+                    player_id,
+                    room.roomId
+                );
+                room.onSocketConnection(socket);
+            } catch (e) {
+                hostlog(
+                    "Error during connection for player id [%s]",
+                    player_id,
+                    e
+                );
+                socket.disconnect(true);
+            }
         });
     }
 }

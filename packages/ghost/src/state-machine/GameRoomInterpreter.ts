@@ -5,11 +5,9 @@
  * in its field.
  */
 
-const statelog = require("debug")("ttt:ghost:state-machine");
-const errorlog = require("debug")("ttt:ghost:error");
-const debuglog = require("debug")("ttt:ghost:debug");
+import  {statelog, hostlog, errorlog, debuglog} from "../utils"
 
-import { Machine, Actor } from "xstate";
+import { Machine, Actor, State } from "xstate";
 import { Interpreter, StateListener } from "xstate/lib/interpreter";
 
 import { PlayerId } from "../connectors/gmaster_api";
@@ -23,6 +21,7 @@ import {
 } from "./game-room/game-room-schema";
 import { state_machine, machine_options } from "./game-room/game-room-machine";
 import { Socket } from "socket.io";
+import { PlayerSetupContext } from "./player-setup/player-setup-schema";
 
 export type GameRoomInterpreterDependencies = {
     gmaster: GMConnector;
@@ -166,4 +165,14 @@ export class GameRoomInterpreter extends Interpreter<
               !this.state.matches("setup") &&
               !this.state.done
             : false;
+    
+    hasPlayer = (playerId: string) => {
+        // TODO: oof.
+        for (let psma  of this.state.context.player_setup_machines.values()) {
+            if ((psma.state! as State<PlayerSetupContext>).context.player_id === playerId) {
+                return true;
+            }
+        }
+        return false;
+    }
 }

@@ -253,7 +253,6 @@ describe("WS communication", () => {
         client1.connect();
     });
 
-    // let client1: SocketIOClient.Socket;
     test("player can quit before the game start and another player take his place", done => {
         let client1 = openClientSocket("p1");
         client1.once("choose_role", () => {

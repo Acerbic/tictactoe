@@ -1,9 +1,8 @@
 /**
  * Implementation of game-room machine
  */
-const statelog = require("debug")("ttt:ghost:state-machine");
-const errorlog = require("debug")("ttt:ghost:error");
-const debuglog = require("debug")("ttt:ghost:debug");
+
+import { statelog, hostlog, errorlog, debuglog } from "../../utils";
 
 import { MachineConfig, MachineOptions, ActionFunctionMap } from "xstate";
 import * as MachineActions from "./actions";

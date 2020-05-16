@@ -1,11 +1,10 @@
-import debug from "debug";
+import { statelog, hostlog, errorlog, debuglog } from "./utils";
+
 import { createServer } from "http";
 import socketio from "socket.io";
 
 import { app } from "./app";
 import { SocketDispatcher } from "./SocketDispatcher";
-
-const hostlog = debug("ttt:ghost");
 
 /**
  * Make http server from Express app
