@@ -10,8 +10,22 @@ import { AddressInfo } from "net";
 // in case we need em
 import GmasterConnector from "../src/connectors/gmaster_connector";
 import { GetGameBoard } from "../src/connectors/prisma_connector";
+import * as gm_api from "../src/connectors/gmaster_api";
 jest.mock("../src/connectors/gmaster_connector");
 jest.mock("../src/connectors/prisma_connector");
+
+/**
+ * Destructuring + casting
+ *
+ * provides entry points to mock GmasterConnector's post and get fields
+ */
+const {
+    post: mocked_gmc_post,
+    get: mocked_gmc_get
+} = new GmasterConnector() as {
+    post: jest.MockedFunction<GmasterConnector["post"]>;
+    get: jest.MockedFunction<GmasterConnector["get"]>;
+};
 
 import { app } from "../src/app";
 import { attachDispatcher } from "../src/socketDispatch";
@@ -65,12 +79,12 @@ describe("WS communication", () => {
      *  Cleanup WS & HTTP servers
      */
     afterEach(done => {
-        for (let s of socketsOpened) {
+        socketsOpened.forEach(s => {
             // Cleanup
             if (s.connected) {
                 s.disconnect();
             }
-        }
+        });
         socServer.close();
         httpServer.close();
         done();
@@ -82,4 +96,48 @@ describe("WS communication", () => {
             done();
         });
     }, 1000);
+
+    test("2 player can complete setup separately", done => {
+        mocked_gmc_post.mockImplementationOnce((endpoint, payload) => {
+            if (endpoint === "CreateGame") {
+                return Promise.resolve(<gm_api.CreateGameResponse>{
+                    success: true,
+                    gameId: "1111111",
+                    newState: { game: "wait", turn: "player1" }
+                });
+            } else {
+                return Promise.resolve({
+                    success: false,
+                    errorMessage: "Bad Endpoint",
+                    errorCode: 0
+                });
+            }
+        });
+
+        const client1 = openClientSocket("p1");
+
+        client1.once("choose_role", () => {
+            client1.emit("iwannabetracer", "first");
+            const client2 = openClientSocket("p2");
+
+            client2.once("choose_role", () => {
+                client2.emit("iwannabetracer", "second");
+            });
+
+            const p1_done = new Promise(resolve => {
+                client1.once("you_are_it", (role: unknown) => {
+                    expect(role).toBe("first");
+                    resolve();
+                });
+            });
+            const p2_done = new Promise(resolve => {
+                client2.once("you_are_it", (role: unknown) => {
+                    expect(role).toBe("second");
+                    resolve();
+                });
+            });
+
+            Promise.all([p1_done, p2_done]).then(() => done());
+        });
+    });
 });
