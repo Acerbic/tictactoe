@@ -19,7 +19,6 @@ import {
     CreateGameRequest,
     MakeMoveRequest
 } from "../../connectors/gmaster_api";
-import { log } from "xstate/lib/actions";
 
 export const state_machine: MachineConfig<
     GameRoomContext,
@@ -107,17 +106,16 @@ export const state_machine: MachineConfig<
     },
     on: {
         // might be overtaken by deeper (more specific) states transitions
-        SOC_CONNECT: { actions: [log("Top-state connect"), "top_reconnect"] },
+        SOC_CONNECT: { actions: "top_reconnect" },
         SOC_DISCONNECT: {
-            actions: [log("Top-state disconnect"), "top_disconnect"]
+            actions: "top_disconnect"
         }
     }
 };
 
-export const machine_options: Partial<MachineOptions<
-    GameRoomContext,
-    GameRoomEvent
->> = {
+export const machine_options: Partial<
+    MachineOptions<GameRoomContext, GameRoomEvent>
+> = {
     services: {
         /**
          * call CreateGame Rest API on game master
@@ -173,7 +171,9 @@ export const machine_options: Partial<MachineOptions<
                         return { type: "CALL_MAKEMOVE_ENDED", response };
                     } else {
                         errorlog(
-                            `Call to MakeMove failed: [${response.errorCode}] - ${response.errorMessage}`
+                            `Call to MakeMove failed: [${
+                                response.errorCode
+                            }] - ${response.errorMessage}`
                         );
                         throw response;
                         // TODO: handle non-success by the game master

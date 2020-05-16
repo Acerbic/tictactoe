@@ -1,19 +1,14 @@
-import {
-    GameId,
-    GameMasterGetRequest,
-    GameMasterPostRequest,
-    GameMasterResponse,
-    APIResponse,
-    APIResponseFailure,
-    CheckGameResponse
-} from "../gmaster_api";
+import { APIResponseFailure } from "../gmaster_api";
+import GMC from "../gmaster_connector";
 
-export const gmasterPost = jest.fn().mockResolvedValue(<APIResponseFailure>{
-    success: false,
-    errorCode: 0,
-    errorMessage: "Mocked response"
-});
-export const gmasterGet = jest.fn().mockResolvedValue(<APIResponseFailure>{
+const m_gmasterPost = jest
+    .fn<ReturnType<GMC["post"]>, Parameters<GMC["post"]>>()
+    .mockResolvedValue(<APIResponseFailure>{
+        success: false,
+        errorCode: 0,
+        errorMessage: "Mocked response"
+    });
+const m_gmasterGet = jest.fn().mockResolvedValue(<APIResponseFailure>{
     success: false,
     errorCode: 0,
     errorMessage: "Mocked response"
@@ -23,6 +18,6 @@ export default jest
     .fn()
     .mockName("GMConnector")
     .mockImplementation(() => ({
-        get: gmasterGet,
-        post: gmasterPost
+        get: m_gmasterGet,
+        post: m_gmasterPost
     }));
