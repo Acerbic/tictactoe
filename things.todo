@@ -9,3 +9,4 @@
 ☐ find a way to configure Lerna to split lock file into packages (to prevent excessive docker rebuilds on every lock change)
 ☐ write production deployment script and readme
 ☐ remove non-TS generated code from gamesDB
+☐ test if SocketIO holds recieved event when no listeners are subscribed yet or dumps them
