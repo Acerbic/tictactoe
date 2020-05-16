@@ -3,7 +3,7 @@ import { createServer } from "http";
 import socketio from "socket.io";
 
 import { app } from "./app";
-import { attachDispatcher } from "./socketDispatch";
+import { SocketDispatcher } from "./SocketDispatcher";
 
 const hostlog = debug("ttt:ghost");
 
@@ -22,7 +22,7 @@ const socServer = socketio(http, {
 /**
  * Add custom ws behaviours
  */
-attachDispatcher(socServer);
+new SocketDispatcher().attach(socServer);
 
 // start listening for http connections
 http.listen(3060, function() {

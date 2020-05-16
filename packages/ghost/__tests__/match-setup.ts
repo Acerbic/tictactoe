@@ -28,7 +28,7 @@ const {
 };
 
 import { app } from "../src/app";
-import { attachDispatcher } from "../src/socketDispatch";
+import { SocketDispatcher } from "../src/SocketDispatcher";
 
 describe("WS communication", () => {
     let httpServer: http.Server;
@@ -66,7 +66,7 @@ describe("WS communication", () => {
         httpServerAddr = httpServer.address() as AddressInfo;
         expect(typeof httpServerAddr).toBe("object");
         socServer = ioServer(httpServer);
-        attachDispatcher(socServer);
+        new SocketDispatcher().attach(socServer);
 
         // note: (not in official documentation tho, may change)
         // (ioServer as any).httpServer === httpServer;
@@ -121,6 +121,49 @@ describe("WS communication", () => {
             const client2 = openClientSocket("p2");
 
             client2.once("choose_role", () => {
+                client2.emit("iwannabetracer", "second");
+            });
+
+            const p1_done = new Promise(resolve => {
+                client1.once("you_are_it", (role: unknown) => {
+                    expect(role).toBe("first");
+                    resolve();
+                });
+            });
+            const p2_done = new Promise(resolve => {
+                client2.once("you_are_it", (role: unknown) => {
+                    expect(role).toBe("second");
+                    resolve();
+                });
+            });
+
+            Promise.all([p1_done, p2_done]).then(() => done());
+        });
+    });
+
+    test("2 player can complete setup in parallel", done => {
+        mocked_gmc_post.mockImplementationOnce(endpoint => {
+            if (endpoint === "CreateGame") {
+                return Promise.resolve(<gm_api.CreateGameResponse>{
+                    success: true,
+                    gameId: "1111111",
+                    newState: { game: "wait", turn: "player1" }
+                });
+            } else {
+                return Promise.resolve({
+                    success: false,
+                    errorMessage: "Bad Endpoint",
+                    errorCode: 0
+                });
+            }
+        });
+
+        const client1 = openClientSocket("p1");
+
+        client1.once("choose_role", () => {
+            const client2 = openClientSocket("p2");
+            client2.once("choose_role", () => {
+                client1.emit("iwannabetracer", "first");
                 client2.emit("iwannabetracer", "second");
             });
 
