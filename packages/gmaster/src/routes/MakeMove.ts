@@ -8,14 +8,14 @@ import {
     MakeMoveRequest,
     MakeMoveResponse,
     APIResponseFailure
-} from "./api";
+} from "@trulyacerbic/ttt-apis/gmaster-api";
 
 import { GameContext, GameEvent, GameStateValue } from "../game/game-schema";
 import { GameMachine, GameStateValueToApi } from "../game/game-machine";
 import { makeFailureResponse } from "./utils";
 
 const router = express.Router();
-router.post("/MakeMove/:gameId", function(req, res, next) {
+router.post("/MakeMove/:gameId", function (req, res, next) {
     const gameId = req.params.gameId as GameId;
     const gamesDb = req.app.get("gamesDb") as DbConnector;
 

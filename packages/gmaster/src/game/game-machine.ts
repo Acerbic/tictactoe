@@ -6,7 +6,7 @@ import {
     GameEvent,
     GameStateValue
 } from "./game-schema";
-import { GameState } from "../routes/api";
+import { GameState } from "@trulyacerbic/ttt-apis/gmaster-api";
 
 export const GameMachine = xstate.Machine<GameContext, GameSchema, GameEvent>(
     {

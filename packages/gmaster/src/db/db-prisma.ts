@@ -3,7 +3,7 @@
  */
 
 import { Game, DbConnector } from "./db";
-import { GameId } from "../routes/api";
+import { GameId } from "@trulyacerbic/ttt-apis/gmaster-api";
 import { prisma, Prisma } from "@trulyacerbic/ttt-gamesdb";
 import { BaseClientOptions } from "prisma-client-lib";
 

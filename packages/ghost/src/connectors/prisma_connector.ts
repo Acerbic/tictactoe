@@ -2,7 +2,7 @@
  * Connects directly to the game storage to retrieve game data (for reads unrelated to game progression)
  */
 
-import { GameId } from "./gmaster_api";
+import { GameId } from "@trulyacerbic/ttt-apis/gmaster-api";
 import { prisma } from "@trulyacerbic/ttt-gamesdb";
 
 export type GameBoard = [

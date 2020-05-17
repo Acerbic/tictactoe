@@ -1,11 +1,15 @@
 import * as express from "express";
 import { DbConnector } from "../db/db";
-import { GameId, DropGameResponse, APIResponseFailure } from "./api";
+import {
+    GameId,
+    DropGameResponse,
+    APIResponseFailure
+} from "@trulyacerbic/ttt-apis/gmaster-api";
 import { makeFailureResponse } from "./utils";
 
 const router = express.Router();
 
-router.post("/DropGame/:gameId", function(req, res, next) {
+router.post("/DropGame/:gameId", function (req, res, next) {
     const gameId = req.params.gameId as GameId;
     const gamesDb = req.app.get("gamesDb") as DbConnector;
 

@@ -6,7 +6,11 @@
 
 import { StateSchema, Actor } from "xstate";
 import { Socket } from "socket.io";
-import { PlayerId, GameId, GameState } from "../../connectors/gmaster_api";
+import {
+    PlayerId,
+    GameId,
+    GameState
+} from "@trulyacerbic/ttt-apis/gmaster-api";
 import {
     PlayerSetupEvent,
     PlayerSetupContext,

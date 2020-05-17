@@ -8,7 +8,7 @@
 import supertest from "supertest";
 import generateApp from "../src/app";
 
-import * as api from "../src/routes/api";
+import * as api from "@trulyacerbic/ttt-apis/gmaster-api";
 
 it("should fail to start the server if PRISMA_URL unset", () => {
     const oldPRISMA_URL = process.env.PRISMA_URL;

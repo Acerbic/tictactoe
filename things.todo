@@ -11,4 +11,4 @@
 ☐ remove non-TS generated code from gamesDB
 ☐ test if SocketIO holds recieved event when no listeners are subscribed yet or dumps them
 ☐ investigate if `gamesdb` needs prepublish hook - look up README
-☐ rethink projects importing each other's api. common api package?
+✔ rethink projects importing each other's api. common api package? @done(20-05-17 21:50)

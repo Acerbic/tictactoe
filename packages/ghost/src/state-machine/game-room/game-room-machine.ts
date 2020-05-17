@@ -17,7 +17,7 @@ import {
     MakeMoveResponse,
     CreateGameRequest,
     MakeMoveRequest
-} from "../../connectors/gmaster_api";
+} from "@trulyacerbic/ttt-apis/gmaster-api";
 
 export const state_machine: MachineConfig<
     GameRoomContext,

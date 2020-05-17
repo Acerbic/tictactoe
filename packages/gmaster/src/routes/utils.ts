@@ -1,4 +1,4 @@
-import { APIResponseFailure } from "./api";
+import { APIResponseFailure } from "@trulyacerbic/ttt-apis/gmaster-api";
 
 export function makeFailureResponse(
     err?: any,

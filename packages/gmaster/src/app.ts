@@ -11,7 +11,7 @@ import CreateGame from "./routes/CreateGame";
 import CheckGame from "./routes/CheckGame";
 import DropGame from "./routes/DropGame";
 import MakeMove from "./routes/MakeMove";
-import { APIResponseFailure } from "./routes/api";
+import { APIResponseFailure } from "@trulyacerbic/ttt-apis/gmaster-api";
 
 const generateApp = () => {
     const app = express();

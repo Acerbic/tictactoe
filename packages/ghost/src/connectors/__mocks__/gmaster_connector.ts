@@ -1,4 +1,4 @@
-import { APIResponseFailure } from "../gmaster_api";
+import { APIResponseFailure } from "@trulyacerbic/ttt-apis/gmaster-api";
 import GMC from "../gmaster_connector";
 
 const m_gmasterPost = jest

@@ -16,9 +16,8 @@ import {
     GameRoom_PlayerReady,
     GameRoom_PlayerPickRole
 } from "./game-room-schema";
-import { API } from "../../api";
-
-import { PlayerId } from "../../connectors/gmaster_api";
+import { API } from "@trulyacerbic/ttt-apis/ghost-api";
+import { PlayerId } from "@trulyacerbic/ttt-apis/gmaster-api";
 
 import player_setup from "../player-setup/player-setup-machine";
 

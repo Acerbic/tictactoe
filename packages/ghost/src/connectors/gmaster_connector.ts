@@ -9,7 +9,7 @@ import {
     APIResponse,
     APIResponseFailure,
     CheckGameResponse
-} from "./gmaster_api";
+} from "@trulyacerbic/ttt-apis/gmaster-api";
 import fetch from "isomorphic-unfetch";
 
 // TODO: move to .env variable
