@@ -7,8 +7,8 @@
 
 import { statelog, hostlog, errorlog, debuglog } from "../utils";
 
-import { Machine, Actor, State } from "xstate";
-import { Interpreter, StateListener } from "xstate/lib/interpreter";
+import { Machine, Actor } from "xstate";
+import { Interpreter } from "xstate/lib/interpreter";
 
 import { PlayerId } from "@trulyacerbic/ttt-apis/gmaster-api";
 import GMConnector from "../connectors/gmaster_connector";
@@ -25,8 +25,6 @@ import { Socket } from "socket.io";
 export type GameRoomInterpreterDependencies = {
     gmaster: GMConnector;
     prisma: PrismaGetGameBoard;
-    promoteRoom: (room: GameRoomInterpreter) => void;
-    dropRoom: (room: GameRoomInterpreter) => void;
 };
 
 let roomCount = 1;
@@ -43,7 +41,6 @@ export class GameRoomInterpreter extends Interpreter<
     GameRoomEvent
 > {
     public roomId: string;
-    deps: GameRoomInterpreterDependencies;
     private superSend: sendType;
 
     /**
@@ -60,7 +57,6 @@ export class GameRoomInterpreter extends Interpreter<
             })
         );
         this.roomId = "#" + roomCount;
-        this.deps = deps;
         roomCount++;
 
         // only send events if not in final state
@@ -130,20 +126,6 @@ export class GameRoomInterpreter extends Interpreter<
 
         socket.on("move", (move: any) => {
             this.send({ type: "SOC_MOVE", player_id, move });
-        });
-
-        const promoter: StateListener<
-            GameRoomContext,
-            GameRoomEvent
-        > = state => {
-            if (!state.matches("players_setup")) {
-                this.deps.promoteRoom(this);
-                this.off(promoter); // self-remove ("once")
-            }
-        };
-        this.onTransition(promoter);
-        this.onDone(e => {
-            this.deps.dropRoom(this);
         });
 
         // raise machine EVENT - SOC_CONNECT

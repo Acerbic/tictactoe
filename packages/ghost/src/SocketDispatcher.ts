@@ -15,7 +15,11 @@ import { GameRoomInterpreter } from "./state-machine/GameRoomInterpreter";
 import GmasterConnector from "./connectors/gmaster_connector";
 import { GetGameBoard } from "./connectors/prisma_connector";
 import { PlayerId } from "@trulyacerbic/ttt-apis/gmaster-api";
-import { GameRoomEvent } from "./state-machine/game-room/game-room-schema";
+import {
+    GameRoomEvent,
+    GameRoomContext
+} from "./state-machine/game-room/game-room-schema";
+import { StateListener } from "xstate/lib/interpreter";
 
 export class SocketDispatcher {
     /**
@@ -30,23 +34,24 @@ export class SocketDispatcher {
      */
     private deps = {
         gmaster: new GmasterConnector(),
-        prisma: GetGameBoard,
-        // NOTE: if game-room machine is implemented as actor in higher-order
-        //       ghost machine, these would be events to the parent
-        promoteRoom: (room: GameRoomInterpreter) => {
-            const roomInd = this.awaitingGameRooms.findIndex(r => r === room);
-            if (roomInd >= 0) {
-                this.awaitingGameRooms.splice(roomInd, 1);
-            }
-            for (let playerId of room.state.context.players.keys()) {
-                this.activeGameRooms.set(playerId, room);
-            }
-        },
-        dropRoom: (room: GameRoomInterpreter) => {
-            this.activeGameRooms.delete(room.state.context.player1!);
-            this.activeGameRooms.delete(room.state.context.player2!);
-        }
+        prisma: GetGameBoard
     };
+
+    // NOTE: if game-room machine is implemented as actor in higher-order
+    //       ghost machine, these would be events to the parent
+    private promoteRoom(room: GameRoomInterpreter) {
+        const roomInd = this.awaitingGameRooms.findIndex(r => r === room);
+        if (roomInd >= 0) {
+            this.awaitingGameRooms.splice(roomInd, 1);
+        }
+        for (let playerId of room.state.context.players.keys()) {
+            this.activeGameRooms.set(playerId, room);
+        }
+    }
+    private dropRoom(room: GameRoomInterpreter) {
+        this.activeGameRooms.delete(room.state.context.player1!);
+        this.activeGameRooms.delete(room.state.context.player2!);
+    }
 
     private getRoomForSocketEvent(
         socketId: Socket["id"],
@@ -83,8 +88,20 @@ export class SocketDispatcher {
 
         // create a fresh new room
         const newRoom = new GameRoomInterpreter(this.deps);
+
+        // observe new room state to move it from "awaiting" to "active" list
+        const promoter: StateListener<
+            GameRoomContext,
+            GameRoomEvent
+        > = state => {
+            if (!state.matches("players_setup")) {
+                this.promoteRoom(newRoom);
+                newRoom.off(promoter); // self-remove ("once")
+            }
+        };
         newRoom
             .onTransition(
+                // just logging
                 (r => (_: any, event: GameRoomEvent) =>
                     statelog(
                         "Transition in room {%s}: (%s) -> %O",
@@ -93,6 +110,10 @@ export class SocketDispatcher {
                         r.getDetailedStateValue()
                     ))(newRoom)
             )
+            .onTransition(promoter)
+            .onDone(() => {
+                this.dropRoom(newRoom);
+            })
             .start();
         hostlog("game room created: %s", newRoom.roomId);
         this.awaitingGameRooms.push(newRoom);
