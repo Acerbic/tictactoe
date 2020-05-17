@@ -2,9 +2,9 @@
  * Actions for game-room machine
  */
 
-const errorlog = require("debug")("ttt:ghost:error");
-const debuglog = require("debug")("ttt:ghost:debug");
-const actionlog = require("debug")("ttt:ghost:action");
+import { statelog, hostlog, errorlog, debuglog } from "../../utils";
+import debug from "debug";
+const actionlog = debug("ttt:ghost:action");
 
 import { ActionFunction, assign, spawn, Spawnable } from "xstate";
 
@@ -16,6 +16,8 @@ import {
     GameRoom_PlayerReady,
     GameRoom_PlayerPickRole
 } from "./game-room-schema";
+import { API } from "../../api";
+
 import { PlayerId } from "../../connectors/gmaster_api";
 
 import player_setup from "../player-setup/player-setup-machine";
@@ -242,18 +244,18 @@ export const top_reconnect: ActionF<GameRoom_PlayerDisconnected> = (
     event
 ) => {
     // reconnection during game in progress - update socket
-
     ctx.players.get(event.player_id)!.socket = event.socket;
 
     ctx.getBoard(ctx.game_id!).then(board => {
         // update reconnected player's knowledge
-        event.socket.emit("reconnection", {
-            gameId: ctx.game_id,
+        const data: API["out"]["reconnection"] = {
+            gameId: ctx.game_id!,
             board,
             step:
                 ctx.current_player === event.player_id
                     ? "my-turn"
                     : "opponents-turn"
-        });
+        };
+        event.socket.emit("reconnection", data);
     });
 };

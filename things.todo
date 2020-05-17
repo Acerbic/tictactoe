@@ -10,3 +10,5 @@
 ☐ write production deployment script and readme
 ☐ remove non-TS generated code from gamesDB
 ☐ test if SocketIO holds recieved event when no listeners are subscribed yet or dumps them
+☐ investigate if `gamesdb` needs prepublish hook - look up README
+☐ rethink projects importing each other's api. common api package?
