@@ -177,5 +177,5 @@ describe("After game started", () => {
             client1.connect();
         });
         client1.disconnect();
-    }, 1000000);
+    });
 });

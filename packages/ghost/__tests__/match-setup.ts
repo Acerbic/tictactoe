@@ -254,14 +254,15 @@ describe("WS communication", () => {
     });
 
     test("player can quit before the game start and another player take his place", done => {
-        let client1 = openClientSocket("p1");
+        const client1 = openClientSocket("p1");
+        const client2 = openClientSocket("p2");
+        const client3 = openClientSocket("p3");
+
         client1.once("choose_role", () => {
-            const client2 = openClientSocket("p2");
             client2.once("choose_role", () => {
                 client2.emit("iwannabetracer", "second");
                 client1.disconnect();
 
-                const client3 = openClientSocket("p3");
                 client3.once("choose_role", () => {
                     client3.emit("iwannabetracer", "first");
 
@@ -293,14 +294,15 @@ describe("WS communication", () => {
     });
 
     test("player can disconnect before match started and on reconnection his setup is reset", done => {
-        let client1 = openClientSocket("p1");
+        const client1 = openClientSocket("p1");
+        const client2 = openClientSocket("p2");
+        const client1_again = openClientSocket("p1");
+
         client1.once("choose_role", () => {
             client1.emit("iwannabetracer", "first");
-            const client2 = openClientSocket("p2");
             client2.once("choose_role", () => {
                 client1.once("disconnect", () => {
                     client2.emit("iwannabetracer", "second");
-                    let client1_again = openClientSocket("p1");
                     client1_again.once("choose_role", () => done());
                     client1_again.connect();
                 });
