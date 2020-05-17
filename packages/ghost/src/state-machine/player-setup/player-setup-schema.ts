@@ -19,8 +19,10 @@ export interface PlayerSetupStateSchema {
 
 // accept events forwarded from parent machine
 export type PlayerSetupEvent =
-    | GameRoom_PlayerDisconnected
-    | GameRoom_PlayerPickRole;
+    // socket.io Socket instance has circular references, which
+    // prevents its serialization with JSON, so it can't be passed
+    // to a child machine from parent via event
+    Omit<GameRoom_PlayerDisconnected, "socket"> | GameRoom_PlayerPickRole;
 
 export type PlayerSetupContext = {
     socket?: Socket;

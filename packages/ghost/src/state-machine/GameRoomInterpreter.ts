@@ -44,8 +44,6 @@ export class GameRoomInterpreter extends Interpreter<
     GameRoomEvent
 > {
     public roomId: string;
-    promiseChain: Promise<any>; // TODO: unused
-    public socketsInUse: Set<Socket["id"]>; // TODO: unused
     deps: GameRoomInterpreterDependencies;
     private superSend: sendType;
 
@@ -66,10 +64,10 @@ export class GameRoomInterpreter extends Interpreter<
         this.roomId = "#" + roomCount;
         this.deps = deps;
         roomCount++;
-        this.promiseChain = Promise.resolve();
-        this.socketsInUse = new Set();
 
         // only send events if not in final state
+        // overriding `send` here instead of checking before each
+        // invokation of `send` for this.state.done flag
         this.superSend = this.send;
         this.send = (...args) => {
             if (!this.state.done) {
@@ -86,7 +84,8 @@ export class GameRoomInterpreter extends Interpreter<
                 ([name, machine]: [string | number, Actor]) => ({
                     [name]: machine?.state?.value
                 })
-            )
+            ),
+            player_setup_machines: Array.from(this.state.context.player_setup_machines.values()).map(a => a.id)
         };
     }
 
@@ -100,8 +99,6 @@ export class GameRoomInterpreter extends Interpreter<
         }
         debuglog(`a user with id = ${player_id} connecting: ${socket.id}`);
 
-        this.socketsInUse.add(socket.id);
-
         // attach variety of socket event handlers
         socket.on("disconnect", () => {
             debuglog(
@@ -114,11 +111,9 @@ export class GameRoomInterpreter extends Interpreter<
                 socket,
                 player_id
             });
-            this.socketsInUse.delete(socket.id);
         });
 
         // listen for further socket messages
-
         socket.once("iwannabetracer", (role: "first" | "second") => {
             this.send({
                 type: "SOC_IWANNABETRACER",
