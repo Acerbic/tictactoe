@@ -1,0 +1,16 @@
+{
+  "name": "apis",
+  "version": "1.0.0",
+  "description": "Packages APIS definitions.",
+  "main": "",
+  "author": "Gleb Varenov",
+  "license": "MIT",
+  "private": true,
+  "types": "index.d.ts",
+  "scripts": {
+    "build": "tsc"
+  },
+  "devDependencies": {
+    "typescript": "^3.9.2"
+  }
+}

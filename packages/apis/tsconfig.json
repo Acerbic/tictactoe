@@ -1,0 +1,12 @@
+{
+    "compilerOptions": {
+        "lib": ["es6", "esnext.asynciterable"],
+        "skipLibCheck": true,
+        "module": "esnext",
+        "allowJs": true,
+        "target": "es6",
+        "noImplicitAny": true,
+        "moduleResolution": "node",
+        "declaration": true
+    }
+}
