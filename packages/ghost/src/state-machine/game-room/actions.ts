@@ -171,7 +171,8 @@ export const spawn_player_setup_actor = assign<
                     player_id,
                     socket,
                     desired_role: "first"
-                }) as Spawnable
+                }) as Spawnable,
+                player_id
             )
         )
     };
@@ -181,10 +182,11 @@ export const spawn_player_setup_actor = assign<
  * Conditionally forwards event to a child actor
  * (actor must be not in final state)
  */
-export const forward_soc_event: ActionF<
-    GameRoom_PlayerDisconnected | GameRoom_PlayerPickRole
-> = (ctx, event) => {
-    actionlog("forward_soc_event", event.socket.id);
+export const forward_soc_event: ActionF<GameRoom_PlayerPickRole> = (
+    ctx,
+    event
+) => {
+    actionlog("forward_soc_event", event.socket.id, event.type);
     const actor = ctx.player_setup_machines.get(event.socket.id);
     if (actor?.state && !actor.state.done) {
         actor.send(event);
@@ -206,16 +208,25 @@ export const add_ready_player: ActionF<GameRoom_PlayerReady> = (
 /**
  * Delete from players list and free player-setup machine
  */
-export const clear_player_setup: ActionF<GameRoom_PlayerDisconnected> = (
-    ctx,
-    event
-) => {
+export const clear_player_setup = assign<
+    GameRoomContext,
+    GameRoom_PlayerDisconnected
+>((ctx, event) => {
     actionlog("clear_player_setup");
     const actor = ctx.player_setup_machines.get(event.socket.id);
-    actor?.stop?.();
-    ctx.player_setup_machines.delete(event.socket.id);
-    ctx.players.delete(event.player_id);
-};
+    if (actor?.state && !actor.state.done) {
+        actor.send({ type: "SOC_DISCONNECT", player_id: event.player_id });
+        actor.stop?.();
+    }
+    const m = new Map(ctx.player_setup_machines);
+    m.delete(event.socket.id);
+    const p = new Map(ctx.players);
+    p.delete(event.player_id);
+    return {
+        player_setup_machines: m,
+        players: p
+    };
+});
 
 export const top_disconnect: ActionF<GameRoom_PlayerDisconnected> = (
     ctx,

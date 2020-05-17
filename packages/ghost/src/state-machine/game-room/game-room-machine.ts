@@ -31,7 +31,7 @@ export const state_machine: MachineConfig<
             on: {
                 SOC_CONNECT: { actions: "spawn_player_setup_actor" },
                 SOC_DISCONNECT: {
-                    actions: ["forward_soc_event", "clear_player_setup"]
+                    actions: ["clear_player_setup"]
                 },
                 SOC_IWANNABETRACER: { actions: "forward_soc_event" },
                 PLAYER_READY: [
@@ -112,9 +112,10 @@ export const state_machine: MachineConfig<
     }
 };
 
-export const machine_options: Partial<
-    MachineOptions<GameRoomContext, GameRoomEvent>
-> = {
+export const machine_options: Partial<MachineOptions<
+    GameRoomContext,
+    GameRoomEvent
+>> = {
     services: {
         /**
          * call CreateGame Rest API on game master
@@ -170,9 +171,7 @@ export const machine_options: Partial<
                         return { type: "CALL_MAKEMOVE_ENDED", response };
                     } else {
                         errorlog(
-                            `Call to MakeMove failed: [${
-                                response.errorCode
-                            }] - ${response.errorMessage}`
+                            `Call to MakeMove failed: [${response.errorCode}] - ${response.errorMessage}`
                         );
                         throw response;
                         // TODO: handle non-success by the game master
@@ -191,6 +190,7 @@ export const machine_options: Partial<
 
     guards: {
         both_players_ready: ({ players }, event) => {
+            debuglog("Guard: both_players_ready", players.size);
             // ATTN: cond guard is checked BEFORE actions are executed
             return players.size >= 1 && event.type === "PLAYER_READY";
         }
