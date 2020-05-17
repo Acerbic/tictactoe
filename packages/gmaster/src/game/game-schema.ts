@@ -3,7 +3,7 @@
  */
 
 import { StateSchema, ExtractStateValue } from "xstate";
-import { PlayerId } from "../routes/api";
+import { PlayerId } from "@trulyacerbic/ttt-apis/gmaster-api";
 
 export interface GameContext {
     board: Array<Array<any>>;

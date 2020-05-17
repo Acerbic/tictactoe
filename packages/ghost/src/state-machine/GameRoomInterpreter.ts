@@ -10,7 +10,7 @@ import  {statelog, hostlog, errorlog, debuglog} from "../utils"
 import { Machine, Actor, State } from "xstate";
 import { Interpreter, StateListener } from "xstate/lib/interpreter";
 
-import { PlayerId } from "../connectors/gmaster_api";
+import { PlayerId } from "@trulyacerbic/ttt-apis/gmaster-api";
 import GMConnector from "../connectors/gmaster_connector";
 import { PrismaGetGameBoard } from "../connectors/prisma_connector";
 

@@ -4,14 +4,14 @@ import {
     CreateGameRequest,
     CreateGameResponse,
     APIResponseFailure
-} from "./api";
+} from "@trulyacerbic/ttt-apis/gmaster-api";
 import { makeFailureResponse } from "./utils";
 
 import { GameMachine, GameStateValueToApi } from "../game/game-machine";
 
 const router = express.Router();
 
-router.post("/CreateGame", function(req, res, next) {
+router.post("/CreateGame", function (req, res, next) {
     const { player1Id, player2Id } = req.body as CreateGameRequest;
     const gamesDb = req.app.get("gamesDb") as DbConnector;
 

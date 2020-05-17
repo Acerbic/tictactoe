@@ -2,7 +2,7 @@
  * Description of player-setup machine
  */
 
-import { PlayerId } from "../../connectors/gmaster_api";
+import { PlayerId } from "@trulyacerbic/ttt-apis/gmaster-api";
 import {
     GameRoom_PlayerDisconnected,
     GameRoom_PlayerPickRole

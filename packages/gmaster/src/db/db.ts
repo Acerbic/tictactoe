@@ -2,7 +2,7 @@
  * Type definitions for GMaster <-> DBStorage connection interface
  * (used internally in gmaster)
  */
-import { GameId, PlayerId } from "../routes/api";
+import { GameId, PlayerId } from "@trulyacerbic/ttt-apis/gmaster-api";
 
 /**
  * Preserved state of a game

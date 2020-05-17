@@ -9,7 +9,7 @@
 import supertest from "supertest";
 import generateApp from "../src/app";
 
-import * as api from "../src/routes/api";
+import * as api from "@trulyacerbic/ttt-apis/gmaster-api";
 
 /**
  * If provided string endpoint (in the form of URI like

@@ -14,7 +14,7 @@ import { Socket, Server as SocServer } from "socket.io";
 import { GameRoomInterpreter } from "./state-machine/GameRoomInterpreter";
 import GmasterConnector from "./connectors/gmaster_connector";
 import { GetGameBoard } from "./connectors/prisma_connector";
-import { PlayerId } from "./connectors/gmaster_api";
+import { PlayerId } from "@trulyacerbic/ttt-apis/gmaster-api";
 import { GameRoomEvent } from "./state-machine/game-room/game-room-schema";
 
 export class SocketDispatcher {
