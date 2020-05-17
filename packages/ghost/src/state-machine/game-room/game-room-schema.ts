@@ -35,17 +35,12 @@ export interface PlayerInfo {
     id: PlayerId;
     // holds connection status in Socket.connected field.
     socket: Socket;
-    role_request: "first" | "second";
+    role_request?: "first" | "second";
+    // this holds spawned submachine operating player's setup phase
+    setup_actor: Actor<PlayerSetupContext, PlayerSetupEvent>;
 }
 
 export interface GameRoomContext {
-    // this holds spawned submachines during players setup phase
-    // size of this set shows number of parallel players going
-    // (or finished) player setup
-    player_setup_machines: Map<
-        Socket["id"],
-        Actor<PlayerSetupContext, PlayerSetupEvent>
-    >;
     // since game master operates on 'player1' and 'player2' tokens
     // we need to keep mapping of those to player ids.
     // these fields can be undefined during a game's setup, but after that
@@ -62,7 +57,7 @@ export interface GameRoomContext {
     // latest game state, reported after a move was accepted by game master
     latest_game_state?: GameState;
 
-    // holds records for players who finished setup and ready to play.
+    // holds records for who connected to this room.
     // this also tracks player's socket for disconnection/reconnection
     // during the game
     players: Map<PlayerId, PlayerInfo>;
@@ -80,8 +75,8 @@ export interface GameRoomContext {
 
 export type GameRoom_PlayerConnected = {
     type: "SOC_CONNECT";
-    socket: Socket;
     player_id: PlayerId;
+    socket: Socket;
 };
 
 export type GameRoom_PlayerDisconnected = {
@@ -92,20 +87,25 @@ export type GameRoom_PlayerDisconnected = {
 
 export type GameRoom_PlayerPickRole = {
     type: "SOC_IWANNABETRACER";
-    socket: Socket;
+    player_id: PlayerId;
     role: "first" | "second";
 };
 
 export type GameRoom_PlayerReady = {
     type: "PLAYER_READY";
     player_id: PlayerId;
-    socket: Socket;
     desired_role: "first" | "second";
+};
+
+export type GameRoom_PlayerMove = {
+    type: "SOC_MOVE";
+    player_id: PlayerId;
+    move: any;
 };
 
 export type GameRoomEvent =
     | GameRoom_PlayerConnected
     | GameRoom_PlayerDisconnected
-    | GameRoom_PlayerReady
     | GameRoom_PlayerPickRole
-    | { type: "SOC_MOVE"; move: { row: number; column: number } };
+    | GameRoom_PlayerReady
+    | GameRoom_PlayerMove;

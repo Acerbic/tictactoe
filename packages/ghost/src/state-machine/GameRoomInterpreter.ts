@@ -21,7 +21,6 @@ import {
 } from "./game-room/game-room-schema";
 import { state_machine, machine_options } from "./game-room/game-room-machine";
 import { Socket } from "socket.io";
-import { PlayerSetupContext } from "./player-setup/player-setup-schema";
 
 export type GameRoomInterpreterDependencies = {
     gmaster: GMConnector;
@@ -53,7 +52,6 @@ export class GameRoomInterpreter extends Interpreter<
     constructor(deps: GameRoomInterpreterDependencies) {
         super(
             Machine(state_machine, machine_options, <GameRoomContext>{
-                player_setup_machines: new Map(),
                 players: new Map(),
                 emits_sync: Promise.resolve(),
 
@@ -85,9 +83,9 @@ export class GameRoomInterpreter extends Interpreter<
                     [name]: machine?.state?.value
                 })
             ),
-            player_setup_machines: Array.from(
-                this.state.context.player_setup_machines.values()
-            ).map(a => a.id)
+            players: Array.from(this.state.context.players.values()).map(
+                a => a.id
+            )
         };
     }
 
@@ -115,17 +113,23 @@ export class GameRoomInterpreter extends Interpreter<
             });
         });
 
+        /**
+         * After successful connection player_id will not change, therefor
+         * `player_id` could be used to uniquely track both the player and
+         * the socket in the system.
+         */
+
         // listen for further socket messages
         socket.once("iwannabetracer", (role: "first" | "second") => {
             this.send({
                 type: "SOC_IWANNABETRACER",
-                socket,
+                player_id,
                 role
             });
         });
 
         socket.on("move", (move: any) => {
-            this.send({ type: "SOC_MOVE", move });
+            this.send({ type: "SOC_MOVE", player_id, move });
         });
 
         const promoter: StateListener<
@@ -154,7 +158,7 @@ export class GameRoomInterpreter extends Interpreter<
     playersCount = () => (this.state ? this.state.context.players.size : 0);
 
     isRoomFull = () =>
-        this.state ? this.state.context.player_setup_machines.size >= 2 : true;
+        this.state ? this.state.context.players.size >= 2 : true;
 
     isGameInProgress = () =>
         this.state
@@ -164,15 +168,6 @@ export class GameRoomInterpreter extends Interpreter<
             : false;
 
     hasPlayer = (playerId: string) => {
-        // TODO: oof.
-        for (let psma of this.state.context.player_setup_machines.values()) {
-            if (
-                (psma.state! as State<PlayerSetupContext>).context.player_id ===
-                playerId
-            ) {
-                return true;
-            }
-        }
-        return false;
+        return this.state.context.players.has(playerId);
     };
 }

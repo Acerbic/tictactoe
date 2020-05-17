@@ -29,7 +29,7 @@ export const state_machine: MachineConfig<
     states: {
         players_setup: {
             on: {
-                SOC_CONNECT: { actions: "spawn_player_setup_actor" },
+                SOC_CONNECT: { actions: "initiate_player_setup" },
                 SOC_DISCONNECT: {
                     actions: ["clear_player_setup"]
                 },
@@ -192,7 +192,13 @@ export const machine_options: Partial<MachineOptions<
         both_players_ready: ({ players }, event) => {
             debuglog("Guard: both_players_ready", players.size);
             // ATTN: cond guard is checked BEFORE actions are executed
-            return players.size >= 1 && event.type === "PLAYER_READY";
+            return (
+                players.size >= 2 &&
+                event.type === "PLAYER_READY" &&
+                Array.from(players.values()).filter(pinfo =>
+                    pinfo.setup_actor.state!.matches("ready2play")
+                ).length == 2
+            );
         }
     }
 };

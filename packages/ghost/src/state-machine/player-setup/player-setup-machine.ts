@@ -20,7 +20,10 @@ import {
     PlayerSetupStateSchema,
     PlayerSetupEvent
 } from "./player-setup-schema";
-import { GameRoom_PlayerConnected } from "../game-room/game-room-schema";
+import {
+    GameRoom_PlayerPickRole,
+    GameRoom_PlayerReady
+} from "../game-room/game-room-schema";
 
 const player_setup_machine_config: MachineConfig<
     PlayerSetupContext,
@@ -46,9 +49,6 @@ const player_setup_machine_config: MachineConfig<
         aborted: {
             type: "final"
         }
-    },
-    context: {
-        desired_role: "first"
     }
 };
 
@@ -62,22 +62,18 @@ const player_setup_machine_options: Partial<MachineOptions<
             ctx.socket!.emit("choose_role");
         },
 
-        store_role_requested: assign((ctx, event) => {
+        // this is an assign action - it will be elevated and executed prior to other actions
+        store_role_requested: assign((ctx, event: GameRoom_PlayerPickRole) => {
             actionlog(ctx.player_id, "store_role_requested");
-            if (event.type === "SOC_IWANNABETRACER") {
-                return { desired_role: event.role };
-            } else {
-                return {};
-            }
-        }),
+            return { desired_role: event.role };
+        }) as AssignAction<PlayerSetupContext, PlayerSetupEvent>,
 
         announce_player_ready: sendParent(
-            ({ player_id, socket, desired_role }: PlayerSetupContext) => {
+            ({ player_id, desired_role }: PlayerSetupContext) => {
                 actionlog(player_id, "announce_player_ready");
-                return {
+                return <GameRoom_PlayerReady>{
                     type: "PLAYER_READY",
                     player_id,
-                    socket,
                     desired_role
                 };
             }

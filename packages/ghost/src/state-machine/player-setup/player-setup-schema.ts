@@ -25,7 +25,7 @@ export type PlayerSetupEvent =
     Omit<GameRoom_PlayerDisconnected, "socket"> | GameRoom_PlayerPickRole;
 
 export type PlayerSetupContext = {
-    socket?: Socket;
-    player_id?: PlayerId;
+    socket: Socket;
+    player_id: PlayerId;
     desired_role: "first" | "second";
 };

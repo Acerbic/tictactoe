@@ -14,7 +14,8 @@ import {
     GameRoom_PlayerConnected,
     GameRoom_PlayerDisconnected,
     GameRoom_PlayerReady,
-    GameRoom_PlayerPickRole
+    GameRoom_PlayerPickRole,
+    PlayerInfo
 } from "./game-room-schema";
 import { API } from "@trulyacerbic/ttt-apis/ghost-api";
 import { PlayerId } from "@trulyacerbic/ttt-apis/gmaster-api";
@@ -160,22 +161,24 @@ export const call_dropgame: ActionF = ctx => {
     ctx.gm_connect.post("DropGame", {}, ctx.game_id);
 };
 
-export const spawn_player_setup_actor = assign<
+export const initiate_player_setup = assign<
     GameRoomContext,
     GameRoom_PlayerConnected
 >((ctx, { player_id, socket }) => {
-    return {
-        player_setup_machines: ctx.player_setup_machines.set(
-            socket.id,
-            spawn(
-                player_setup({
-                    player_id,
-                    socket,
-                    desired_role: "first"
-                }) as Spawnable,
-                player_id
-            )
+    const pinfo: PlayerInfo = {
+        id: player_id,
+        socket,
+        setup_actor: spawn(
+            player_setup({
+                player_id,
+                socket,
+                desired_role: "first"
+            }) as Spawnable,
+            player_id
         )
+    };
+    return {
+        players: ctx.players.set(player_id, pinfo)
     };
 });
 
@@ -187,23 +190,20 @@ export const forward_soc_event: ActionF<GameRoom_PlayerPickRole> = (
     ctx,
     event
 ) => {
-    actionlog("forward_soc_event", event.socket.id, event.type);
-    const actor = ctx.player_setup_machines.get(event.socket.id);
-    if (actor?.state && !actor.state.done) {
-        actor.send(event);
+    actionlog("forward_soc_event", event.player_id, event.type);
+    const pinfo = ctx.players.get(event.player_id);
+    if (pinfo?.setup_actor.state && !pinfo.setup_actor.state.done) {
+        pinfo.setup_actor.send(event);
     }
 };
 
 export const add_ready_player: ActionF<GameRoom_PlayerReady> = (
     ctx,
-    { player_id, socket, desired_role }
+    { player_id, desired_role }
 ) => {
     actionlog("add_ready_player");
-    ctx.players.set(player_id, {
-        id: player_id,
-        socket,
-        role_request: desired_role
-    });
+    const pinfo: PlayerInfo = ctx.players.get(player_id)!;
+    pinfo.role_request = desired_role;
 };
 
 /**
@@ -212,20 +212,17 @@ export const add_ready_player: ActionF<GameRoom_PlayerReady> = (
 export const clear_player_setup = assign<
     GameRoomContext,
     GameRoom_PlayerDisconnected
->((ctx, event) => {
+>((ctx, { player_id }) => {
     actionlog("clear_player_setup");
-    const actor = ctx.player_setup_machines.get(event.socket.id);
-    if (actor?.state && !actor.state.done) {
-        actor.send({ type: "SOC_DISCONNECT", player_id: event.player_id });
-        actor.stop?.();
+    const pinfo = ctx.players.get(player_id);
+    if (pinfo?.setup_actor.state && !pinfo.setup_actor.state.done) {
+        pinfo.setup_actor.send({ type: "SOC_DISCONNECT", player_id });
+        pinfo.setup_actor.stop?.();
     }
-    const m = new Map(ctx.player_setup_machines);
-    m.delete(event.socket.id);
-    const p = new Map(ctx.players);
-    p.delete(event.player_id);
+    const players = new Map(ctx.players);
+    players.delete(player_id);
     return {
-        player_setup_machines: m,
-        players: p
+        players
     };
 });
 
