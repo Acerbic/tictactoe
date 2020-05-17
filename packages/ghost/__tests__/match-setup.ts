@@ -143,7 +143,7 @@ describe("WS communication", () => {
         client.connect();
     }, 1000);
 
-    test("2 player can complete setup separately", done => {
+    test("2 players can complete setup separately", done => {
         const client1 = openClientSocket("p1");
 
         client1.once("choose_role", () => {
@@ -173,7 +173,7 @@ describe("WS communication", () => {
         client1.connect();
     });
 
-    test("2 player can complete setup in parallel", done => {
+    test("2 players can complete setup in parallel", done => {
         const client1 = openClientSocket("p1");
 
         client1.once("choose_role", () => {
@@ -285,6 +285,26 @@ describe("WS communication", () => {
                     });
                 });
                 client3.connect();
+            });
+            client2.connect();
+        });
+
+        client1.connect();
+    });
+
+    test("player can disconnect before match started and on reconnection his setup is reset", done => {
+        let client1 = openClientSocket("p1");
+        client1.once("choose_role", () => {
+            client1.emit("iwannabetracer", "first");
+            const client2 = openClientSocket("p2");
+            client2.once("choose_role", () => {
+                client1.once("disconnect", () => {
+                    client2.emit("iwannabetracer", "second");
+                    let client1_again = openClientSocket("p1");
+                    client1_again.once("choose_role", () => done());
+                    client1_again.connect();
+                });
+                client1.disconnect();
             });
             client2.connect();
         });
