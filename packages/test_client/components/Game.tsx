@@ -16,9 +16,9 @@ interface P {
 }
 
 const initialBoard: GameBoardProps["board"] = [
-    [undefined, undefined, undefined],
-    [undefined, undefined, undefined],
-    [undefined, undefined, undefined]
+    [null, null, null],
+    [null, null, null],
+    [null, null, null]
 ];
 
 export const Game: React.FC<P> = props => {

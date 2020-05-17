@@ -13,7 +13,11 @@ export const GameMachine = xstate.Machine<GameContext, GameSchema, GameEvent>(
         id: "tictactoe",
         context: {
             // game board (3x3 table)
-            board: Array(Array(3), Array(3), Array(3)),
+            board: [
+                [null, null, null],
+                [null, null, null],
+                [null, null, null]
+            ],
             // number of moves made so far
             moves_made: 0,
             // stores the move made by a player,

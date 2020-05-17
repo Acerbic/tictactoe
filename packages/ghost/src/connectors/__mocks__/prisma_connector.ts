@@ -1,7 +1,5 @@
-export const GetGameBoard = jest
-    .fn()
-    .mockResolvedValue([
-        [undefined, undefined, undefined],
-        [undefined, undefined, undefined],
-        [undefined, undefined, undefined]
-    ]);
+export const GetGameBoard = jest.fn().mockResolvedValue([
+    [null, null, null],
+    [null, null, null],
+    [null, null, null]
+]);
