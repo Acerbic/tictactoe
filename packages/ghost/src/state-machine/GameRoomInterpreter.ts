@@ -5,7 +5,7 @@
  * in its field.
  */
 
-import  {statelog, hostlog, errorlog, debuglog} from "../utils"
+import { statelog, hostlog, errorlog, debuglog } from "../utils";
 
 import { Machine, Actor, State } from "xstate";
 import { Interpreter, StateListener } from "xstate/lib/interpreter";
@@ -85,7 +85,9 @@ export class GameRoomInterpreter extends Interpreter<
                     [name]: machine?.state?.value
                 })
             ),
-            player_setup_machines: Array.from(this.state.context.player_setup_machines.values()).map(a => a.id)
+            player_setup_machines: Array.from(
+                this.state.context.player_setup_machines.values()
+            ).map(a => a.id)
         };
     }
 
@@ -160,14 +162,17 @@ export class GameRoomInterpreter extends Interpreter<
               !this.state.matches("setup") &&
               !this.state.done
             : false;
-    
+
     hasPlayer = (playerId: string) => {
         // TODO: oof.
-        for (let psma  of this.state.context.player_setup_machines.values()) {
-            if ((psma.state! as State<PlayerSetupContext>).context.player_id === playerId) {
+        for (let psma of this.state.context.player_setup_machines.values()) {
+            if (
+                (psma.state! as State<PlayerSetupContext>).context.player_id ===
+                playerId
+            ) {
                 return true;
             }
         }
         return false;
-    }
+    };
 }

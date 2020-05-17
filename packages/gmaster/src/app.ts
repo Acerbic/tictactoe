@@ -24,7 +24,10 @@ const generateApp = () => {
     // this will throw if PRISMA_URL is undefined or incorrect
     new URL(process.env.PRISMA_URL!);
     // DB connection to be reused by all API calls
-    app.set("gamesDb", new GamesDbConnector({endpoint: process.env.PRISMA_URL!}));
+    app.set(
+        "gamesDb",
+        new GamesDbConnector({ endpoint: process.env.PRISMA_URL! })
+    );
 
     // Rest API
     app.use(CheckGame);
@@ -33,10 +36,16 @@ const generateApp = () => {
     app.use(MakeMove);
 
     // Catch-all error handler
-    app.use(<ErrorRequestHandler>((err, req, res : Response<APIResponseFailure>, next) => {
+    app.use(<ErrorRequestHandler>((
+        err,
+        req,
+        res: Response<APIResponseFailure>,
+        next
+    ) => {
         const errorCode = err?.code || 0;
-        const errorMessage = err?.message || err?.toString?.() || "Unknown error";
-        res.send({success: false, errorCode, errorMessage})
+        const errorMessage =
+            err?.message || err?.toString?.() || "Unknown error";
+        res.send({ success: false, errorCode, errorMessage });
     }));
 
     return app;

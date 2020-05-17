@@ -53,7 +53,10 @@ export class SocketDispatcher {
         playerId: string
     ): GameRoomInterpreter {
         hostlog("getting room for player %s", playerId);
-        debuglog("awaiting: ", this.awaitingGameRooms.map(r => r.roomId));
+        debuglog(
+            "awaiting: ",
+            this.awaitingGameRooms.map(r => r.roomId)
+        );
         debuglog(
             "active: ",
             [...this.activeGameRooms.entries()].map(

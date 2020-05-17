@@ -24,6 +24,6 @@ const socServer = socketio(http, {
 new SocketDispatcher().attach(socServer);
 
 // start listening for http connections
-http.listen(3060, function() {
+http.listen(3060, function () {
     hostlog("ghost is listening on *:3060");
 });

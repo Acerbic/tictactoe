@@ -1,7 +1,11 @@
 import { APIResponseFailure } from "@trulyacerbic/ttt-apis/gmaster-api";
 
+/**
+ * Constructs API failure response from either Error object or
+ * custom message and code
+ */
 export function makeFailureResponse(
-    err?: any,
+    err?: APIResponseFailure | Error | any,
     message?: APIResponseFailure["errorMessage"],
     code?: APIResponseFailure["errorCode"]
 ): APIResponseFailure {

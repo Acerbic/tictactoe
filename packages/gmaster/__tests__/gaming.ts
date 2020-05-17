@@ -33,10 +33,12 @@ describe("Demo matches", () => {
         let gameId = null;
 
         // creating a game
-        const res_create: api.CreateGameResponse = (await agent
-            .post("/CreateGame")
-            .send(<api.CreateGameRequest>{ player1Id, player2Id })
-            .expect(200)).body;
+        const res_create: api.CreateGameResponse = (
+            await agent
+                .post("/CreateGame")
+                .send(<api.CreateGameRequest>{ player1Id, player2Id })
+                .expect(200)
+        ).body;
 
         expect(res_create.success).toBe(true);
         gameId = res_create.gameId;
@@ -75,13 +77,15 @@ describe("Demo matches", () => {
             })
             .expect(200);
 
-        const res_mov: api.MakeMoveResponse = (await agent
-            .post("/MakeMove/" + gameId)
-            .send(<api.MakeMoveRequest>{
-                playerId: player1Id,
-                move: { row: 0, column: 2 }
-            })
-            .expect(200)).body;
+        const res_mov: api.MakeMoveResponse = (
+            await agent
+                .post("/MakeMove/" + gameId)
+                .send(<api.MakeMoveRequest>{
+                    playerId: player1Id,
+                    move: { row: 0, column: 2 }
+                })
+                .expect(200)
+        ).body;
 
         // make sure last move brings victory
         expect(res_mov.success).toBe(true);
@@ -89,18 +93,18 @@ describe("Demo matches", () => {
         expect(res_mov.newState.turn).toBe("player2");
 
         // double check game state was persisted correctly
-        const res_check: api.CheckGameResponse = (await agent.get(
-            "/CheckGame/" + gameId
-        )).body;
+        const res_check: api.CheckGameResponse = (
+            await agent.get("/CheckGame/" + gameId)
+        ).body;
 
         expect(res_check.success).toBe(true);
         expect(res_check.state.game).toBe("over");
         expect(res_check.state.turn).toBe("player2");
 
         // delete the game from records
-        const res_drop: api.DropGameResponse = (await agent
-            .post("/DropGame/" + gameId)
-            .expect(200)).body;
+        const res_drop: api.DropGameResponse = (
+            await agent.post("/DropGame/" + gameId).expect(200)
+        ).body;
 
         expect(res_drop.success).toBe(true);
     });
@@ -109,10 +113,12 @@ describe("Demo matches", () => {
         let gameId = null;
 
         // creating a game
-        const res_create: api.CreateGameResponse = (await agent
-            .post("/CreateGame")
-            .send(<api.CreateGameRequest>{ player1Id, player2Id })
-            .expect(200)).body;
+        const res_create: api.CreateGameResponse = (
+            await agent
+                .post("/CreateGame")
+                .send(<api.CreateGameRequest>{ player1Id, player2Id })
+                .expect(200)
+        ).body;
 
         expect(res_create.success).toBe(true);
         gameId = res_create.gameId;
@@ -179,13 +185,15 @@ describe("Demo matches", () => {
             })
             .expect(200);
 
-        const res_mov: api.MakeMoveResponse = (await agent
-            .post("/MakeMove/" + gameId)
-            .send(<api.MakeMoveRequest>{
-                playerId: player1Id,
-                move: { row: 2, column: 2 }
-            })
-            .expect(200)).body;
+        const res_mov: api.MakeMoveResponse = (
+            await agent
+                .post("/MakeMove/" + gameId)
+                .send(<api.MakeMoveRequest>{
+                    playerId: player1Id,
+                    move: { row: 2, column: 2 }
+                })
+                .expect(200)
+        ).body;
 
         // make sure last move brings draw
         expect(res_mov.success).toBe(true);
@@ -193,18 +201,18 @@ describe("Demo matches", () => {
         expect(res_mov.newState.turn).toBe("player2");
 
         // double check game state was persisted correctly
-        const res_check: api.CheckGameResponse = (await agent.get(
-            "/CheckGame/" + gameId
-        )).body;
+        const res_check: api.CheckGameResponse = (
+            await agent.get("/CheckGame/" + gameId)
+        ).body;
 
         expect(res_check.success).toBe(true);
         expect(res_check.state.game).toBe("draw");
         expect(res_check.state.turn).toBe("player2");
 
         // delete the game from records
-        const res_drop: api.DropGameResponse = (await agent
-            .post("/DropGame/" + gameId)
-            .expect(200)).body;
+        const res_drop: api.DropGameResponse = (
+            await agent.post("/DropGame/" + gameId).expect(200)
+        ).body;
 
         expect(res_drop.success).toBe(true);
     });
