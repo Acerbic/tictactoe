@@ -13,7 +13,7 @@ import { Socket, Server as SocServer } from "socket.io";
 
 import { GameRoomInterpreter } from "./state-machine/GameRoomInterpreter";
 import GmasterConnector from "./connectors/gmaster_connector";
-import { GetGameBoard } from "./connectors/prisma_connector";
+import { getGameBoard } from "./connectors/prisma_connector";
 import { PlayerId } from "@trulyacerbic/ttt-apis/gmaster-api";
 import {
     GameRoomEvent,
@@ -34,7 +34,7 @@ export class SocketDispatcher {
      */
     private deps = {
         gmaster: new GmasterConnector(),
-        prisma: GetGameBoard
+        prisma: getGameBoard
     };
 
     // NOTE: if game-room machine is implemented as actor in higher-order

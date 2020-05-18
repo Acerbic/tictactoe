@@ -5,9 +5,9 @@
 import { GameState, PlayerId, GameId } from "./gmaster-api";
 
 export type GameBoard = [
-    [string?, string?, string?],
-    [string?, string?, string?],
-    [string?, string?, string?]
+    [string | null, string | null, string | null],
+    [string | null, string | null, string | null],
+    [string | null, string | null, string | null]
 ];
 
 type GameStateUpdate = {
@@ -43,7 +43,10 @@ export interface API {
     out: {
         choose_role: void;
         iamalreadytracer: void;
-        you_are_it: "first" | "second";
+        you_are_it: {
+            gameId: GameId;
+            role: "first" | "second";
+        };
         your_turn: void;
         opponent_moved: GameStateUpdate;
         meme_accepted: GameStateUpdate;

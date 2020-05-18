@@ -67,10 +67,11 @@ export const emit_you_are_it: ActionF = ctx => {
     actionlog("emit_you_are_it");
     ctx.emits_sync.then(() => {
         ctx.players.forEach(player_context =>
-            player_context.socket.emit(
-                "you_are_it",
-                ctx.current_player == player_context.id ? "first" : "second"
-            )
+            player_context.socket.emit("you_are_it", {
+                gameId: ctx.game_id!,
+                role:
+                    ctx.current_player == player_context.id ? "first" : "second"
+            })
         );
     });
 };

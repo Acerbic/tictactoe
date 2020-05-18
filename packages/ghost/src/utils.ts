@@ -30,16 +30,18 @@ interface GhostInSocketEmitter extends SocketIOClient.Emitter {
         ...data: P
     ): GhostInSocketEmitter;
 
-    once<
-        T extends string,
-        P extends T extends keyof API["out"] ? [API["out"][T]] : any[]
-    >(
+    // once<
+    //     T extends string,
+    //     P = T extends keyof API["out"] ? [API["out"][T]] : any[]
+    // >(
+    //     e: T,
+    //     fn: (...data: P) => any
+    // ): GhostInSocketEmitter;
+    once<T extends keyof API["out"] | string>(
         e: T,
-        fn: (...data: P) => any
-    ): GhostInSocketEmitter;
-    once<T extends keyof API["out"], P extends API["out"][T]>(
-        e: T,
-        fn: (data: P) => any
+        fn: T extends keyof API["out"]
+            ? (a: API["out"][T]) => any
+            : (...args: any[]) => any
     ): GhostInSocketEmitter;
 
     on<
@@ -54,6 +56,8 @@ interface GhostInSocketEmitter extends SocketIOClient.Emitter {
         fn: (data: P) => any
     ): GhostInSocketEmitter;
 }
+
+// client socket
 export interface GhostInSocket
     extends Omit<SocketIOClient.Socket, "emit" | "on" | "once">,
         GhostInSocketEmitter {
@@ -73,6 +77,7 @@ export interface GhostInSocket
     ): GhostInSocket;
 }
 
+// server socket
 export interface GhostOutSocket extends Socket {
     // NOTE: had to duplicate definiton somewhat to achieve both
     //  editor suggestion on known declared API events and
@@ -89,3 +94,9 @@ export interface GhostOutSocket extends Socket {
         ...data: P
     ): boolean;
 }
+
+// declare let cs: GhostInSocket;
+
+// cs.once("you_are_it", () => {});
+// cs.once("you_are_it", ({ ewo }) => {});
+// cs.once("asd", () => {});

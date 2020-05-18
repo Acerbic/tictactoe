@@ -12,7 +12,7 @@ import { AddressInfo } from "net";
 
 // in case we need em
 import GmasterConnector from "../src/connectors/gmaster_connector";
-import { GetGameBoard } from "../src/connectors/prisma_connector";
+import { getGameBoard } from "../src/connectors/prisma_connector";
 import * as gm_api from "@trulyacerbic/ttt-apis/gmaster-api";
 jest.mock("../src/connectors/gmaster_connector");
 jest.mock("../src/connectors/prisma_connector");
@@ -32,6 +32,7 @@ const {
 
 import { app } from "../src/app";
 import { SocketDispatcher } from "../src/SocketDispatcher";
+import { GhostInSocket } from "../src/utils";
 
 describe("WS communication", () => {
     let httpServer: http.Server;
@@ -42,7 +43,7 @@ describe("WS communication", () => {
     let socketsOpened: Array<SocketIOClient.Socket>;
 
     // helper to open a socket communication from emulated client.
-    function openClientSocket(playerId: string) {
+    function openClientSocket(playerId: string): GhostInSocket {
         // Do not hardcode server port and address, square brackets are used for IPv6
         const socket = ioClient(
             `http://[${httpServerAddr.address}]:${httpServerAddr.port}`,
@@ -80,7 +81,7 @@ describe("WS communication", () => {
             .on("reconnect_failed", () => {
                 let z = playerId;
             });
-        return socket;
+        return socket as GhostInSocket;
     }
 
     /**
@@ -102,7 +103,7 @@ describe("WS communication", () => {
                 errorMessage: "Mocked GET response for " + endpoint
             })
         );
-        (GetGameBoard as jest.Mock).mockImplementation(() =>
+        (getGameBoard as jest.Mock).mockImplementation(() =>
             Promise.resolve([
                 [null, null, null],
                 [null, null, null],
@@ -157,7 +158,7 @@ describe("WS communication", () => {
         httpServer.close();
         mocked_gmc_post.mockReset();
         mocked_gmc_get.mockReset();
-        (GetGameBoard as jest.Mock).mockReset();
+        (getGameBoard as jest.Mock).mockReset();
 
         done();
     });
@@ -183,14 +184,14 @@ describe("WS communication", () => {
             client2.connect();
 
             const p1_done = new Promise(resolve => {
-                client1.once("you_are_it", (role: unknown) => {
-                    expect(role).toBe("first");
+                client1.once("you_are_it", data => {
+                    expect(data.role).toBe("first");
                     client1.once("your_turn", () => resolve());
                 });
             });
             const p2_done = new Promise(resolve => {
-                client2.once("you_are_it", (role: unknown) => {
-                    expect(role).toBe("second");
+                client2.once("you_are_it", data => {
+                    expect(data.role).toBe("second");
                     resolve();
                 });
             });
@@ -212,14 +213,14 @@ describe("WS communication", () => {
             client2.connect();
 
             const p1_done = new Promise(resolve => {
-                client1.once("you_are_it", (role: unknown) => {
-                    expect(role).toBe("first");
+                client1.once("you_are_it", data => {
+                    expect(data.role).toBe("first");
                     client1.once("your_turn", () => resolve());
                 });
             });
             const p2_done = new Promise(resolve => {
-                client2.once("you_are_it", (role: unknown) => {
-                    expect(role).toBe("second");
+                client2.once("you_are_it", data => {
+                    expect(data.role).toBe("second");
                     resolve();
                 });
             });
@@ -242,13 +243,13 @@ describe("WS communication", () => {
 
             let role_1: string, role_2: string;
             const p1_done = new Promise(resolve => {
-                client1.once("you_are_it", (role: string) => {
+                client1.once("you_are_it", ({ role }) => {
                     role_1 = role;
                     resolve();
                 });
             });
             const p2_done = new Promise(resolve => {
-                client2.once("you_are_it", (role: string) => {
+                client2.once("you_are_it", ({ role }) => {
                     role_2 = role;
                     resolve();
                 });
@@ -294,14 +295,14 @@ describe("WS communication", () => {
                     client3.emit("iwannabetracer", "first");
 
                     const p3_done = new Promise(resolve => {
-                        client3.once("you_are_it", (role: unknown) => {
-                            expect(role).toBe("first");
+                        client3.once("you_are_it", data => {
+                            expect(data.role).toBe("first");
                             client3.once("your_turn", () => resolve());
                         });
                     });
                     const p2_done = new Promise(resolve => {
-                        client2.once("you_are_it", (role: unknown) => {
-                            expect(role).toBe("second");
+                        client2.once("you_are_it", data => {
+                            expect(data.role).toBe("second");
                             resolve();
                         });
                     });

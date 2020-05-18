@@ -14,7 +14,10 @@ import { AddressInfo } from "net";
  * Mockarena!
  */
 import GmasterConnector from "../src/connectors/gmaster_connector";
-import { GetGameBoard } from "../src/connectors/prisma_connector";
+import {
+    getGameBoard,
+    PrismaGetGameBoard
+} from "../src/connectors/prisma_connector";
 import * as gm_api from "@trulyacerbic/ttt-apis/gmaster-api";
 import { API as gh_api } from "@trulyacerbic/ttt-apis/ghost-api";
 jest.mock("../src/connectors/gmaster_connector");
@@ -108,7 +111,10 @@ describe("After game started", () => {
                 errorMessage: "Mocked GET response for " + endpoint
             })
         );
-        (GetGameBoard as jest.Mock).mockImplementation(() =>
+
+        (getGameBoard as jest.MockedFunction<
+            PrismaGetGameBoard
+        >).mockImplementation(() =>
             Promise.resolve([
                 [null, null, null],
                 [null, null, null],
@@ -162,8 +168,8 @@ describe("After game started", () => {
                 .once("choose_role", () => {
                     client1.emit("iwannabetracer", "first");
                 })
-                .once("you_are_it", role => {
-                    expect(role).toBe("first");
+                .once("you_are_it", data => {
+                    expect(data.role).toBe("first");
                     client1.once("your_turn", () => resolve());
                 });
             client1.connect();
@@ -174,8 +180,8 @@ describe("After game started", () => {
                 .once("choose_role", () => {
                     client2.emit("iwannabetracer", "second");
                 })
-                .once("you_are_it", role => {
-                    expect(role).toBe("second");
+                .once("you_are_it", data => {
+                    expect(data.role).toBe("second");
                     resolve();
                 });
             client2.connect();
@@ -198,7 +204,7 @@ describe("After game started", () => {
         httpServer.close();
         mocked_gmc_post.mockReset();
         mocked_gmc_get.mockReset();
-        (GetGameBoard as jest.Mock).mockReset();
+        (getGameBoard as jest.Mock).mockReset();
 
         done();
     });
@@ -357,6 +363,49 @@ describe("After game started", () => {
         Promise.all([p1_done, p2_done]).then(() => done());
     });
 
-    test.todo("can reconnect in a middle of a match and have board position");
+    test.only("can reconnect in a middle of a match and have board position", done => {
+        client1
+            .emit("move", { row: 0, column: 0 })
+            .once("your_turn", () => {
+                client1.emit("move", { row: 0, column: 1 });
+            })
+            .once("your_turn", () => {
+                client1.emit("move", { row: 1, column: 2 });
+            })
+            .once("your_turn", () => {
+                client1.disconnect();
+            })
+            .once("disconnect", () => {
+                (getGameBoard as jest.MockedFunction<
+                    PrismaGetGameBoard
+                >).mockResolvedValueOnce([
+                    ["p1", "p1", "p2"],
+                    ["p2", "p2", "p1"],
+                    [null, null, null]
+                ]);
+                const client1_again = openClientSocket("p1");
+                client1_again.on("reconnection", data => {
+                    expect(data.step).toBe("my-turn");
+                    expect(data.board).toEqual([
+                        ["p1", "p1", "p2"],
+                        ["p2", "p2", "p1"],
+                        [null, null, null]
+                    ]);
+                    done();
+                });
+                client1_again.connect();
+            });
+
+        client2
+            .once("your_turn", () => {
+                client2.emit("move", { row: 1, column: 0 });
+            })
+            .once("your_turn", () => {
+                client2.emit("move", { row: 1, column: 1 });
+            })
+            .once("your_turn", () => {
+                client2.emit("move", { row: 0, column: 2 });
+            });
+    }, 10000000);
     test.todo("can choose to play again without the need to setup again");
 });

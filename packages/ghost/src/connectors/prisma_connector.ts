@@ -3,19 +3,15 @@
  */
 
 import { GameId } from "@trulyacerbic/ttt-apis/gmaster-api";
+import { GameBoard } from "@trulyacerbic/ttt-apis/ghost-api";
 import { prisma } from "@trulyacerbic/ttt-gamesdb";
 
-export type GameBoard = [
-    [string?, string?, string?],
-    [string?, string?, string?],
-    [string?, string?, string?]
-];
 export type PrismaGetGameBoard = (gameId: GameId) => Promise<GameBoard>;
 
 /**
  * Load game record from the DB and return the board
  */
-export const GetGameBoard: PrismaGetGameBoard = async function GetGameBoard(
+export const getGameBoard: PrismaGetGameBoard = async function getGameBoard(
     gameId: GameId
 ) {
     const game = await prisma.gameSession({ id: gameId });
