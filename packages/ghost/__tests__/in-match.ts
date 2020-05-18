@@ -353,4 +353,7 @@ describe("After game started", () => {
 
         Promise.all([p1_done, p2_done]).then(() => done());
     });
+
+    test.todo("can reconnect in a middle of a match and have board position");
+    test.todo("can choose to play again without the need to setup again");
 });
