@@ -23,7 +23,7 @@ type GameStateUpdate = {
  * keyof API["out"] === names of messages to emit from server to client over ws
  *
  * Types of those fields correspond to types of messages data content, with
- * `never` representing no data send over and `any` - unrestricted value
+ * `void` representing no data send over and `any` - unrestricted value
  */
 export interface API {
     in: {
@@ -41,10 +41,10 @@ export interface API {
         imdone: any;
     };
     out: {
-        choose_role: never;
-        iamalreadytracer: never;
+        choose_role: void;
+        iamalreadytracer: void;
         you_are_it: "first" | "second";
-        your_turn: never;
+        your_turn: void;
         opponent_moved: GameStateUpdate;
         meme_accepted: GameStateUpdate;
         gameover: {

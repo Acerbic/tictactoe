@@ -10,7 +10,9 @@ import http from "http";
 import ioServer from "socket.io";
 import { AddressInfo } from "net";
 
-// in case we need em
+/**
+ * Mockarena!
+ */
 import GmasterConnector from "../src/connectors/gmaster_connector";
 import { GetGameBoard } from "../src/connectors/prisma_connector";
 import * as gm_api from "@trulyacerbic/ttt-apis/gmaster-api";
@@ -33,19 +35,20 @@ const {
 
 import { app } from "../src/app";
 import { SocketDispatcher } from "../src/SocketDispatcher";
+import { GhostInSocket } from "../src/utils";
 
 describe("After game started", () => {
     let httpServer: http.Server;
     let httpServerAddr: AddressInfo;
     let socServer: ioServer.Server;
-    let client1: SocketIOClient.Socket;
-    let client2: SocketIOClient.Socket;
+    let client1: GhostInSocket;
+    let client2: GhostInSocket;
 
     // keeps track of opened sockets to close them between tests
     let socketsOpened: Array<SocketIOClient.Socket>;
 
     // helper to open a socket communication from emulated client.
-    function openClientSocket(playerId: string): SocketIOClient.Socket {
+    function openClientSocket(playerId: string): GhostInSocket {
         // Do not hardcode server port and address, square brackets are used for IPv6
         const socket = ioClient(
             `http://[${httpServerAddr.address}]:${httpServerAddr.port}`,
@@ -83,7 +86,7 @@ describe("After game started", () => {
             .on("reconnect_failed", () => {
                 let z = playerId;
             });
-        return socket;
+        return socket as GhostInSocket;
     }
 
     /**
@@ -159,7 +162,7 @@ describe("After game started", () => {
                 .once("choose_role", () => {
                     client1.emit("iwannabetracer", "first");
                 })
-                .once("you_are_it", (role: unknown) => {
+                .once("you_are_it", role => {
                     expect(role).toBe("first");
                     client1.once("your_turn", () => resolve());
                 });
@@ -171,7 +174,7 @@ describe("After game started", () => {
                 .once("choose_role", () => {
                     client2.emit("iwannabetracer", "second");
                 })
-                .once("you_are_it", (role: unknown) => {
+                .once("you_are_it", role => {
                     expect(role).toBe("second");
                     resolve();
                 });
@@ -203,7 +206,7 @@ describe("After game started", () => {
     test("can reconnect (immediately after start)", done => {
         client1.once("disconnect", () => {
             client1 = openClientSocket("p1");
-            client1.once("reconnection", (data: any) => {
+            client1.once("reconnection", data => {
                 expect(data.step).toBe("my-turn");
                 expect(data.board).toEqual([
                     [null, null, null],
@@ -233,7 +236,7 @@ describe("After game started", () => {
                     });
                     client1.emit("move", { row: 0, column: 2 });
                 })
-                .once("gameover", ({ winner }: gh_api["out"]["gameover"]) => {
+                .once("gameover", ({ winner }) => {
                     expect(winner).toBe("p1");
                     resolve();
                 });
@@ -247,7 +250,7 @@ describe("After game started", () => {
                 .once("your_turn", () =>
                     client2.emit("move", { row: 1, column: 1 })
                 )
-                .once("gameover", ({ winner }: gh_api["out"]["gameover"]) => {
+                .once("gameover", ({ winner }) => {
                     expect(winner).toBe("p1");
                     resolve();
                 });
@@ -266,7 +269,7 @@ describe("After game started", () => {
                 .once("your_turn", () => {
                     client1.emit("move", { row: 2, column: 2 });
                 })
-                .once("gameover", ({ winner }: gh_api["out"]["gameover"]) => {
+                .once("gameover", ({ winner }) => {
                     expect(winner).toBe("p2");
                     resolve();
                 });
@@ -290,7 +293,7 @@ describe("After game started", () => {
 
                     client2.emit("move", { row: 1, column: 2 });
                 })
-                .once("gameover", ({ winner }: gh_api["out"]["gameover"]) => {
+                .once("gameover", ({ winner }) => {
                     expect(winner).toBe("p2");
                     resolve();
                 });
@@ -325,7 +328,7 @@ describe("After game started", () => {
 
                     client1.emit("move", { row: 2, column: 2 });
                 })
-                .once("gameover", ({ winner }: gh_api["out"]["gameover"]) => {
+                .once("gameover", ({ winner }) => {
                     expect(winner).toBe(null);
                     resolve();
                 });
@@ -345,7 +348,7 @@ describe("After game started", () => {
                 .once("your_turn", () => {
                     client2.emit("move", { row: 2, column: 1 });
                 })
-                .once("gameover", ({ winner }: gh_api["out"]["gameover"]) => {
+                .once("gameover", ({ winner }) => {
                     expect(winner).toBe(null);
                     resolve();
                 });

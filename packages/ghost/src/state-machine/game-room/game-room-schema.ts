@@ -19,6 +19,7 @@ import {
 
 import GMConnector from "../../connectors/gmaster_connector";
 import { PrismaGetGameBoard } from "../../connectors/prisma_connector";
+import { GhostOutSocket } from "../../utils";
 
 export interface GameRoomSchema extends StateSchema<GameRoomContext> {
     states: {
@@ -34,7 +35,7 @@ export interface GameRoomSchema extends StateSchema<GameRoomContext> {
 export interface PlayerInfo {
     id: PlayerId;
     // holds connection status in Socket.connected field.
-    socket: Socket;
+    socket: GhostOutSocket;
     role_request?: "first" | "second";
     // this holds spawned submachine operating player's setup phase
     setup_actor: Actor<PlayerSetupContext, PlayerSetupEvent>;

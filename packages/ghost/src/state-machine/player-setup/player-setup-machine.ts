@@ -59,7 +59,7 @@ const player_setup_machine_options: Partial<MachineOptions<
     actions: {
         emit_choose_role: ctx => {
             actionlog(ctx.player_id, "emit_choose_role");
-            ctx.socket!.emit("choose_role");
+            ctx.socket.emit("choose_role");
         },
 
         // this is an assign action - it will be elevated and executed prior to other actions

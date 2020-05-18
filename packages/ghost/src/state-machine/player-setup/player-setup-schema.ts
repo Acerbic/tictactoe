@@ -7,7 +7,7 @@ import {
     GameRoom_PlayerDisconnected,
     GameRoom_PlayerPickRole
 } from "../game-room/game-room-schema";
-import { Socket } from "socket.io";
+import { GhostOutSocket } from "../../utils";
 
 export interface PlayerSetupStateSchema {
     states: {
@@ -25,7 +25,7 @@ export type PlayerSetupEvent =
     Omit<GameRoom_PlayerDisconnected, "socket"> | GameRoom_PlayerPickRole;
 
 export type PlayerSetupContext = {
-    socket: Socket;
+    socket: GhostOutSocket;
     player_id: PlayerId;
     desired_role: "first" | "second";
 };
