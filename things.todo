@@ -12,3 +12,4 @@
 ☐ test if SocketIO holds recieved event when no listeners are subscribed yet or dumps them
 ☐ investigate if `gamesdb` needs prepublish hook - look up README
 ✔ rethink projects importing each other's api. common api package? @done(20-05-17 21:50)
+☐ investigate how actual reconnection (not my ad-hoc solution atm) is ws handled in terms of events for both server and client

@@ -158,10 +158,7 @@ export const machine_options: Partial<MachineOptions<
                     "MakeMove",
                     {
                         playerId: ctx.current_player!,
-                        move: {
-                            row: event.move.row,
-                            column: event.move.column
-                        }
+                        move: event.move
                     },
                     ctx.game_id
                 )

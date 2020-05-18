@@ -36,6 +36,9 @@ export interface API {
         };
         iwannabetracer: "first" | "second";
         move: any;
+        // the following are not implemented yet
+        remind_me: any;
+        imdone: any;
     };
     out: {
         choose_role: never;
@@ -52,5 +55,8 @@ export interface API {
             board: GameBoard;
             step: "my-turn" | "opponents-turn";
         };
+        // the following are not implemented yet
+        update: any;
+        ragequit: any;
     };
 }
