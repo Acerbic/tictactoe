@@ -48,7 +48,8 @@ export interface API {
         opponent_moved: GameStateUpdate;
         meme_accepted: GameStateUpdate;
         gameover: {
-            winner: PlayerId;
+            // null means a draw
+            winner: PlayerId | null;
         };
         reconnection: {
             gameId: GameId;

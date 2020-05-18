@@ -87,6 +87,29 @@ describe("WS communication", () => {
      * Setup WS & HTTP servers
      */
     beforeEach(done => {
+        /* remocking implementations that were reset between tests */
+        mocked_gmc_post.mockImplementation(endpoint =>
+            Promise.resolve(<gm_api.APIResponseFailure>{
+                success: false,
+                errorCode: 0,
+                errorMessage: "Mocked POST response for " + endpoint
+            })
+        );
+        mocked_gmc_get.mockImplementation(endpoint =>
+            Promise.resolve(<gm_api.APIResponseFailure>{
+                success: false,
+                errorCode: 0,
+                errorMessage: "Mocked GET response for " + endpoint
+            })
+        );
+        (GetGameBoard as jest.Mock).mockImplementation(() =>
+            Promise.resolve([
+                [null, null, null],
+                [null, null, null],
+                [null, null, null]
+            ])
+        );
+
         httpServer = http.createServer(app).listen();
         // NOTE: potential problem as `httpServer.address()` is said to also return
         // `string` in some cases
@@ -132,6 +155,10 @@ describe("WS communication", () => {
         });
         socServer.close();
         httpServer.close();
+        mocked_gmc_post.mockReset();
+        mocked_gmc_get.mockReset();
+        (GetGameBoard as jest.Mock).mockReset();
+
         done();
     });
 

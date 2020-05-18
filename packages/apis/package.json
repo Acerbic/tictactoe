@@ -8,9 +8,10 @@
   "private": true,
   "types": "index.d.ts",
   "scripts": {
-    "build": "tsc"
+    "build": "tsc && rimraf '*.js'"
   },
   "devDependencies": {
+    "rimraf": "^3.0.2",
     "typescript": "^3.9.2"
   }
 }

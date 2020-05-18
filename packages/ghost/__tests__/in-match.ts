@@ -14,6 +14,7 @@ import { AddressInfo } from "net";
 import GmasterConnector from "../src/connectors/gmaster_connector";
 import { GetGameBoard } from "../src/connectors/prisma_connector";
 import * as gm_api from "@trulyacerbic/ttt-apis/gmaster-api";
+import { API as gh_api } from "@trulyacerbic/ttt-apis/ghost-api";
 jest.mock("../src/connectors/gmaster_connector");
 jest.mock("../src/connectors/prisma_connector");
 
@@ -89,6 +90,29 @@ describe("After game started", () => {
      * Setup WS & HTTP servers
      */
     beforeEach(done => {
+        /* remocking implementations that were reset between tests */
+        mocked_gmc_post.mockImplementation(endpoint =>
+            Promise.resolve(<gm_api.APIResponseFailure>{
+                success: false,
+                errorCode: 0,
+                errorMessage: "Mocked POST response for " + endpoint
+            })
+        );
+        mocked_gmc_get.mockImplementation(endpoint =>
+            Promise.resolve(<gm_api.APIResponseFailure>{
+                success: false,
+                errorCode: 0,
+                errorMessage: "Mocked GET response for " + endpoint
+            })
+        );
+        (GetGameBoard as jest.Mock).mockImplementation(() =>
+            Promise.resolve([
+                [null, null, null],
+                [null, null, null],
+                [null, null, null]
+            ])
+        );
+
         httpServer = http.createServer(app).listen();
         // NOTE: potential problem as `httpServer.address()` is said to also return
         // `string` in some cases
@@ -103,19 +127,29 @@ describe("After game started", () => {
         // (ioServer as any).httpServer === httpServer;
 
         socketsOpened = [];
-        mocked_gmc_post.mockImplementationOnce((endpoint, payload) => {
-            if (endpoint === "CreateGame") {
-                return Promise.resolve(<gm_api.CreateGameResponse>{
-                    success: true,
-                    gameId: "1111111",
-                    newState: { game: "wait", turn: "player1" }
-                });
-            } else {
-                return Promise.resolve({
-                    success: false,
-                    errorMessage: "Bad Endpoint",
-                    errorCode: 0
-                });
+
+        // mock implementations to prepare for a game
+        let next_turn = "player1";
+        mocked_gmc_post.mockImplementation(endpoint => {
+            switch (endpoint) {
+                case "CreateGame":
+                    return Promise.resolve(<gm_api.CreateGameResponse>{
+                        success: true,
+                        gameId: "1111111",
+                        newState: { game: "wait", turn: "player1" }
+                    });
+                case "MakeMove":
+                    next_turn = next_turn === "player1" ? "player2" : "player1";
+                    return Promise.resolve(<gm_api.MakeMoveResponse>{
+                        success: true,
+                        newState: { game: "wait", turn: next_turn }
+                    });
+                default:
+                    return Promise.resolve({
+                        success: false,
+                        errorMessage: "Bad Endpoint: " + endpoint,
+                        errorCode: 0
+                    });
             }
         });
 
@@ -159,10 +193,14 @@ describe("After game started", () => {
         });
         socServer.close();
         httpServer.close();
+        mocked_gmc_post.mockReset();
+        mocked_gmc_get.mockReset();
+        (GetGameBoard as jest.Mock).mockReset();
+
         done();
     });
 
-    test("can reconnect", done => {
+    test("can reconnect (immediately after start)", done => {
         client1.once("disconnect", () => {
             client1 = openClientSocket("p1");
             client1.once("reconnection", (data: any) => {
@@ -177,5 +215,142 @@ describe("After game started", () => {
             client1.connect();
         });
         client1.disconnect();
+    });
+
+    test("can win the game as first player", done => {
+        const p1_done = new Promise(resolve => {
+            client1
+                .emit("move", { row: 0, column: 0 })
+                .once("your_turn", () =>
+                    client1.emit("move", { row: 0, column: 1 })
+                )
+                .once("your_turn", () => {
+                    mocked_gmc_post.mockResolvedValueOnce(<
+                        gm_api.MakeMoveResponse
+                    >{
+                        success: true,
+                        newState: { game: "over", turn: "player2" }
+                    });
+                    client1.emit("move", { row: 0, column: 2 });
+                })
+                .once("gameover", ({ winner }: gh_api["out"]["gameover"]) => {
+                    expect(winner).toBe("p1");
+                    resolve();
+                });
+        });
+
+        const p2_done = new Promise(resolve => {
+            client2
+                .once("your_turn", () => {
+                    client2.emit("move", { row: 1, column: 0 });
+                })
+                .once("your_turn", () =>
+                    client2.emit("move", { row: 1, column: 1 })
+                )
+                .once("gameover", ({ winner }: gh_api["out"]["gameover"]) => {
+                    expect(winner).toBe("p1");
+                    resolve();
+                });
+        });
+
+        Promise.all([p1_done, p2_done]).then(() => done());
+    });
+
+    test("can win the game as second player", done => {
+        const p1_done = new Promise(resolve => {
+            client1
+                .emit("move", { row: 0, column: 0 })
+                .once("your_turn", () =>
+                    client1.emit("move", { row: 0, column: 1 })
+                )
+                .once("your_turn", () => {
+                    client1.emit("move", { row: 2, column: 2 });
+                })
+                .once("gameover", ({ winner }: gh_api["out"]["gameover"]) => {
+                    expect(winner).toBe("p2");
+                    resolve();
+                });
+        });
+
+        const p2_done = new Promise(resolve => {
+            client2
+                .once("your_turn", () => {
+                    client2.emit("move", { row: 1, column: 0 });
+                })
+                .once("your_turn", () =>
+                    client2.emit("move", { row: 1, column: 1 })
+                )
+                .once("your_turn", () => {
+                    mocked_gmc_post.mockResolvedValueOnce(<
+                        gm_api.MakeMoveResponse
+                    >{
+                        success: true,
+                        newState: { game: "over", turn: "player1" }
+                    });
+
+                    client2.emit("move", { row: 1, column: 2 });
+                })
+                .once("gameover", ({ winner }: gh_api["out"]["gameover"]) => {
+                    expect(winner).toBe("p2");
+                    resolve();
+                });
+        });
+
+        Promise.all([p1_done, p2_done]).then(() => done());
+    });
+
+    test("can draw the game", done => {
+        const p1_done = new Promise(resolve => {
+            client1
+                .emit("move", { row: 0, column: 0 })
+                .once("your_turn", () =>
+                    client1.emit("move", { row: 0, column: 1 })
+                )
+                .once("your_turn", () => {
+                    client1.emit("move", { row: 1, column: 2 });
+                })
+                .once("your_turn", () => {
+                    client1.emit("move", { row: 2, column: 0 });
+                })
+                .once("your_turn", () => {
+                    client1.emit("move", { row: 2, column: 2 });
+                })
+                .once("your_turn", () => {
+                    mocked_gmc_post.mockResolvedValueOnce(<
+                        gm_api.MakeMoveResponse
+                    >{
+                        success: true,
+                        newState: { game: "draw", turn: "player2" }
+                    });
+
+                    client1.emit("move", { row: 2, column: 2 });
+                })
+                .once("gameover", ({ winner }: gh_api["out"]["gameover"]) => {
+                    expect(winner).toBe(null);
+                    resolve();
+                });
+        });
+
+        const p2_done = new Promise(resolve => {
+            client2
+                .once("your_turn", () => {
+                    client2.emit("move", { row: 1, column: 0 });
+                })
+                .once("your_turn", () =>
+                    client2.emit("move", { row: 1, column: 1 })
+                )
+                .once("your_turn", () => {
+                    client2.emit("move", { row: 0, column: 2 });
+                })
+                .once("your_turn", () => {
+                    client2.emit("move", { row: 2, column: 1 });
+                })
+                .once("gameover", ({ winner }: gh_api["out"]["gameover"]) => {
+                    expect(winner).toBe(null);
+                    resolve();
+                });
+        });
+
+        Promise.all([p1_done, p2_done]).then(() => done());
     });
 });
