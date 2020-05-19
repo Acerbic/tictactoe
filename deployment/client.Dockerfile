@@ -10,7 +10,7 @@ WORKDIR /app
 CMD ["yarn", "dev"]
 
 # copying files and building the project
-COPY ./packages/test_client .
+COPY ./packages/client .
 COPY ["yarn.lock", "./"]
 RUN yarn --pure-lockfile
 RUN yarn build
