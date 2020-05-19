@@ -6,8 +6,9 @@ WORKDIR /app
 COPY ["package.json", "yarn.lock", "./"]
 RUN yarn --pure-lockfile
 
-# copy prebuilt @trulyacerbic/ttt-gamesdb & crosslink
+# copy prebuilt @trulyacerbic/ttt-gamesdb, @trulyacerbic/ttt-apis & crosslink
 COPY packages/gamesdb ./packages/gamesdb
+COPY packages/apis ./packages/apis
 COPY ["packages/gmaster/package.json", "./packages/gmaster/"]
 COPY lerna.json .
 

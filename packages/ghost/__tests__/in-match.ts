@@ -38,7 +38,7 @@ const {
 
 import { app } from "../src/app";
 import { SocketDispatcher } from "../src/SocketDispatcher";
-import { debuglog, GhostInSocket } from "../src/utils";
+import { GhostInSocket } from "./__utils";
 
 describe("After game started", () => {
     let httpServer: http.Server;

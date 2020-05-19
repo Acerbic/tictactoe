@@ -32,7 +32,7 @@ const {
 
 import { app } from "../src/app";
 import { SocketDispatcher } from "../src/SocketDispatcher";
-import { GhostInSocket } from "../src/utils";
+import { GhostInSocket } from "./__utils";
 
 describe("WS communication", () => {
     let httpServer: http.Server;

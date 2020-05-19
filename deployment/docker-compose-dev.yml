@@ -71,7 +71,9 @@ services:
                 CLIENT_PORT: 3030
         image: tttclient:latest
         environment:
-            GHOST_URI: ghost:3060
+            # so, in principle ghost server can be anywhere independent of
+            # client server, thus we need to point to it explicitly for runtime
+            GHOST_URL: http://localhost:3060
         restart: always
         ports:
             - "3030:3030"
