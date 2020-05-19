@@ -26,14 +26,14 @@ type GameStateUpdate = {
  * `void` representing no data send over and `any` - unrestricted value
  */
 export interface API {
+    /**
+     * pseudo-message (issued by opening connection).
+     * the contents is a `query` param to the opening call
+     */
+    connection: {
+        playerId: PlayerId;
+    };
     in: {
-        /**
-         * pseudo-message (issued by opening connection).
-         * the contents is a `query` param to the opening call
-         */
-        connection: {
-            playerId: PlayerId;
-        };
         iwannabetracer: "first" | "second";
         move: any;
         // the following are not implemented yet

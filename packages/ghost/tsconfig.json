@@ -11,9 +11,9 @@
         "moduleResolution": "node",
         "sourceMap": true,
         "outDir": "dist",
-        "rootDir": "./src",
+        "rootDir": ".",
         "baseUrl": "."
     },
-    "include": ["src/**/*"],
+    "include": ["src/**/*", "src/../tt.ts"],
     "exclude": ["**/__mocks__/**"]
 }

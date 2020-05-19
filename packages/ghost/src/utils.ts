@@ -25,23 +25,21 @@ interface GhostInSocketEmitter extends SocketIOClient.Emitter {
         e: T,
         ...data: P
     ): GhostInSocketEmitter;
-    emit<T extends keyof API["in"], P extends [API["in"][T]]>(
+    emit<T extends keyof API["in"], P extends API["in"][T]>(
         e: T,
-        ...data: P
+        data: P
     ): GhostInSocketEmitter;
 
-    // once<
-    //     T extends string,
-    //     P = T extends keyof API["out"] ? [API["out"][T]] : any[]
-    // >(
-    //     e: T,
-    //     fn: (...data: P) => any
-    // ): GhostInSocketEmitter;
-    once<T extends keyof API["out"] | string>(
+    once<
+        T extends string,
+        P extends T extends keyof API["out"] ? [API["out"][T]] : any[]
+    >(
         e: T,
-        fn: T extends keyof API["out"]
-            ? (a: API["out"][T]) => any
-            : (...args: any[]) => any
+        fn: (...data: P) => any
+    ): GhostInSocketEmitter;
+    once<T extends keyof API["out"], P extends API["out"][T]>(
+        e: T,
+        fn: (a: P) => any
     ): GhostInSocketEmitter;
 
     on<
@@ -60,7 +58,7 @@ interface GhostInSocketEmitter extends SocketIOClient.Emitter {
 // client socket
 export interface GhostInSocket
     extends Omit<SocketIOClient.Socket, "emit" | "on" | "once">,
-        GhostInSocketEmitter {
+        Omit<GhostInSocketEmitter, "emit"> {
     // NOTE: had to duplicate definiton somewhat to achieve both
     //  editor suggestion on known declared API events and
     //  ability to emit non-API events without limitation
@@ -71,9 +69,9 @@ export interface GhostInSocket
         e: T,
         ...data: P
     ): GhostInSocket;
-    emit<T extends keyof API["in"], P extends [API["in"][T]]>(
+    emit<T extends keyof API["in"], P extends API["in"][T]>(
         e: T,
-        ...data: P
+        data: P
     ): GhostInSocket;
 }
 
@@ -89,14 +87,8 @@ export interface GhostOutSocket extends Socket {
         e: T,
         ...data: P
     ): boolean;
-    emit<T extends keyof API["out"], P extends [API["out"][T]]>(
+    emit<T extends keyof API["out"], P extends API["out"][T]>(
         e: T,
-        ...data: P
+        data: P
     ): boolean;
 }
-
-// declare let cs: GhostInSocket;
-
-// cs.once("you_are_it", () => {});
-// cs.once("you_are_it", ({ ewo }) => {});
-// cs.once("asd", () => {});
