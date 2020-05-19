@@ -38,7 +38,7 @@ const {
 
 import { app } from "../src/app";
 import { SocketDispatcher } from "../src/SocketDispatcher";
-import { GhostInSocket } from "../src/utils";
+import { debuglog, GhostInSocket } from "../src/utils";
 
 describe("After game started", () => {
     let httpServer: http.Server;
@@ -363,26 +363,29 @@ describe("After game started", () => {
         Promise.all([p1_done, p2_done]).then(() => done());
     });
 
-    test.only("can reconnect in a middle of a match and have board position", done => {
+    test("can reconnect in a middle of a match and have board position", done => {
+        const client1_moves: gh_api["in"]["move"][] = [
+            { row: 0, column: 0 },
+            { row: 0, column: 1 },
+            { row: 1, column: 2 }
+        ];
         client1
-            .emit("move", { row: 0, column: 0 })
-            .once("your_turn", () => {
-                client1.emit("move", { row: 0, column: 1 });
-            })
-            .once("your_turn", () => {
-                client1.emit("move", { row: 1, column: 2 });
-            })
-            .once("your_turn", () => {
-                client1.disconnect();
+            .emit("move", client1_moves.shift())
+            .on("your_turn", () => {
+                if (client1_moves.length > 0) {
+                    client1.emit("move", client1_moves.shift());
+                } else {
+                    client1.disconnect();
+                }
             })
             .once("disconnect", () => {
-                (getGameBoard as jest.MockedFunction<
-                    PrismaGetGameBoard
-                >).mockResolvedValueOnce([
-                    ["p1", "p1", "p2"],
-                    ["p2", "p2", "p1"],
-                    [null, null, null]
-                ]);
+                (getGameBoard as jest.MockedFunction<PrismaGetGameBoard>)
+                    .mockResolvedValueOnce([
+                        ["p1", "p1", "p2"],
+                        ["p2", "p2", "p1"],
+                        [null, null, null]
+                    ])
+                    .mockName("in-test-name");
                 const client1_again = openClientSocket("p1");
                 client1_again.on("reconnection", data => {
                     expect(data.step).toBe("my-turn");
@@ -396,16 +399,16 @@ describe("After game started", () => {
                 client1_again.connect();
             });
 
-        client2
-            .once("your_turn", () => {
-                client2.emit("move", { row: 1, column: 0 });
-            })
-            .once("your_turn", () => {
-                client2.emit("move", { row: 1, column: 1 });
-            })
-            .once("your_turn", () => {
-                client2.emit("move", { row: 0, column: 2 });
-            });
-    }, 10000000);
+        const client2_moves: gh_api["in"]["move"][] = [
+            { row: 1, column: 0 },
+            { row: 1, column: 1 },
+            { row: 0, column: 2 }
+        ];
+        client2.on("your_turn", () => {
+            if (client2_moves.length > 0) {
+                client1.emit("move", client2_moves.shift());
+            }
+        });
+    });
     test.todo("can choose to play again without the need to setup again");
 });
