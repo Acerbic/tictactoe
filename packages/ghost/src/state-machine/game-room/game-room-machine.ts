@@ -10,7 +10,8 @@ import * as MachineActions from "./actions";
 import {
     GameRoomContext,
     GameRoomSchema,
-    GameRoomEvent
+    GameRoomEvent,
+    GameRoom_PlayerMove
 } from "./game-room-schema";
 import {
     CreateGameResponse,
@@ -157,8 +158,8 @@ export const machine_options: Partial<MachineOptions<
                 .post<MakeMoveRequest, MakeMoveResponse>(
                     "MakeMove",
                     {
-                        playerId: ctx.current_player!,
-                        move: event.move
+                        playerId: (event as GameRoom_PlayerMove).player_id,
+                        move: (event as GameRoom_PlayerMove).move
                     },
                     ctx.game_id
                 )
