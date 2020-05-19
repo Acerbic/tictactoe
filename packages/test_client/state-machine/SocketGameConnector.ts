@@ -96,7 +96,7 @@ export class SocketGameConnector implements GameConnector {
     };
 
     // received 'choose_role' message
-    private s_you_are_it = (role: "first" | "second") => {
+    private s_you_are_it = ({ role }: { role: "first" | "second" }) => {
         this.send({ type: "S_GAME_START", role });
     };
 

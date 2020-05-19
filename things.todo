@@ -15,3 +15,5 @@
 ☐ investigate how actual reconnection (not my ad-hoc solution atm) is ws handled in terms of events for both server and client
 ☐ use test shard of prisma for testing
 ☐ implement switch to using "live" endpoints for integration run of the same tests in ghost
+☐ drop game if both clients quit
+☐ distinguis disconnect and quit?
