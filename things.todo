@@ -10,10 +10,10 @@
 ☐ write production deployment script and readme
 ✔ remove non-TS generated code from gamesDB @done(20-05-20 03:33)
 ✔ test if SocketIO holds recieved event when no listeners are subscribed yet or dumps them @done(20-05-20 04:47)
-☐ investigate if `gamesdb` needs prepublish hook - look up README
+✘ investigate if `gamesdb` needs prepublish hook - look up README @cancelled(20-05-20 05:08)
 ✔ rethink projects importing each other's api. common api package? @done(20-05-17 21:50)
 ☐ investigate how actual reconnection (not my ad-hoc solution atm) is ws handled in terms of events for both server and client
-☐ use test shard of prisma for testing
-☐ implement switch to using "live" endpoints for integration run of the same tests in ghost
+✘ use test shard of prisma for testing @cancelled(20-05-20 05:08)
+✘ implement switch to using "live" endpoints for integration run of the same tests in ghost @cancelled(20-05-20 05:09)
 ☐ drop game if both clients quit
 ☐ distinguis disconnect and quit?
