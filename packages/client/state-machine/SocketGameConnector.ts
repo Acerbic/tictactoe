@@ -51,13 +51,15 @@ export class SocketGameConnector implements GameConnector {
             reconnection: false,
             query: {
                 playerId
-            }
+            },
+            autoConnect: false
         });
 
         if (!this.socket) {
-            throw "Failed to open a socket";
+            throw "Failed to create a socket";
         } else {
             this.attachListeners();
+            this.socket.connect();
         }
     }
 
@@ -97,6 +99,7 @@ export class SocketGameConnector implements GameConnector {
 
     // received 'choose_role' message
     private s_you_are_it = ({ role }: { role: "first" | "second" }) => {
+        console.log("I am " + role);
         this.send({ type: "S_GAME_START", role });
     };
 

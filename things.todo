@@ -9,7 +9,7 @@
 ☐ find a way to configure Lerna to split lock file into packages (to prevent excessive docker rebuilds on every lock change)
 ☐ write production deployment script and readme
 ✔ remove non-TS generated code from gamesDB @done(20-05-20 03:33)
-☐ test if SocketIO holds recieved event when no listeners are subscribed yet or dumps them
+✔ test if SocketIO holds recieved event when no listeners are subscribed yet or dumps them @done(20-05-20 04:47)
 ☐ investigate if `gamesdb` needs prepublish hook - look up README
 ✔ rethink projects importing each other's api. common api package? @done(20-05-17 21:50)
 ☐ investigate how actual reconnection (not my ad-hoc solution atm) is ws handled in terms of events for both server and client
