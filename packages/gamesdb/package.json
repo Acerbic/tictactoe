@@ -5,7 +5,7 @@
   "main": "generated/prisma-ts-client",
   "publishAccess": "public",
   "scripts": {
-    "build": "yarn generate && tsc generated/prisma-ts-client/index.ts",
+    "build": "yarn generate && tsc",
     "prisma": "prisma",
     "generate": "prisma generate",
     "deploy": "prisma generate && prisma deploy",

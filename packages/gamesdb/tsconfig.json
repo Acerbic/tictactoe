@@ -2,13 +2,12 @@
     "compilerOptions": {
         "lib": ["es6", "esnext.asynciterable"],
         "skipLibCheck": true,
-        "module": "esnext",
+        "module": "CommonJS",
         "allowJs": true,
         "target": "es6",
         "noImplicitAny": true,
         "moduleResolution": "node",
-        "noEmit": false,
         "declaration": true,
-        "rootDir": "./"
+        "rootDir": "./generated/prisma-ts-client"
     }
 }

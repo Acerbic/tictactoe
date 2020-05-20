@@ -1,14 +1,14 @@
 ✔ put client into a docker container and dockerize the run sequence @done (01.04.2019, 2:27:41)
 ✘ investigate lerna --hoist when Yarn Workspaces aren't used @cancelled (30.03.2019, 1:13:09)
-☐ dev setup with watchers-recompile-restart?
+✘ dev setup with watchers-recompile-restart? @cancelled(20-05-20 02:37)
 ✔ dev setup localhost domain instaed of "gmaster:3000"/"ghost", etc.. @done(20-05-13 01:16)
-☐ use env vars everywhere
+✔ use env vars everywhere @done(20-05-20 02:32)
 ✔ lerna bootstrap - add -- --pure-lockfile to Dockerfiles @done (30.03.2019, 1:17:10)
 ☐ Docker HEALTHCHECK
 ✘ investigate .gitignore in sub directory @cancelled(20-05-13 01:16)
 ☐ find a way to configure Lerna to split lock file into packages (to prevent excessive docker rebuilds on every lock change)
 ☐ write production deployment script and readme
-☐ remove non-TS generated code from gamesDB
+✔ remove non-TS generated code from gamesDB @done(20-05-20 03:33)
 ☐ test if SocketIO holds recieved event when no listeners are subscribed yet or dumps them
 ☐ investigate if `gamesdb` needs prepublish hook - look up README
 ✔ rethink projects importing each other's api. common api package? @done(20-05-17 21:50)
