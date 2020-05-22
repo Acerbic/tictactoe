@@ -15,7 +15,8 @@ const http = createServer(app);
  * Wrap http server with websocket functionality
  */
 const socServer = socketio(http, {
-    pingTimeout: process.env.NODE_ENV == "production" ? 3000 : 1000000
+    pingTimeout: process.env.NODE_ENV == "production" ? 3000 : 1000000,
+    serveClient: false
 });
 
 /**

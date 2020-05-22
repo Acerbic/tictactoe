@@ -47,15 +47,53 @@ export class SocketGameConnector implements GameConnector {
 
     private openSocket(playerId: string) {
         this.socket = io(this.game_host_url, {
+            timeout: 2000,
+            reconnection: true,
             query: {
                 playerId
             },
-            autoConnect: false
+            autoConnect: false,
+            reconnectionAttempts: 20
         });
 
         if (!this.socket) {
             throw "Failed to create a socket";
         } else {
+            this.socket
+                .on("connect", () => {
+                    console.info("Socket -- connect");
+                })
+                .on("connect_error", err => {
+                    console.error("Socket -- connect_error", err);
+                })
+                .on("connect_timeout", to => {
+                    console.debug("Socket -- connect_timeout", to);
+                })
+                .on("error", err => {
+                    console.error("Socket -- error", err);
+                })
+                .on("disconnect", reason => {
+                    console.info("Socket -- disconnect", reason);
+                })
+                .on("reconnect", num => {
+                    console.info("Socket -- reconnect", num);
+                })
+                .on("reconnect_attempt", num => {
+                    console.info("Socket -- reconnect_attempt", num);
+                })
+                .on("reconnecting", num => {
+                    console.info("Socket -- reconnecting", num);
+                })
+                .on("reconnect_failed", () => {
+                    console.error("Socket -- reconnect_failed");
+                })
+                .on("ping", () => {
+                    console.debug("Socket -- ping");
+                })
+                .on("pong", latency => {
+                    console.debug("Socket -- pong", latency);
+                });
+
             this.attachListeners();
             this.socket.connect();
         }
@@ -66,14 +104,10 @@ export class SocketGameConnector implements GameConnector {
      */
     private attachListeners = () => {
         // this one will be received if we are joining a new game
-        this.socket.once("choose_role", () =>
-            this.send({
-                type: "S_CONNECTED"
-            })
-        );
+        this.socket.once("choose_role", () => this.s_choose_role());
         // this one will be received (instead of "choose_role") if we
         // are reconnecting to a match in progress
-        this.socket.once("reconnection", r => this.s_reconnection(r));
+        this.socket.once("update", r => this.s_reconnection(r));
 
         // those to follow "choose_role" in player configuration process
         this.socket.once("iamalreadytracer", () => this.s_iamalreadytracer());
@@ -84,6 +118,12 @@ export class SocketGameConnector implements GameConnector {
         this.socket.on("meme_accepted", r => this.s_move_accepted(r));
         this.socket.on("opponent_moved", r => this.s_opponent_moved(r));
         this.socket.on("gameover", r => this.s_gameover(r));
+    };
+
+    private s_choose_role = () => {
+        this.send({
+            type: "S_CONNECTED"
+        });
     };
 
     // reconnect to an existing game

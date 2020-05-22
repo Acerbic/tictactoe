@@ -77,7 +77,7 @@ export const Game: React.FC<P> = props => {
                 </div>
                 <div id={styles.controls} className="container-fluid">
                     <div className="row">
-                        <form className="col">
+                        <div className="col">
                             <ConnectGroup
                                 playerId={playerId}
                                 setPlayerId={setPlayerId}
@@ -94,7 +94,7 @@ export const Game: React.FC<P> = props => {
                             {state.matches("end") && (
                                 <NewGameButton onClick={startNewGame} />
                             )}
-                        </form>
+                        </div>
                     </div>
                 </div>
             </section>

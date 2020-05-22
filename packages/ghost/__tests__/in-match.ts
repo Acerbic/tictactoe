@@ -231,7 +231,7 @@ describe("After game started", () => {
     test("can reconnect (immediately after start)", done => {
         client1.once("disconnect", () => {
             client1 = openClientSocket("p1");
-            client1.once("reconnection", data => {
+            client1.once("update", data => {
                 expect(data.step).toBe("my-turn");
                 expect(data.board).toEqual([
                     [null, null, null],
@@ -406,7 +406,7 @@ describe("After game started", () => {
                     ])
                     .mockName("in-test-name");
                 const client1_again = openClientSocket("p1");
-                client1_again.on("reconnection", data => {
+                client1_again.on("update", data => {
                     expect(data.step).toBe("my-turn");
                     expect(data.board).toEqual([
                         ["p1", "p1", "p2"],

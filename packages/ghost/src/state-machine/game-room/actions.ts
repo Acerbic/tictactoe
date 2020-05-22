@@ -235,18 +235,21 @@ export const top_disconnect: ActionF<GameRoom_PlayerDisconnected> = (
     // disconnect during game in progress - don't drop the game,
     // await reconnection instead
     // TODO: inform players of disconnect
+
+    actionlog("top-disconnect", event.player_id);
 };
 
-export const top_reconnect: ActionF<GameRoom_PlayerDisconnected> = (
+export const top_reconnect: ActionF<GameRoom_PlayerConnected> = (
     ctx,
     event
 ) => {
+    actionlog("top-reconnect", event.player_id);
     // reconnection during game in progress - update socket
     ctx.players.get(event.player_id)!.socket = event.socket;
 
     ctx.getBoard(ctx.game_id!).then(board => {
         // update reconnected player's knowledge
-        const data: API["out"]["reconnection"] = {
+        const data: API["out"]["update"] = {
             gameId: ctx.game_id!,
             board,
             step:
@@ -254,6 +257,6 @@ export const top_reconnect: ActionF<GameRoom_PlayerDisconnected> = (
                     ? "my-turn"
                     : "opponents-turn"
         };
-        event.socket.emit("reconnection", data);
+        event.socket.emit("update", data);
     });
 };

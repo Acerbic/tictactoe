@@ -5,7 +5,7 @@
  */
 
 var generateApp = require("../dist/app").default;
-var debug = require("debug")("gmaster:server");
+var debuglog = require("debug")("gmaster:server");
 var http = require("http");
 
 var app = generateApp();
@@ -52,8 +52,8 @@ function normalizePort(val) {
 
 /**
  * Event listener for HTTP server "error" event.
+ * @see https://nodejs.org/docs/latest-v14.x/api/net.html#net_event_error
  */
-
 function onError(error) {
     if (error.syscall !== "listen") {
         throw error;
@@ -78,10 +78,10 @@ function onError(error) {
 
 /**
  * Event listener for HTTP server "listening" event.
+ * @see https://nodejs.org/docs/latest-v14.x/api/net.html#net_event_listening
  */
-// TODO: check if this is doing anything
 function onListening() {
     var addr = server.address();
     var bind = typeof addr === "string" ? "pipe " + addr : "port " + addr.port;
-    debug("Listening on " + bind);
+    debuglog("Listening on " + bind);
 }

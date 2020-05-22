@@ -54,13 +54,12 @@ export interface API {
             // null means a draw
             winner: PlayerId | null;
         };
-        reconnection: {
+        update: {
             gameId: GameId;
             board: GameBoard;
             step: "my-turn" | "opponents-turn";
         };
         // the following are not implemented yet
-        update: any;
         ragequit: any;
     };
 }

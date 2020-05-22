@@ -5,7 +5,6 @@
  */
 
 import { StateSchema, Actor } from "xstate";
-import { Socket } from "socket.io";
 import {
     PlayerId,
     GameId,
@@ -74,16 +73,22 @@ export interface GameRoomContext {
     getBoard: PrismaGetGameBoard;
 }
 
+/**
+ * `SOC_*` type events originate from socket, but they are describing business
+ * logic events, not transport level. I.e. "SOC_CONNECT" doesn't indicate
+ * websocket-level (re-)connection attempt, but rather "player connects to the
+ * game room" higher-level event.
+ */
 export type GameRoom_PlayerConnected = {
     type: "SOC_CONNECT";
     player_id: PlayerId;
-    socket: Socket;
+    socket: GhostOutSocket;
 };
 
 export type GameRoom_PlayerDisconnected = {
     type: "SOC_DISCONNECT";
     player_id: PlayerId;
-    socket: Socket;
+    socket: GhostOutSocket;
 };
 
 export type GameRoom_PlayerPickRole = {
