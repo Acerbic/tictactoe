@@ -16,6 +16,7 @@
     "debug": "~4.1.1",
     "express": "^4.17.1",
     "morgan": "^1.10.0",
+    "prisma-client-lib": "^1.34.10",
     "xstate": "^4.8.0"
   },
   "devDependencies": {
