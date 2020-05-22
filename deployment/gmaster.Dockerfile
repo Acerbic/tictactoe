@@ -2,6 +2,14 @@ FROM node:lts-alpine
 RUN apk add yarn && npm i lerna -g
 WORKDIR /app
 
+# parameters to run this Dockerfile
+ARG GMASTER_PORT=3000
+
+# Container running conditions and command
+ENV GMASTER_PORT=$GMASTER_PORT
+EXPOSE $GMASTER_PORT
+CMD cd ./packages/gmaster && yarn start
+
 # Common dependencies among projects
 COPY ["package.json", "yarn.lock", "./"]
 RUN yarn --pure-lockfile
@@ -22,9 +30,3 @@ COPY packages/gmaster ./packages/gmaster
 
 # compile TypeScript
 RUN lerna run build --scope="gmaster"
-
-CMD cd ./packages/gmaster && yarn start
-
-ARG GMASTER_PORT=3000
-ENV GMASTER_PORT=$GMASTER_PORT
-EXPOSE $GMASTER_PORT

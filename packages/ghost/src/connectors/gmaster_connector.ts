@@ -12,8 +12,7 @@ import {
 } from "@trulyacerbic/ttt-apis/gmaster-api";
 import fetch from "isomorphic-unfetch";
 
-// TODO: move to .env variable
-const gmaster_url = `http://${process.env["GMASTER_URI"]}/`;
+const gmaster_url = process.env["GMASTER_URL"];
 
 /**
  * Call a GMaster POST Rest command.

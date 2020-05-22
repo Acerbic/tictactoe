@@ -12,7 +12,7 @@ import { SocketGameConnector } from "../state-machine/SocketGameConnector";
 import styles from "./Game.module.css";
 
 interface P {
-    game_host_uri: string;
+    game_host_url: string;
 }
 
 const initialBoard: GameBoardProps["board"] = [
@@ -48,7 +48,7 @@ export const Game: React.FC<P> = props => {
 
         // initiate new connection to game server
         const con = new SocketGameConnector(
-            props.game_host_uri,
+            props.game_host_url,
             setBoard,
             send,
             playerId

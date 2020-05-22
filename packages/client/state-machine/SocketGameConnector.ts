@@ -13,19 +13,19 @@ import io from "socket.io-client";
 import { GameConnector, ClientEventSender } from "./state-machine-schema";
 
 export class SocketGameConnector implements GameConnector {
-    game_host_uri: string;
+    game_host_url: string;
     setBoard: Function;
     socket: SocketIOClient.Socket = null;
     send: ClientEventSender;
     playerId: string;
 
     constructor(
-        game_host_uri: string,
+        game_host_url: string,
         setBoard: Function,
         send: ClientEventSender,
         playerId: string
     ) {
-        this.game_host_uri = game_host_uri;
+        this.game_host_url = game_host_url;
         this.setBoard = setBoard;
         this.send = send;
         this.playerId = playerId;
@@ -46,9 +46,7 @@ export class SocketGameConnector implements GameConnector {
     };
 
     private openSocket(playerId: string) {
-        this.socket = io(this.game_host_uri, {
-            timeout: 20000000,
-            reconnection: false,
+        this.socket = io(this.game_host_url, {
             query: {
                 playerId
             },

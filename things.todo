@@ -12,8 +12,16 @@
 ✔ test if SocketIO holds recieved event when no listeners are subscribed yet or dumps them @done(20-05-20 04:47)
 ✘ investigate if `gamesdb` needs prepublish hook - look up README @cancelled(20-05-20 05:08)
 ✔ rethink projects importing each other's api. common api package? @done(20-05-17 21:50)
-☐ investigate how actual reconnection (not my ad-hoc solution atm) is ws handled in terms of events for both server and client
+✔ investigate how actual reconnection (not my ad-hoc solution atm) is ws handled in terms of events for both server and client @done(20-05-21 03:47)
 ✘ use test shard of prisma for testing @cancelled(20-05-20 05:08)
 ✘ implement switch to using "live" endpoints for integration run of the same tests in ghost @cancelled(20-05-20 05:09)
 ☐ drop game if both clients quit
 ☐ distinguis disconnect and quit?
+☐ drop Bootstrap, use Tailwind
+☐ see if css-modules can be injected as normal classes via JSX transform
+☐ namespace ghost socket usage
+✘ rename reconnect events to make it obvious it is a game-level reconnect, not transport-level @cancelled(20-05-21 03:48)
+☐ do I need certs for HTTPS-endpoints deployment?
+☐ login system with persistant account and deterministic playerId.
+☐ add ack to sending move from client
+✔ replace ENV *URI with *URl and full scheme+domain+port qualification @done(20-05-22 04:08)

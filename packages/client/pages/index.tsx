@@ -7,7 +7,7 @@ export default class TestPage extends React.Component {
     render() {
         return (
             <div id={styles.page}>
-                <Game game_host_uri={process.env.game_host_url}></Game>
+                <Game game_host_url={process.env.game_host_url}></Game>
             </div>
         );
     }

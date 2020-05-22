@@ -2,6 +2,16 @@ FROM node:lts-alpine
 RUN apk add yarn && npm i lerna -g
 WORKDIR /app
 
+# parameters to run this Dockerfile
+ARG GHOST_PORT=3060
+
+# Container running conditions and command
+ENV GHOST_PORT=$GHOST_PORT
+EXPOSE $GHOST_PORT
+# Node.js debugger access
+EXPOSE 9229
+CMD cd ./packages/ghost && yarn dev
+
 # Common dependencies among projects
 COPY ["package.json", "yarn.lock", "./"]
 RUN yarn --pure-lockfile
@@ -22,10 +32,3 @@ COPY packages/ghost ./packages/ghost
 
 # compile TypeScript
 RUN lerna run build --scope="ghost"
-
-CMD cd ./packages/ghost && yarn dev
-
-ARG GHOST_PORT=3060
-ENV GHOST_PORT=$GHOST_PORT
-EXPOSE $GHOST_PORT
-EXPOSE 9229
