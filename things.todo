@@ -25,3 +25,4 @@
 ☐ login system with persistant account and deterministic playerId.
 ☐ add ack to sending move from client
 ✔ replace ENV *URI with *URl and full scheme+domain+port qualification @done(20-05-22 04:08)
+☐ fix client/ghost not recognizing erroneous moves

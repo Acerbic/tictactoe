@@ -1,6 +1,12 @@
 /**
  * Interfaces with Game Master proccess via http requests
  */
+
+// Seems like this is not needed in Node v14, but in LTS (12)
+// absense of this causes an error - Cannot find name 'URL'
+// @see https://github.com/DefinitelyTyped/DefinitelyTyped/issues/34960
+import { URL } from "url";
+
 import {
     GameId,
     GameMasterGetRequest,
@@ -29,8 +35,8 @@ async function gmasterPost<
     payload: TReq,
     gameId?: GameId
 ): Promise<TRes | APIResponseFailure> {
-    const uri = gmaster_url + endpoint + (gameId ? "/" + gameId : "");
-    const res = await fetch(uri, {
+    const url = new URL(endpoint + (gameId ? "/" + gameId : ""), gmaster_url);
+    const res = await fetch(url.toString(), {
         method: "POST",
         headers: {
             "Content-Type": "application/json"
@@ -40,7 +46,7 @@ async function gmasterPost<
     const json = res.json();
     json.catch((err: any) =>
         console.error(
-            `gmaster.post (${uri})[${JSON.stringify(payload)}]: ${err}`
+            `gmaster.post (${url})[${JSON.stringify(payload)}]: ${err}`
         )
     );
     return json;
@@ -56,8 +62,8 @@ async function gmasterGet<
     TReq extends GameMasterGetRequest = any,
     TRes extends APIResponse = CheckGameResponse
 >(endpoint: string, gameId: GameId): Promise<TRes | APIResponseFailure> {
-    const uri = gmaster_url + endpoint + (gameId ? "/" + gameId : "");
-    const res = await fetch(uri, {
+    const url = new URL(endpoint + (gameId ? "/" + gameId : ""), gmaster_url);
+    const res = await fetch(url.toString(), {
         method: "GET"
     });
     return res.json();
