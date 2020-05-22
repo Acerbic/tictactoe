@@ -4,7 +4,7 @@
   "description": "Game host. Backend module to communicate game between players (via sockets) and game master. An instance of game host is spawned for each game.",
   "author": "Gleb Varenov",
   "license": "MIT",
-  "private": false,
+  "private": true,
   "scripts": {
     "build": "tsc",
     "start": "cross-env DEBUG=*,-engine*,-express:router,-binding,-socket.io* node ./dist/server.js",

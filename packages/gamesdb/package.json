@@ -3,7 +3,7 @@
   "version": "1.0.27",
   "description": "Prisma graphql database model definition",
   "main": "generated/prisma-ts-client",
-  "publishAccess": "public",
+  "private": true,
   "scripts": {
     "build": "yarn generate && tsc",
     "prisma": "prisma",
@@ -21,6 +21,7 @@
   "author": "Varenov Gleb",
   "license": "ISC",
   "dependencies": {
+    "graphql": "^14",
     "prisma-client-lib": "^1.34.10"
   },
   "devDependencies": {
