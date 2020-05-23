@@ -13,7 +13,6 @@ import { Socket, Server as SocServer } from "socket.io";
 
 import { GameRoomInterpreter } from "./state-machine/GameRoomInterpreter";
 import GmasterConnector from "./connectors/gmaster_connector";
-// import { getGameBoard } from "./connectors/prisma_connector";
 import { getGameBoard } from "./connectors/hasura_connector";
 import { PlayerId } from "@trulyacerbic/ttt-apis/gmaster-api";
 import {

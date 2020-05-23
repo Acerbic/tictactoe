@@ -17,7 +17,7 @@ import {
 } from "../player-setup/player-setup-schema";
 
 import GMConnector from "../../connectors/gmaster_connector";
-import { PrismaGetGameBoard } from "../../connectors/prisma_connector";
+import { PrismaGetGameBoard } from "../../connectors/hasura_connector";
 import { GhostOutSocket } from "../../utils";
 
 export interface GameRoomSchema extends StateSchema<GameRoomContext> {

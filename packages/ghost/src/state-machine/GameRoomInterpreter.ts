@@ -12,7 +12,7 @@ import { Interpreter } from "xstate/lib/interpreter";
 
 import { PlayerId } from "@trulyacerbic/ttt-apis/gmaster-api";
 import GMConnector from "../connectors/gmaster_connector";
-import { PrismaGetGameBoard } from "../connectors/prisma_connector";
+import { PrismaGetGameBoard } from "../connectors/hasura_connector";
 
 import {
     GameRoomContext,

@@ -1,7 +1,0 @@
-type GameSession {
-  id: ID! @unique
-  player1: String!
-  player2: String!
-  state: String!
-  board: String!
-}

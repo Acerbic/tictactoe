@@ -5,7 +5,6 @@
 import express, { ErrorRequestHandler, Response } from "express";
 import morgan from "morgan";
 
-// import GamesDbConnector from "./db/db-prisma";
 import { HasuraConnector } from "./db/db-hasura";
 
 import CreateGame from "./routes/CreateGame";
@@ -22,12 +21,12 @@ const generateApp = () => {
     }
     app.use(express.json());
 
-    // this will throw if PRISMA_URL is undefined or incorrect
-    new URL(process.env.PRISMA_URL!);
+    // this will throw if HASURA_URL is undefined or incorrect
+    new URL(process.env.HASURA_URL!);
     // DB connection to be reused by all API calls
     app.set(
         "gamesDb",
-        new HasuraConnector({ endpoint: "http://localhost:8080/v1/graphql" })
+        new HasuraConnector({ endpoint: process.env.HASURA_URL! })
     );
 
     // Rest API

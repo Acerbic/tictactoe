@@ -4,7 +4,6 @@
 
 import { GameId } from "@trulyacerbic/ttt-apis/gmaster-api";
 import { GameBoard } from "@trulyacerbic/ttt-apis/ghost-api";
-// import { prisma } from "@trulyacerbic/ttt-gamesdb";
 import { query } from "graphqurl";
 
 export type PrismaGetGameBoard = (gameId: GameId) => Promise<GameBoard>;
@@ -24,7 +23,7 @@ export const getGameBoard: PrismaGetGameBoard = async function getGameBoard(
     `;
 
     return query({
-        endpoint: "http://localhost:8080/v1/graphql",
+        endpoint: process.env.HASURA_URL!,
         query: q,
         variables: { id: gameId }
     }).then(r => {
