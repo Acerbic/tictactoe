@@ -9,7 +9,8 @@
     "prisma": "prisma",
     "generate": "prisma generate",
     "deploy": "prisma generate && prisma deploy",
-    "clean": "rimraf generated"
+    "clean": "rimraf generated",
+    "hasura:apply": "hasura migrate apply --project hasura && hasura metadata apply --project hasura"
   },
   "keywords": [
     "prisma",
@@ -22,6 +23,7 @@
   "license": "ISC",
   "dependencies": {
     "graphql": "^14",
+    "hasura-cli": "^1.2.1",
     "prisma-client-lib": "^1.34.10"
   },
   "devDependencies": {
