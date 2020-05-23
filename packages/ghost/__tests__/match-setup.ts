@@ -2,6 +2,8 @@
  * Simulation of incoming connections and setup of a new game.
  */
 
+// TODO: fix reconnection testing that broke after switching to Hasura
+
 // allow step debugging
 const EXTEND_SOCKET_TIMEOUTS = process.env.VSCODE_CLI ? true : false;
 

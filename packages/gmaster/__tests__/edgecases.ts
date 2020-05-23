@@ -19,7 +19,8 @@ it("should fail to start the server if PRISMA_URL unset", () => {
     process.env.PRISMA_URL = oldPRISMA_URL;
 });
 
-it("should error if prisma storage is unavailable", async () => {
+// TODO: fix to point to hasura
+it("should error if db storage is unavailable", async () => {
     const oldPRISMA_URL = process.env.PRISMA_URL;
     process.env.PRISMA_URL = "http://localhost:59999"; // fakeout
     const misdirectedApp = generateApp();

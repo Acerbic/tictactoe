@@ -17,6 +17,7 @@
     "cross-env": "^7.0.2",
     "debug": "^4.1.1",
     "express": "^4.17.1",
+    "graphqurl": "^0.3.3",
     "isomorphic-unfetch": "^3.0.0",
     "socket.io": "^2.3.0",
     "xstate": "^4.8.0"

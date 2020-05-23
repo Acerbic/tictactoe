@@ -5,7 +5,8 @@
 import express, { ErrorRequestHandler, Response } from "express";
 import morgan from "morgan";
 
-import GamesDbConnector from "./db/db-prisma";
+// import GamesDbConnector from "./db/db-prisma";
+import { HasuraConnector } from "./db/db-hasura";
 
 import CreateGame from "./routes/CreateGame";
 import CheckGame from "./routes/CheckGame";
@@ -26,7 +27,7 @@ const generateApp = () => {
     // DB connection to be reused by all API calls
     app.set(
         "gamesDb",
-        new GamesDbConnector({ endpoint: process.env.PRISMA_URL! })
+        new HasuraConnector({ endpoint: "http://localhost:8080/v1/graphql" })
     );
 
     // Rest API
