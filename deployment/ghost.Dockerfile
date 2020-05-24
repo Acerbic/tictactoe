@@ -16,9 +16,8 @@ CMD cd ./packages/ghost && yarn dev
 COPY ["package.json", "yarn.lock", "./"]
 RUN yarn --pure-lockfile
 
-# copy prebuilt @trulyacerbic/ttt-gamesdb, @trulyacerbic/ttt-apis & crosslink
+# copy prebuilt @trulyacerbic/ttt-apis & crosslink
 COPY packages/apis ./packages/apis
-COPY packages/gamesdb ./packages/gamesdb
 COPY ["packages/ghost/package.json", "./packages/ghost/"]
 COPY lerna.json .
 
