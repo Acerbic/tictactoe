@@ -26,4 +26,5 @@
 ☐ add ack to sending move from client
 ✔ replace ENV *URI with *URl and full scheme+domain+port qualification @done(20-05-22 04:08)
 ☐ fix client/ghost not recognizing erroneous moves
-☐ Remove mentions of Prisma in the project (Types, names, etc.)
+✔ Remove mentions of Prisma in the project (Types, names, etc.) @done(20-05-26 07:40)
+☐ Update DOCS diagrams

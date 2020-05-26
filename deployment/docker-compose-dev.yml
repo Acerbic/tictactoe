@@ -24,17 +24,6 @@ services:
             ## uncomment next line to set an admin secret
             # HASURA_GRAPHQL_ADMIN_SECRET: myadminsecretkey
 
-    # prisma-deployer:
-    #     build:
-    #         dockerfile: deployment/prisma-deployer.Dockerfile
-    #         context: ..
-    #         args:
-    #             PRISMA_HOSTPORT: prisma:4466
-    #     image: prisma-deployer:latest
-    #     restart: on-failure
-    #     depends_on:
-    #         - prisma
-
     gmaster:
         build:
             dockerfile: deployment/gmaster.Dockerfile

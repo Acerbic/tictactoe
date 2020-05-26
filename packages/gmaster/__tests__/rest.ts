@@ -2,7 +2,7 @@
  * Testing REST API
  *
  * Must provide with env variable `ENDPOINT` to test a remote host running
- * gmaster, or variable `PRISMA_URL` to instantiate the application from source
+ * gmaster, or variable `HASURA_URL` to instantiate the application from source
  * code.
  */
 
@@ -14,8 +14,8 @@ import * as api from "@trulyacerbic/ttt-apis/gmaster-api";
 /**
  * If provided string endpoint (in the form of URI like
  * "http://localhost:3000"), use it. Otherwise, instantiate a new web
- * application from source code (in this case, don't forget to set up PRISMA_URL
- * env variable to point to prisma storage)
+ * application from source code (in this case, don't forget to set up HASURA_URL
+ * env variable to point to hasura storage)
  */
 const agent_app =
     "string" === typeof process.env.ENDPOINT && process.env.ENDPOINT.length > 0

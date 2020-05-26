@@ -23,16 +23,6 @@ services:
             HASURA_GRAPHQL_ENABLED_LOG_TYPES: startup, http-log, webhook-log, websocket-log, query-log
             ## uncomment next line to set an admin secret
             # HASURA_GRAPHQL_ADMIN_SECRET: myadminsecretkey
-    # prisma-deployer:
-    #     build:
-    #         dockerfile: deployment/prisma-deployer.Dockerfile
-    #         context: ..
-    #         args:
-    #             PRISMA_HOSTPORT: prisma:4466
-    #     image: prisma-deployer:latest
-    #     restart: on-failure
-    #     depends_on:
-    #         - prisma
 
 volumes:
     db_data:

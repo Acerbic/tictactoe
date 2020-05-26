@@ -19,9 +19,7 @@
   "license": "ISC",
   "dependencies": {
     "graphqurl": "^0.3.3",
-    "hasura-cli": "^1.2.1"
-  },
-  "devDependencies": {
+    "hasura-cli": "^1.2.1",
     "rimraf": "^3.0.2"
   }
 }

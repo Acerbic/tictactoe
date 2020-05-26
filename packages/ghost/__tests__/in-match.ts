@@ -16,12 +16,12 @@ import { AddressInfo } from "net";
 import GmasterConnector from "../src/connectors/gmaster_connector";
 import {
     getGameBoard,
-    PrismaGetGameBoard
-} from "../src/connectors/prisma_connector";
+    DBGetGameBoard
+} from "../src/connectors/hasura_connector";
 import * as gm_api from "@trulyacerbic/ttt-apis/gmaster-api";
 import { API as gh_api } from "@trulyacerbic/ttt-apis/ghost-api";
 jest.mock("../src/connectors/gmaster_connector");
-jest.mock("../src/connectors/prisma_connector");
+jest.mock("../src/connectors/hasura_connector");
 
 /**
  * Destructuring + casting
@@ -113,7 +113,7 @@ describe("After game started", () => {
         );
 
         (getGameBoard as jest.MockedFunction<
-            PrismaGetGameBoard
+            DBGetGameBoard
         >).mockImplementation(() =>
             Promise.resolve([
                 [null, null, null],
@@ -398,7 +398,7 @@ describe("After game started", () => {
                 }
             })
             .once("disconnect", () => {
-                (getGameBoard as jest.MockedFunction<PrismaGetGameBoard>)
+                (getGameBoard as jest.MockedFunction<DBGetGameBoard>)
                     .mockResolvedValueOnce([
                         ["p1", "p1", "p2"],
                         ["p2", "p2", "p1"],

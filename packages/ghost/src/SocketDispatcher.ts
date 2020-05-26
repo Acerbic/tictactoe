@@ -34,7 +34,7 @@ export class SocketDispatcher {
      */
     private deps = {
         gmaster: new GmasterConnector(),
-        prisma: getGameBoard
+        getGameBoard
     };
 
     // NOTE: if game-room machine is implemented as actor in higher-order

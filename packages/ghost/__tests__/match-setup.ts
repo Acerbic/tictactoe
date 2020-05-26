@@ -14,10 +14,10 @@ import { AddressInfo } from "net";
 
 // in case we need em
 import GmasterConnector from "../src/connectors/gmaster_connector";
-import { getGameBoard } from "../src/connectors/prisma_connector";
+import { getGameBoard } from "../src/connectors/hasura_connector";
 import * as gm_api from "@trulyacerbic/ttt-apis/gmaster-api";
 jest.mock("../src/connectors/gmaster_connector");
-jest.mock("../src/connectors/prisma_connector");
+jest.mock("../src/connectors/hasura_connector");
 
 /**
  * Destructuring + casting

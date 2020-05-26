@@ -36,7 +36,7 @@ without lerna, if they are published to the npm repo.
 
 ## Running dev in Docker
 
-Creates Prisma DB, Ghost, Gmaster, Client containers.
+Creates DB, Ghost, Gmaster, Client containers.
 
 ```bash
 yarn deploy:dev

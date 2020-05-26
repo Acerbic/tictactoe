@@ -6,12 +6,12 @@ import { GameId } from "@trulyacerbic/ttt-apis/gmaster-api";
 import { GameBoard } from "@trulyacerbic/ttt-apis/ghost-api";
 import { query } from "graphqurl";
 
-export type PrismaGetGameBoard = (gameId: GameId) => Promise<GameBoard>;
+export type DBGetGameBoard = (gameId: GameId) => Promise<GameBoard>;
 
 /**
  * Load game record from the DB and return the board
  */
-export const getGameBoard: PrismaGetGameBoard = async function getGameBoard(
+export const getGameBoard: DBGetGameBoard = async function getGameBoard(
     gameId: GameId
 ) {
     const q = `

@@ -2,7 +2,7 @@
  * Testing various modes of failure
  *
  * Must provide with env variable `ENDPOINT` to test a remote host running
- * gmaster, or variable `PRISMA_URL` to instantiate the application from source
+ * gmaster, or variable `HASURA_URL` to instantiate the application from source
  * code.
  */
 import supertest from "supertest";
@@ -10,21 +10,21 @@ import generateApp from "../src/app";
 
 import * as api from "@trulyacerbic/ttt-apis/gmaster-api";
 
-it("should fail to start the server if PRISMA_URL unset", () => {
-    const oldPRISMA_URL = process.env.PRISMA_URL;
-    delete process.env.PRISMA_URL;
+it("should fail to start the server if HASURA_URL unset", () => {
+    const oldHASURA_URL = process.env.HASURA_URL;
+    delete process.env.HASURA_URL;
     expect(generateApp).toThrow();
-    process.env.PRISMA_URL = "malformedurl";
+    process.env.HASURA_URL = "malformedurl";
     expect(generateApp).toThrow();
-    process.env.PRISMA_URL = oldPRISMA_URL;
+    process.env.HASURA_URL = oldHASURA_URL;
 });
 
 // TODO: fix to point to hasura
 it("should error if db storage is unavailable", async () => {
-    const oldPRISMA_URL = process.env.PRISMA_URL;
-    process.env.PRISMA_URL = "http://localhost:59999"; // fakeout
+    const oldHASURA_URL = process.env.HASURA_URL;
+    process.env.HASURA_URL = "http://localhost:59999"; // fakeout
     const misdirectedApp = generateApp();
-    process.env.PRISMA_URL = oldPRISMA_URL;
+    process.env.HASURA_URL = oldHASURA_URL;
     const res: api.APIResponseFailure = (
         await supertest(misdirectedApp)
             .post("/CreateGame")
@@ -46,8 +46,8 @@ describe("Logical errors", () => {
         /**
          * If provided string endpoint (in the form of URI like
          * "http://localhost:3000"), use it. Otherwise, instantiate a new web
-         * application from source code (in this case, don't forget to set up PRISMA_URL
-         * env variable to point to prisma storage)
+         * application from source code (in this case, don't forget to set up HASURA_URL
+         * env variable to point to hasura storage)
          */
         const agent_app =
             "string" === typeof process.env.ENDPOINT &&
