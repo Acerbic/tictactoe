@@ -14,4 +14,4 @@ CMD ["yarn", "dev"]
 COPY ./packages/client .
 COPY ["yarn.lock", "./"]
 RUN yarn --pure-lockfile
-RUN yarn build
+#RUN yarn build -- no need to build for dev start

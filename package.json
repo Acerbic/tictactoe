@@ -18,9 +18,7 @@
   ],
   "devDependencies": {
     "prettier": "2.0.5",
-    "rimraf": "^3.0.2"
-  },
-  "dependencies": {
+    "rimraf": "^3.0.2",
     "cross-env": "^7.0.2"
   }
 }

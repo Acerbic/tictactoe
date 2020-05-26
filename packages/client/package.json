@@ -1,5 +1,5 @@
 {
-  "name": "@trulyacerbic/ttt-test-client",
+  "name": "@trulyacerbic/ttt-client",
   "version": "1.0.0",
   "description": "Test game master for TicTacToe",
   "main": "index.js",
