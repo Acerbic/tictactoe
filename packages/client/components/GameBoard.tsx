@@ -23,13 +23,20 @@ export interface GameBoardProps {
     onCellClick: (i: number, j: number) => void;
 }
 
+// extracting argument to useSpring as a named function to help TS resolve
+// overload of useSpring call. (Between useSpring(object) and
+// useSpring(Function))
+const springInitGen: Parameters<typeof useSpring>[0] = () => ({
+    xys: [0, 0, 1],
+    config: { mass: 5, tension: 350, friction: 40 }
+});
+
 export const GameBoard: React.FC<GameBoardProps> = ({ board, onCellClick }) => {
     const ref = useRef();
 
-    const [springProp, setSpringProp] = useSpring(() => ({
-        xys: [0, 0, 1],
-        config: { mass: 5, tension: 350, friction: 40 }
-    }));
+    const [springProp, setSpringProp] = useSpring<{
+        xys: [number, number, number];
+    }>(springInitGen);
     return (
         <animated.div
             id={styles.board}
@@ -38,7 +45,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({ board, onCellClick }) => {
                 setSpringProp({ xys: calc(x, y, ref) })
             }
             onMouseLeave={() => setSpringProp({ xys: [0, 0, 1] })}
-            style={{ transform: springProp.xys.interpolate(trans as any) }}
+            style={{ transform: springProp.xys.interpolate(trans) }}
         >
             {[0, 1, 2].map(i =>
                 [0, 1, 2].map(j => (
