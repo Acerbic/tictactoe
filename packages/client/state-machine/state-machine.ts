@@ -124,19 +124,22 @@ export const clientMachine = Machine<ClientContext, ClientSchema, ClientEvent>(
     },
     {
         guards: {
-            reconnected_our_turn: (_, e: S_ReconnectedEvent) => e.isMyTurn,
-            started_with_our_turn: (_, e: S_GameStartEvent) =>
-                e.role === "first",
-            draw: (_, e: S_GameEndEvent) => e.outcome === "meh",
-            victory: (_, e: S_GameEndEvent) => e.outcome === "win"
+            reconnected_our_turn: (_, e) =>
+                e.type === "S_RECONNECTED" && e.isMyTurn,
+            started_with_our_turn: (_, e) =>
+                e.type === "S_GAME_START" && e.role === "first",
+            draw: (_, e) => e.type === "S_GAME_END" && e.outcome === "meh",
+            victory: (_, e) => e.type === "S_GAME_END" && e.outcome === "win"
         },
         actions: {
-            emit_iwannabetracer: (ctx, e: UI_RolePickedEvent) =>
-                ctx.gameConnector.actions.emit_iwannabetracer(e.role),
-            emit_move: (ctx, e: UI_MoveChosenEvent) =>
-                ctx.gameConnector.actions.emit_move(e.row, e.column),
+            emit_iwannabetracer: (ctx, e) =>
+                e.type === "UI_ROLE_PICKED" &&
+                ctx.gameConnector?.actions.emit_iwannabetracer(e.role),
+            emit_move: (ctx, e) =>
+                e.type === "UI_MOVE_CHOSEN" &&
+                ctx.gameConnector?.actions.emit_move(e.row, e.column),
             emit_dropgame: ctx => {
-                ctx.gameConnector.actions.emit_dropgame();
+                ctx.gameConnector?.actions.emit_dropgame();
                 ctx.gameConnector = null;
             },
             store_connection: assign({

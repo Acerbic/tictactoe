@@ -29,7 +29,7 @@ export const Game: React.FC<P> = props => {
     const [state, send] = useMachine(clientMachine);
 
     // FIXME: submitting incorrect move (occupied cells)
-    const cellClicked = (row, column) => {
+    const cellClicked = (row: number, column: number) => {
         console.log(`clicked ${row} - ${column}`);
         if (!state.matches("game.our_turn")) {
             return;
@@ -38,7 +38,7 @@ export const Game: React.FC<P> = props => {
         send({ type: "UI_MOVE_CHOSEN", row, column });
     };
 
-    const chooseRole = role => {
+    const chooseRole = (role: "first" | "second") => {
         console.log("Requested to be " + role);
         send({ type: "UI_ROLE_PICKED", role });
     };

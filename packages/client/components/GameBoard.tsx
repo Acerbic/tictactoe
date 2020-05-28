@@ -6,23 +6,23 @@ import GameBoardCell from "./GameBoardCell";
 import styles from "./GameBoard.module.css";
 
 const calc = (
-    x,
-    y,
-    ref: React.MutableRefObject<HTMLElement>
+    x: number,
+    y: number,
+    ref: React.MutableRefObject<HTMLDivElement | null>
 ): [number, number, number] => {
-    const rect = ref.current.getBoundingClientRect();
+    const rect = ref.current!.getBoundingClientRect();
     const [cx, cy] = [rect.left + rect.width / 2, rect.top + rect.height / 2];
     return [-(y - cy) / 20, (x - cx) / 20, 1.1];
 };
-const trans = (x, y, s) => {
+const trans = (x: number, y: number, s: number) => {
     return `perspective(600px) rotateX(${x}deg) rotateY(${y}deg) scale(${s})`;
 };
 
 export interface GameBoardProps {
     board: [
-        [string?, string?, string?],
-        [string?, string?, string?],
-        [string?, string?, string?]
+        [string | null, string | null, string | null],
+        [string | null, string | null, string | null],
+        [string | null, string | null, string | null]
     ];
     onCellClick: (i: number, j: number) => void;
 }
@@ -40,7 +40,10 @@ const springInitGen = () =>
     } as UseSpringProps<SpringData & CSSProperties>);
 
 export const GameBoard: React.FC<GameBoardProps> = ({ board, onCellClick }) => {
-    const ref = useRef();
+    // hackity-hacks because react-spring typedefs are incorrect
+    const ref = useRef<
+        HTMLDivElement
+    >() as React.MutableRefObject<HTMLDivElement | null>;
 
     const [springProp, setSpringProp] = useSpring<SpringData>(springInitGen);
     return (
