@@ -1,13 +1,18 @@
 import React, { useState } from "react";
+import { useRecoilValue, useRecoilState } from "recoil";
 import { useMachine } from "@xstate/react";
 
 import { GameBoard, GameBoardProps } from "./GameBoard";
 import RoleBtns from "./RoleBtns";
+import { Btn } from "./Btn";
 import ConnectGroup from "./ConnectGroup";
 import StateMessage from "./StateMessage";
 import NewGameButton from "./NewGameButton";
+import { PopBanner } from "./PopBanner";
+
 import { clientMachine } from "../state-machine/state-machine";
 import { SocketGameConnector } from "../state-machine/SocketGameConnector";
+import { playerState, roleSelectedState } from "../state-defs";
 
 import styles from "./Game.module.css";
 
@@ -23,7 +28,9 @@ const initialBoard: GameBoardProps["board"] = [
 
 export const Game: React.FC<P> = props => {
     // const [gameId, setGameId] = useState(null);
-    const [playerId, setPlayerId] = useState("");
+
+    const [player, setPlayer] = useRecoilState(playerState);
+    const [roleSelected, setRoleSelected] = useRecoilState(roleSelectedState);
     const [board, setBoard] = useState(initialBoard);
 
     const [state, send] = useMachine(clientMachine);
@@ -41,6 +48,7 @@ export const Game: React.FC<P> = props => {
     const chooseRole = (role: "first" | "second") => {
         console.log("Requested to be " + role);
         send({ type: "UI_ROLE_PICKED", role });
+        setRoleSelected(role);
     };
 
     const startNewGame = () => {
@@ -51,7 +59,7 @@ export const Game: React.FC<P> = props => {
             props.game_host_url,
             setBoard,
             send,
-            playerId
+            player!.id
         );
 
         // switch state to a new game start
@@ -62,20 +70,60 @@ export const Game: React.FC<P> = props => {
     };
 
     const dropGameConnection = () => {
-        setPlayerId("");
+        setPlayer(null);
         send({ type: "UI_RESET" });
     };
 
+    let stateRendered: JSX.Element[] = [];
+    switch (true) {
+        case !player:
+            stateRendered = [
+                <PopBanner>Sorry, need to login to play.</PopBanner>
+            ];
+            break;
+        case state.matches("initial"):
+            stateRendered = [
+                <PopBanner title="Do you want to play a game? o^_^o">
+                    <Btn onClick={startNewGame}>Yes</Btn>
+                </PopBanner>
+            ];
+            break;
+        case state.matches("awaiting_connection"):
+            stateRendered = [<StateMessage state={state} />];
+            break;
+
+        case state.matches("role_picking"):
+            stateRendered = [
+                <PopBanner title="Pick wisely!">
+                    <h3 className="text-xl mb-3">Who you gonna be?</h3>
+                    <Btn onClick={() => chooseRole("first")} className="mx-3">
+                        Bass
+                    </Btn>
+                    <Btn onClick={() => chooseRole("second")} className="mx-3">
+                        Base
+                    </Btn>
+                </PopBanner>
+            ];
+            break;
+
+        case state.matches("waiting4opponent"):
+            stateRendered = [
+                <PopBanner>... waiting for opponent to join...</PopBanner>
+            ];
+
+        default:
+            stateRendered = [
+                <GameBoard board={board} onCellClick={cellClicked} />,
+                <h1>
+                    <StateMessage state={state} />
+                </h1>
+            ];
+    }
+
     return (
-        <>
-            <section className={styles.content}>
-                <div id={styles.game}>
-                    <GameBoard board={board} onCellClick={cellClicked} />
-                    <h1>
-                        <StateMessage state={state} />
-                    </h1>
-                </div>
-                <div id={styles.controls} className="container-fluid">
+        <section className="flex items-center justify-center h-full">
+            <div className="flex-none">{stateRendered}</div>
+            {/* <div id={styles.controls} className="container-fluid">
                     <div className="row">
                         <div className="col">
                             <ConnectGroup
@@ -96,9 +144,8 @@ export const Game: React.FC<P> = props => {
                             )}
                         </div>
                     </div>
-                </div>
-            </section>
-        </>
+                </div> */}
+        </section>
     );
 };
 export default Game;

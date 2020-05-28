@@ -61,9 +61,8 @@ export const GameBoard: React.FC<GameBoardProps> = ({ board, onCellClick }) => {
                     <GameBoardCell
                         key={`${i}${j}`}
                         onClick={() => onCellClick(i, j)}
-                    >
-                        {board[i][j]}
-                    </GameBoardCell>
+                        cellTokenPlayerId={board[i][j]}
+                    ></GameBoardCell>
                 ))
             )}
         </animated.div>
