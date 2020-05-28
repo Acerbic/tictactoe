@@ -140,7 +140,8 @@ export const clientMachine = Machine<ClientContext, ClientSchema, ClientEvent>(
                 ctx.gameConnector = null;
             },
             store_connection: assign({
-                gameConnector: (_, e: UI_NewGameEvent) => e.connection
+                gameConnector: (ctx, e: ClientEvent) =>
+                    e.type === "UI_NEW_GAME" ? e.connection : ctx.gameConnector
             })
         }
     },

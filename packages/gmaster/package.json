@@ -16,7 +16,7 @@
     "express": "^4.17.1",
     "graphqurl": "^0.3.3",
     "morgan": "^1.10.0",
-    "xstate": "4.9.1"
+    "xstate": "^4.10.0"
   },
   "devDependencies": {
     "@trulyacerbic/ttt-apis": "*",
