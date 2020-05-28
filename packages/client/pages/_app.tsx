@@ -1,4 +1,5 @@
-import "bootstrap/dist/css/bootstrap.min.css";
+// Tailwind CSS
+import "./tailwind.css";
 
 function MyApp({ Component, pageProps }) {
     return <Component {...pageProps} />;
