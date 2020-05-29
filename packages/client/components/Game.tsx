@@ -89,7 +89,11 @@ export const Game: React.FC<P> = props => {
             ];
             break;
         case state.matches("awaiting_connection"):
-            stateRendered = [<StateMessage state={state} />];
+            stateRendered = [
+                <PopBanner>
+                    <StateMessage state={state} />
+                </PopBanner>
+            ];
             break;
 
         case state.matches("role_picking"):

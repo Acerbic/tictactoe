@@ -35,7 +35,7 @@ type SpringData = {
 };
 const springInitGen = () =>
     ({
-        xys: [0, 0, 1],
+        xys: [0, 0, 0.1],
         config: { mass: 5, tension: 350, friction: 40 }
     } as UseSpringProps<SpringData & CSSProperties>);
 
@@ -46,6 +46,10 @@ export const GameBoard: React.FC<GameBoardProps> = ({ board, onCellClick }) => {
     >() as React.MutableRefObject<HTMLDivElement | null>;
 
     const [springProp, setSpringProp] = useSpring<SpringData>(springInitGen);
+    React.useEffect(() => {
+        setSpringProp({ xys: [0, 0, 1] });
+    }, []);
+
     return (
         <animated.div
             id={styles.board}
