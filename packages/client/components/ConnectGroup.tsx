@@ -22,7 +22,7 @@ export const ConnectGroup: React.FC<P> = props => {
                     className="form-control"
                     name="pid"
                     value={props.playerId}
-                    disabled={props.connected || null}
+                    disabled={props.connected || undefined}
                     onChange={e => props.setPlayerId(e.target.value)}
                 />
             </div>

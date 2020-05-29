@@ -13,7 +13,7 @@ export const RoleBtns: React.FC<P> = props => (
             id="btnFirst"
             type="button"
             className="btn btn-primary"
-            disabled={props.disabled || null}
+            disabled={props.disabled || undefined}
             onClick={() => props.chooseRole("first")}
         >
             First
@@ -22,7 +22,7 @@ export const RoleBtns: React.FC<P> = props => (
             id="btnSecond"
             type="button"
             className="btn btn-primary"
-            disabled={props.disabled || null}
+            disabled={props.disabled || undefined}
             onClick={() => props.chooseRole("second")}
         >
             Second
