@@ -1,3 +1,5 @@
 @tailwind base;
 @tailwind components;
+@import "./btn.css";
+
 @tailwind utilities;

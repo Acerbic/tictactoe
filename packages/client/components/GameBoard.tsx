@@ -3,8 +3,6 @@ import { useSpring, animated, UseSpringProps } from "react-spring";
 
 import GameBoardCell from "./GameBoardCell";
 
-import styles from "./GameBoard.module.css";
-
 const calc = (
     x: number,
     y: number,
@@ -52,7 +50,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({ board, onCellClick }) => {
 
     return (
         <animated.div
-            id={styles.board}
+            className="w-56 h-56 flex justify-around flex-wrap"
             ref={ref}
             onMouseMove={({ clientX: x, clientY: y }) =>
                 setSpringProp({ xys: calc(x, y, ref) })
@@ -60,12 +58,12 @@ export const GameBoard: React.FC<GameBoardProps> = ({ board, onCellClick }) => {
             onMouseLeave={() => setSpringProp({ xys: [0, 0, 1] })}
             style={{ transform: springProp.xys.interpolate(trans as any) }}
         >
-            {[0, 1, 2].map(i =>
-                [0, 1, 2].map(j => (
+            {board.map((row, i) =>
+                row.map((id, j) => (
                     <GameBoardCell
-                        key={`${i}${j}`}
+                        key={`${i}-${j}`}
                         onClick={() => onCellClick(i, j)}
-                        cellTokenPlayerId={board[i][j]}
+                        cellTokenPlayerId={id}
                     ></GameBoardCell>
                 ))
             )}

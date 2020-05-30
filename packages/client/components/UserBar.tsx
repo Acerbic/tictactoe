@@ -1,24 +1,23 @@
+/**
+ * Top bar with user controls - login/logout, username, etc.
+ * This is the presentation part of user login logic
+ * @mixes ./withUserLoginControl
+ */
+
 import React from "react";
 
-import { Btn } from "./Btn";
-
 import styles from "./UserBar.module.css";
-
-interface P {
-    username?: string;
-    onLogout: () => void;
-    onLogin: () => void;
-}
+import { P } from "./withUserLoginControl";
 
 export const UserBar: React.FC<P> = props => {
     const anonymous = (
-        <Btn
+        <button
             type="button"
             onClick={props.onLogin}
-            className="align-middle text-sm"
+            className="btn btn-blue align-middle text-sm"
         >
             Login
-        </Btn>
+        </button>
     );
     const user = (
         <div>
@@ -29,26 +28,24 @@ export const UserBar: React.FC<P> = props => {
                 {props.username}
             </span>
 
-            <Btn
+            <button
                 type="button"
                 onClick={props.onLogout}
-                className="align-middle ml-3 text-sm"
+                className="btn btn-blue align-middle ml-3 text-sm"
             >
                 Logout
-            </Btn>
+            </button>
         </div>
     );
 
     return (
         <div className={styles.userbar}>
             {/* "Ear" undershadow */}
-            <div className={styles.earshadow}></div>
+            <div className="earshadow"></div>
             {/* "Ear" */}
-            <div className={styles.ear}></div>
+            <div className="ear"></div>
             {/* Primary pane */}
-            <div className={styles.pane}>
-                {props.username ? user : anonymous}
-            </div>
+            <div className="pane">{props.username ? user : anonymous}</div>
         </div>
     );
 };

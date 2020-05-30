@@ -1,3 +1,8 @@
+/**
+ * UI pop element that covers primary game field to interact with the player or
+ * inform them of some "meta" events, like disconnections or errors
+ */
+
 import React from "react";
 
 interface P {
@@ -5,9 +10,12 @@ interface P {
 }
 
 export const PopBanner: React.FC<React.PropsWithChildren<P>> = props => {
-    // bg-opacity-75 border-opacity-75 text-opacity-75
     return (
-        <div className="fixed w-screen h-screen flex flex-col left-0 top-0 b justify-center pointer-events-none">
+        <div
+            className={`
+                fixed w-screen h-screen flex flex-col left-0 top-0
+                justify-center pointer-events-none`}
+        >
             <div
                 className={`
                     bg-blue-100 border-t-4 border-b-4 border-blue-500

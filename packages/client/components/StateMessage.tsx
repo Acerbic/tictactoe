@@ -1,3 +1,7 @@
+/**
+ * Text element to represent current game's state
+ */
+
 import React from "react";
 import { State } from "xstate";
 import {

@@ -1,24 +1,21 @@
+/**
+ * Main content of the page. Instantiates xstate, root of game-related display.
+ */
+
 import React, { useState } from "react";
-import { useRecoilValue, useRecoilState } from "recoil";
+import { useRecoilValue, useRecoilCallback } from "recoil";
 import { useMachine } from "@xstate/react";
 
 import { GameBoard, GameBoardProps } from "./GameBoard";
-import RoleBtns from "./RoleBtns";
-import { Btn } from "./Btn";
-import ConnectGroup from "./ConnectGroup";
 import StateMessage from "./StateMessage";
 import NewGameButton from "./NewGameButton";
 import { PopBanner } from "./PopBanner";
 
 import { clientMachine } from "../state-machine/state-machine";
 import { SocketGameConnector } from "../state-machine/SocketGameConnector";
-import { playerState, roleSelectedState } from "../state-defs";
+import { playerState, roleAssignedState } from "../state-defs";
 
-import styles from "./Game.module.css";
-
-interface P {
-    game_host_url: string;
-}
+interface P {}
 
 const initialBoard: GameBoardProps["board"] = [
     [null, null, null],
@@ -29,8 +26,13 @@ const initialBoard: GameBoardProps["board"] = [
 export const Game: React.FC<P> = props => {
     // const [gameId, setGameId] = useState(null);
 
-    const [player, setPlayer] = useRecoilState(playerState);
-    const [roleSelected, setRoleSelected] = useRecoilState(roleSelectedState);
+    const player = useRecoilValue(playerState);
+    const roleAssigner = useRecoilCallback(
+        ({ set }, role) => {
+            set(roleAssignedState, role);
+        },
+        [player]
+    );
     const [board, setBoard] = useState(initialBoard);
 
     const [state, send] = useMachine(clientMachine);
@@ -48,7 +50,8 @@ export const Game: React.FC<P> = props => {
     const chooseRole = (role: "first" | "second") => {
         console.log("Requested to be " + role);
         send({ type: "UI_ROLE_PICKED", role });
-        setRoleSelected(role);
+        // preliminary, before the game decided our exact role
+        roleAssigner(role);
     };
 
     const startNewGame = () => {
@@ -56,8 +59,8 @@ export const Game: React.FC<P> = props => {
 
         // initiate new connection to game server
         const con = new SocketGameConnector(
-            props.game_host_url,
             setBoard,
+            roleAssigner,
             send,
             player!.id
         );
@@ -70,7 +73,7 @@ export const Game: React.FC<P> = props => {
     };
 
     const dropGameConnection = () => {
-        setPlayer(null);
+        // not resetting the board just yet - it will happen upon new game start
         send({ type: "UI_RESET" });
     };
 
@@ -81,13 +84,17 @@ export const Game: React.FC<P> = props => {
                 <PopBanner>Sorry, need to login to play.</PopBanner>
             );
             break;
+
         case state.matches("initial"):
             stateRendered = (
                 <PopBanner title="Do you want to play a game? o^_^o">
-                    <Btn onClick={startNewGame}>Yes</Btn>
+                    <button onClick={startNewGame} className="btn btn-blue">
+                        Yes
+                    </button>
                 </PopBanner>
             );
             break;
+
         case state.matches("awaiting_connection"):
             stateRendered = (
                 <PopBanner>
@@ -100,12 +107,18 @@ export const Game: React.FC<P> = props => {
             stateRendered = (
                 <PopBanner title="Pick wisely!">
                     <h3 className="text-xl mb-3">Who you gonna be?</h3>
-                    <Btn onClick={() => chooseRole("first")} className="mx-3">
+                    <button
+                        onClick={() => chooseRole("first")}
+                        className="btn btn-blue mx-3"
+                    >
                         Bass
-                    </Btn>
-                    <Btn onClick={() => chooseRole("second")} className="mx-3">
+                    </button>
+                    <button
+                        onClick={() => chooseRole("second")}
+                        className="btn btn-blue mx-3"
+                    >
                         Base
-                    </Btn>
+                    </button>
                 </PopBanner>
             );
             break;
@@ -114,14 +127,27 @@ export const Game: React.FC<P> = props => {
             stateRendered = (
                 <PopBanner>... waiting for opponent to join...</PopBanner>
             );
+            break;
 
         default:
             stateRendered = (
                 <>
-                    <GameBoard board={board} onCellClick={cellClicked} />,
+                    <GameBoard board={board} onCellClick={cellClicked} />
                     <h1>
                         <StateMessage state={state} />
                     </h1>
+                    {!state.matches("end") && (
+                        <button
+                            type="button"
+                            className="btn btn-blue"
+                            onClick={dropGameConnection}
+                        >
+                            Quit
+                        </button>
+                    )}
+                    {state.matches("end") && (
+                        <NewGameButton onClick={startNewGame} />
+                    )}
                 </>
             );
     }
@@ -129,29 +155,8 @@ export const Game: React.FC<P> = props => {
     return (
         <section className="flex items-center justify-center h-full">
             <div className="flex-none">{stateRendered}</div>
-            {/* <div id={styles.controls} className="container-fluid">
-                    <div className="row">
-                        <div className="col">
-                            <ConnectGroup
-                                playerId={playerId}
-                                setPlayerId={setPlayerId}
-                                connected={!state.matches("initial")}
-                                connectBtn={startNewGame}
-                                disconnectBtn={dropGameConnection}
-                            />
-                            {state.matches("role_picking") && (
-                                <RoleBtns
-                                    disabled={!state.matches("role_picking")}
-                                    chooseRole={chooseRole}
-                                />
-                            )}
-                            {state.matches("end") && (
-                                <NewGameButton onClick={startNewGame} />
-                            )}
-                        </div>
-                    </div>
-                </div> */}
         </section>
     );
 };
+
 export default Game;

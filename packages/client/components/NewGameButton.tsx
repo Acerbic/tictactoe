@@ -5,7 +5,7 @@ interface P {
 }
 
 export const NewGameButton: React.FC<P> = ({ onClick }) => (
-    <button type="button" className="btn btn-primary" onClick={onClick}>
+    <button type="button" className="btn btn-blue" onClick={onClick}>
         Another Game
     </button>
 );

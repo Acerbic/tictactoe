@@ -3,7 +3,7 @@
     z-index: 200;
 }
 
-.userbar .earshadow {
+.userbar :global .earshadow {
     @apply border-yellow-900 border-0;
     border-left-color: transparent;
     border-top-width: 2.25rem;
@@ -11,7 +11,7 @@
     margin-right: -1.5rem;
 }
 
-.userbar .ear {
+.userbar :global .ear {
     @apply border-yellow-500 border-0;
     border-top-width: 1.5rem;
     border-left-width: 1.5rem;
@@ -22,7 +22,7 @@
     z-index: 201;
 }
 
-.userbar .pane {
+.userbar :global .pane {
     @apply bg-yellow-500 border-yellow-900 p-3;
 
     border-bottom-width: 0.25rem;

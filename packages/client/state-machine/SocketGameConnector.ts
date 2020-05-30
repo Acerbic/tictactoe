@@ -10,24 +10,27 @@
  */
 
 import io from "socket.io-client";
+
 import { GameConnector, ClientEventSender } from "./state-machine-schema";
 import { API } from "@trulyacerbic/ttt-apis/ghost-api";
 
+const GHOST_URL = process.env.game_host_url!;
+
 export class SocketGameConnector implements GameConnector {
-    game_host_url: string;
     setBoard: Function;
+    setRoleAssigned: (r: string) => void;
     socket: SocketIOClient.Socket | null = null;
     send: ClientEventSender;
     playerId: string;
 
     constructor(
-        game_host_url: string,
-        setBoard: Function,
+        setBoard: SocketGameConnector["setBoard"],
+        setRoleAssigned: SocketGameConnector["setRoleAssigned"],
         send: ClientEventSender,
         playerId: string
     ) {
-        this.game_host_url = game_host_url;
         this.setBoard = setBoard;
+        this.setRoleAssigned = setRoleAssigned;
         this.send = send;
         this.playerId = playerId;
         this.openSocket(playerId);
@@ -47,7 +50,7 @@ export class SocketGameConnector implements GameConnector {
     };
 
     private openSocket(playerId: string) {
-        this.socket = io(this.game_host_url, {
+        this.socket = io(GHOST_URL, {
             timeout: 2000,
             reconnection: true,
             query: {
@@ -139,6 +142,7 @@ export class SocketGameConnector implements GameConnector {
     // received 'choose_role' message
     private s_you_are_it = ({ role }: API["out"]["you_are_it"]) => {
         console.log("I am " + role);
+        this.setRoleAssigned(role);
         this.send({ type: "S_GAME_START", role });
     };
 
