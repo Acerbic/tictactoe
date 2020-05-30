@@ -74,30 +74,30 @@ export const Game: React.FC<P> = props => {
         send({ type: "UI_RESET" });
     };
 
-    let stateRendered: JSX.Element[] = [];
+    let stateRendered: JSX.Element = <></>;
     switch (true) {
         case !player:
-            stateRendered = [
+            stateRendered = (
                 <PopBanner>Sorry, need to login to play.</PopBanner>
-            ];
+            );
             break;
         case state.matches("initial"):
-            stateRendered = [
+            stateRendered = (
                 <PopBanner title="Do you want to play a game? o^_^o">
                     <Btn onClick={startNewGame}>Yes</Btn>
                 </PopBanner>
-            ];
+            );
             break;
         case state.matches("awaiting_connection"):
-            stateRendered = [
+            stateRendered = (
                 <PopBanner>
                     <StateMessage state={state} />
                 </PopBanner>
-            ];
+            );
             break;
 
         case state.matches("role_picking"):
-            stateRendered = [
+            stateRendered = (
                 <PopBanner title="Pick wisely!">
                     <h3 className="text-xl mb-3">Who you gonna be?</h3>
                     <Btn onClick={() => chooseRole("first")} className="mx-3">
@@ -107,21 +107,23 @@ export const Game: React.FC<P> = props => {
                         Base
                     </Btn>
                 </PopBanner>
-            ];
+            );
             break;
 
         case state.matches("waiting4opponent"):
-            stateRendered = [
+            stateRendered = (
                 <PopBanner>... waiting for opponent to join...</PopBanner>
-            ];
+            );
 
         default:
-            stateRendered = [
-                <GameBoard board={board} onCellClick={cellClicked} />,
-                <h1>
-                    <StateMessage state={state} />
-                </h1>
-            ];
+            stateRendered = (
+                <>
+                    <GameBoard board={board} onCellClick={cellClicked} />,
+                    <h1>
+                        <StateMessage state={state} />
+                    </h1>
+                </>
+            );
     }
 
     return (
