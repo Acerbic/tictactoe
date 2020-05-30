@@ -1,0 +1,31 @@
+.userbar {
+    @apply h-16 flex;
+    z-index: 200;
+}
+
+.userbar .earshadow {
+    @apply border-yellow-900 border-0;
+    border-left-color: transparent;
+    border-top-width: 2.25rem;
+    border-left-width: 1.75rem;
+    margin-right: -1.5rem;
+}
+
+.userbar .ear {
+    @apply border-yellow-500 border-0;
+    border-top-width: 1.5rem;
+    border-left-width: 1.5rem;
+    border-left-color: transparent;
+    /* double more than needed to avoid occasional rounding errors */
+    margin-right: -0.1rem;
+    /* overtake the primary pane's left border */
+    z-index: 201;
+}
+
+.userbar .pane {
+    @apply bg-yellow-500 border-yellow-900 p-3;
+
+    border-bottom-width: 0.25rem;
+    border-left-width: 0.05rem;
+    border-bottom-left-radius: 1rem;
+}

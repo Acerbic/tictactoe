@@ -2,6 +2,8 @@ import React from "react";
 
 import { Btn } from "./Btn";
 
+import styles from "./UserBar.module.css";
+
 interface P {
     username?: string;
     onLogout: () => void;
@@ -38,45 +40,13 @@ export const UserBar: React.FC<P> = props => {
     );
 
     return (
-        <div className="h-16 border-yellow-500 flex" style={{ zIndex: 200 }}>
-            <div
-                className="border-yellow-900 "
-                style={{
-                    borderLeftColor: "transparent",
-                    borderBottomColor: "transparent",
-                    borderTopWidth: "2.25rem",
-                    borderLeftWidth: "1.75rem",
-                    marginRight: "-1.5rem"
-                }}
-            ></div>
-            <div
-                className="border-yellow-500 "
-                style={{
-                    borderLeftColor: "transparent",
-                    borderBottomColor: "transparent",
-                    borderTopWidth: "1.5rem",
-                    borderLeftWidth: "1.5rem",
-                    marginRight: "-0.05rem",
-                    zIndex: 201
-                }}
-            ></div>
-            {/* <div
-                className="border-yellow-900"
-                style={{
-                    borderWidth: "1rem",
-                    borderBottomLeftRadius: "1rem",
-                    marginRight: "-1.95rem",
-                    zIndex: 200
-                }}
-            ></div> */}
-            <div
-                className="py-3 px-3 bg-yellow-500 border-yellow-900"
-                style={{
-                    borderBottomWidth: "0.25rem",
-                    borderLeftWidth: "0.05rem",
-                    borderBottomLeftRadius: "1rem"
-                }}
-            >
+        <div className={styles.userbar}>
+            {/* "Ear" undershadow */}
+            <div className={styles.earshadow}></div>
+            {/* "Ear" */}
+            <div className={styles.ear}></div>
+            {/* Primary pane */}
+            <div className={styles.pane}>
                 {props.username ? user : anonymous}
             </div>
         </div>
