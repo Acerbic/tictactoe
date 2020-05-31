@@ -153,7 +153,14 @@ export const Game: React.FC = () => {
                         <QuitButton onConfirm={quitGame}></QuitButton>
                     )}
                     {state.matches("end") && (
-                        <NewGameButton onClick={startNewGame} />
+                        <NewGameButton
+                            onClick={startNewGame}
+                            style={{
+                                position: "absolute",
+                                top: "6rem",
+                                right: "1em"
+                            }}
+                        />
                     )}
                 </>
             );

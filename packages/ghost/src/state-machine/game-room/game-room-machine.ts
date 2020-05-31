@@ -109,6 +109,10 @@ export const state_machine: MachineConfig<
         SOC_CONNECT: { actions: "top_reconnect" },
         SOC_DISCONNECT: {
             actions: "top_disconnect"
+        },
+        SOC_PLAYER_QUIT: {
+            target: "end",
+            actions: ["emit_gameover", "call_dropgame"]
         }
     }
 };

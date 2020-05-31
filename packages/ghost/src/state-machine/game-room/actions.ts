@@ -142,13 +142,25 @@ export const switch_player: ActionF = ctx => {
         ctx.current_player == ctx.player1 ? ctx.player2 : ctx.player1;
 };
 
-export const emit_gameover: ActionF = ctx => {
+export const emit_gameover: ActionF = (ctx, e) => {
     let winner: API["out"]["gameover"]["winner"] = null;
-    if (ctx.latest_game_state!.game == "over") {
-        if (ctx.latest_game_state!.turn === "player1") {
+    if (e.type === "SOC_PLAYER_QUIT") {
+        // game ended with a rage quit
+        if (ctx.player1 === e.player_id) {
             winner = ctx.player2!;
-        } else {
+        } else if (ctx.player2 === e.player_id) {
             winner = ctx.player1!;
+        } else {
+            // this should not happen!
+        }
+    } else {
+        // normal game finish
+        if (ctx.latest_game_state!.game == "over") {
+            if (ctx.latest_game_state!.turn === "player1") {
+                winner = ctx.player2!;
+            } else {
+                winner = ctx.player1!;
+            }
         }
     }
 

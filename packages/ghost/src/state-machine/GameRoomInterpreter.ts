@@ -128,6 +128,10 @@ export class GameRoomInterpreter extends Interpreter<
             this.send({ type: "SOC_MOVE", player_id, move });
         });
 
+        socket.once("imdone", () =>
+            this.send({ type: "SOC_PLAYER_QUIT", player_id })
+        );
+
         // raise machine EVENT - SOC_CONNECT
         debuglog("User %s connected", player_id);
         this.send({

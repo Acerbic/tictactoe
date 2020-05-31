@@ -49,7 +49,7 @@ export class SocketGameConnector implements GameConnector {
         },
 
         emit_imdone: () => {
-            this.socket?.emit("iamdone");
+            this.socket?.emit("imdone");
             this.socket?.close();
         }
     };
