@@ -17,6 +17,7 @@ export interface GameConnector {
 
         // emit_connect: (playerId: string) => void;
         emit_dropgame: () => void;
+        emit_imdone: () => void;
     };
 }
 
@@ -94,11 +95,17 @@ export type UI_ResetEvent = {
     type: "UI_RESET";
 };
 
+// notifying the server that the game is forfeit
+export type UI_QuitGame = {
+    type: "UI_QUIT_GAME";
+};
+
 /**
  * Grouping of events that come from React
  * (due to user interactions)
  */
 export type UI_Event =
+    | UI_QuitGame
     | UI_ResetEvent
     | UI_NewGameEvent
     | UI_RolePickedEvent

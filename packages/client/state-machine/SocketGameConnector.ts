@@ -46,6 +46,11 @@ export class SocketGameConnector implements GameConnector {
 
         emit_dropgame: () => {
             this.socket?.close();
+        },
+
+        emit_imdone: () => {
+            this.socket?.emit("iamdone");
+            this.socket?.close();
         }
     };
 

@@ -97,7 +97,8 @@ export const clientMachine = Machine<ClientContext, ClientSchema, ClientEvent>(
                             target: "end.victory"
                         },
                         { target: "end.defeat" }
-                    ]
+                    ],
+                    UI_QUIT_GAME: { target: "initial", actions: "emit_imdone" }
                 }
             },
 
@@ -145,7 +146,11 @@ export const clientMachine = Machine<ClientContext, ClientSchema, ClientEvent>(
             store_connection: assign({
                 gameConnector: (ctx, e: ClientEvent) =>
                     e.type === "UI_NEW_GAME" ? e.connection : ctx.gameConnector
-            })
+            }),
+            emit_imdone: ctx => {
+                ctx.gameConnector?.actions.emit_imdone();
+                ctx.gameConnector = null;
+            }
         }
     },
     {

@@ -1,6 +1,5 @@
 .userbar {
     @apply h-16 flex;
-    z-index: 200;
 }
 
 .userbar :global .earshadow {
@@ -19,7 +18,7 @@
     /* double more than needed to avoid occasional rounding errors */
     margin-right: -0.1rem;
     /* overtake the primary pane's left border */
-    z-index: 201;
+    z-index: 2;
 }
 
 .userbar :global .pane {

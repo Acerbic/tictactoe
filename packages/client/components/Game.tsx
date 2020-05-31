@@ -11,6 +11,7 @@ import StateMessage from "./StateMessage";
 import NewGameButton from "./NewGameButton";
 import { PopBanner } from "./PopBanner";
 import { AnnouncerText } from "./AnnouncerText";
+import { QuitButton } from "./QuitButton";
 
 import { clientMachine } from "../state-machine/state-machine";
 import { SocketGameConnector } from "../state-machine/SocketGameConnector";
@@ -76,6 +77,10 @@ export const Game: React.FC = () => {
         send({ type: "UI_RESET" });
     };
 
+    const quitGame = () => {
+        send({ type: "UI_QUIT_GAME" });
+    };
+
     let stateRendered: JSX.Element = <></>;
     switch (true) {
         case !player:
@@ -124,7 +129,16 @@ export const Game: React.FC = () => {
 
         case state.matches("waiting4opponent"):
             stateRendered = (
-                <PopBanner>... waiting for opponent to join...</PopBanner>
+                <PopBanner>
+                    <p className="pt-12">... waiting for opponent to join...</p>
+                    <button
+                        type="button"
+                        className="btn btn-red mt-4"
+                        onClick={dropGameConnection}
+                    >
+                        Quit
+                    </button>
+                </PopBanner>
             );
             break;
 
@@ -136,13 +150,7 @@ export const Game: React.FC = () => {
                         <StateMessage state={state} />
                     </AnnouncerText>
                     {!state.matches("end") && (
-                        <button
-                            type="button"
-                            className="btn btn-blue"
-                            onClick={dropGameConnection}
-                        >
-                            Quit
-                        </button>
+                        <QuitButton onConfirm={quitGame}></QuitButton>
                     )}
                     {state.matches("end") && (
                         <NewGameButton onClick={startNewGame} />
