@@ -10,6 +10,7 @@ import { GameBoard, GameBoardProps } from "./GameBoard";
 import StateMessage from "./StateMessage";
 import NewGameButton from "./NewGameButton";
 import { PopBanner } from "./PopBanner";
+import { AnnouncerText } from "./AnnouncerText";
 
 import { clientMachine } from "../state-machine/state-machine";
 import { SocketGameConnector } from "../state-machine/SocketGameConnector";
@@ -131,9 +132,9 @@ export const Game: React.FC = () => {
             stateRendered = (
                 <>
                     <GameBoard board={board} onCellClick={cellClicked} />
-                    <h1>
+                    <AnnouncerText>
                         <StateMessage state={state} />
-                    </h1>
+                    </AnnouncerText>
                     {!state.matches("end") && (
                         <button
                             type="button"
