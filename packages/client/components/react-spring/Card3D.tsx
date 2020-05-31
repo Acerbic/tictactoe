@@ -46,6 +46,7 @@ export const Card3D: React.FC = ({ children }) => {
                 setSpringProp({ xys: calc(x, y, ref) })
             }
             onMouseLeave={() => setSpringProp({ xys: [0, 0, 1] })}
+            className="w-full h-full"
             style={{ transform: springProp.xys.interpolate(trans as any) }}
         >
             {children}

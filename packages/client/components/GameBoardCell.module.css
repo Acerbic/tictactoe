@@ -1,7 +1,8 @@
 .board-cell {
     @apply w-full h-full;
-    border: solid 3px darksalmon;
+    border: solid 0.2rem darksalmon;
     @apply flex justify-center items-center;
+    border-width: calc(max(min(0.5vh, 0.5vw), 0.2rem));
 }
 
 .board-cell > span {

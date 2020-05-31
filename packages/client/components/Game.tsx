@@ -145,7 +145,15 @@ export const Game: React.FC = () => {
         default:
             stateRendered = (
                 <>
-                    <GameBoard board={board} onCellClick={cellClicked} />
+                    <div
+                        style={{
+                            width: "calc(min(60vh, 60vw))",
+                            height: "calc(min(60vh, 60vw))",
+                            margin: "0 auto"
+                        }}
+                    >
+                        <GameBoard board={board} onCellClick={cellClicked} />
+                    </div>
                     <AnnouncerText>
                         <StateMessage state={state} />
                     </AnnouncerText>

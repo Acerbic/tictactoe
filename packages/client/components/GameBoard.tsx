@@ -14,7 +14,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({ board, onCellClick }) => {
     return (
         <Card3D>
             <div
-                className="w-56 h-56 grid grid-rows-3 grid-cols-3 mx-auto"
+                className="w-full h-full grid grid-rows-3 grid-cols-3"
                 style={{ gap: "5% 5%" }}
             >
                 {board.map((row, i) =>
