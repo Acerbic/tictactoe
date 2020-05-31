@@ -17,7 +17,11 @@ interface P {
 export const GameBoardCell: React.FC<P> = props => {
     const player = useRecoilValue(playerState);
     const ourRole = useRecoilValue(roleAssignedState);
-    const opponentRole = useRecoilValue(opponentRoleAssignedState);
+
+    // FIXME: causes React warning - possibly a Recoil bug, related to
+    // selector()
+    // const opponentRole = useRecoilValue(opponentRoleAssignedState);
+    const opponentRole = ourRole === "first" ? "second" : "first";
 
     const cellRole: "first" | "second" | null =
         props.cellTokenPlayerId === null
