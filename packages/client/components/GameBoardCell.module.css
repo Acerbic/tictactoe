@@ -1,13 +1,9 @@
 .board-cell {
-    @apply w-16 h-16 flex-none;
+    @apply w-full h-full;
     border: solid 3px darksalmon;
-    @apply text-center text-3xl;
-
-    line-height: 4rem;
+    @apply flex justify-center items-center;
 }
 
 .board-cell > span {
-    @apply inline-block align-top text-3xl;
-    /* offsets the border width of the cell above */
-    margin-top: -3px;
+    @apply text-3xl;
 }

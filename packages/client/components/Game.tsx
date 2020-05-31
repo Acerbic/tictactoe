@@ -15,15 +15,13 @@ import { clientMachine } from "../state-machine/state-machine";
 import { SocketGameConnector } from "../state-machine/SocketGameConnector";
 import { playerState, roleAssignedState } from "../state-defs";
 
-interface P {}
-
 const initialBoard: GameBoardProps["board"] = [
     [null, null, null],
     [null, null, null],
     [null, null, null]
 ];
 
-export const Game: React.FC<P> = props => {
+export const Game: React.FC = () => {
     // const [gameId, setGameId] = useState(null);
 
     const player = useRecoilValue(playerState);
