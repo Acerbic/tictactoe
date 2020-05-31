@@ -7,4 +7,5 @@
 
 .board-cell > span {
     @apply text-3xl;
+    text-shadow: 0 0 10px bisque;
 }

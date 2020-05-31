@@ -19,3 +19,8 @@ export const opponentRoleAssignedState = selector<"first" | "second" | null>({
     key: "opponent-role",
     get: ({ get }) => (get(roleAssignedState) === "first" ? "second" : "first")
 });
+
+export const bgIndexState = atom<number>({
+    key: "bg-index",
+    default: 0
+});

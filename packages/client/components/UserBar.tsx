@@ -8,8 +8,12 @@ import React from "react";
 
 import styles from "./UserBar.module.css";
 import { P } from "./withUserLoginControl";
+import { useSetRecoilState } from "recoil";
+import { bgIndexState } from "../state-defs";
 
 export const UserBar: React.FC<P> = props => {
+    const setBgIndex = useSetRecoilState(bgIndexState);
+
     const anonymous = (
         <button
             type="button"
@@ -21,7 +25,11 @@ export const UserBar: React.FC<P> = props => {
     );
     const user = (
         <div>
-            <span data-__meta="icon-userprofile" className="align-middle">
+            <span
+                data-__meta="icon-userprofile"
+                className="align-middle"
+                onClick={() => setBgIndex(ind => ind + 1)}
+            >
                 ?
             </span>
             <span className="font-mono text-2xl text-gray-700 leading-8 align-middle ml-3">
