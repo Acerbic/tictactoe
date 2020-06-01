@@ -7,7 +7,8 @@ import {
     GameId,
     MakeMoveRequest,
     MakeMoveResponse,
-    APIResponseFailure
+    APIResponseFailure,
+    ErrorCodes
 } from "@trulyacerbic/ttt-apis/gmaster-api";
 
 import { GameContext, GameEvent, GameStateValue } from "../game/game-schema";
@@ -40,7 +41,7 @@ router.post("/MakeMove/:gameId", function (req, res, next) {
                 const response: APIResponseFailure = {
                     success: false,
                     errorMessage: "Game already ended",
-                    errorCode: 0 // TODO: replace with a regular code
+                    errorCode: ErrorCodes.GAME_ENDED_ALREADY
                 };
                 res.send(response);
                 return;
@@ -50,7 +51,7 @@ router.post("/MakeMove/:gameId", function (req, res, next) {
                 const response: APIResponseFailure = {
                     success: false,
                     errorMessage: "Wrong player",
-                    errorCode: 0 // TODO: replace with a regular code
+                    errorCode: ErrorCodes.ILLEGAL_MOVE
                 };
                 res.send(response);
                 return;
@@ -65,8 +66,9 @@ router.post("/MakeMove/:gameId", function (req, res, next) {
             ) {
                 const response: APIResponseFailure = {
                     success: false,
-                    errorMessage: "Malformed move",
-                    errorCode: 0 // TODO: replace with a regular code
+                    errorMessage:
+                        "Move outside of board boundaries (0..2 x 0..2)",
+                    errorCode: ErrorCodes.BAD_ARGUMENTS
                 };
                 res.send(response);
                 return;
@@ -75,7 +77,7 @@ router.post("/MakeMove/:gameId", function (req, res, next) {
                 const response: APIResponseFailure = {
                     success: false,
                     errorMessage: "Bad move - cell already taken",
-                    errorCode: 0 // TODO: replace with a regular code
+                    errorCode: ErrorCodes.ILLEGAL_MOVE
                 };
                 res.send(response);
                 return;
@@ -105,18 +107,16 @@ router.post("/MakeMove/:gameId", function (req, res, next) {
                     // TODO: replace with a proper error code
                     const response = makeFailureResponse(
                         err,
-                        "Failed to save the new game state",
-                        0
+                        "Failed to save the new game state"
                     );
                     res.send(response);
                 });
         })
-        .catch(ex => {
-            const response: APIResponseFailure = {
-                success: false,
-                errorMessage: "Game was not loaded from DB: " + ex,
-                errorCode: 0 // TODO: replace with a regular code
-            };
+        .catch(err => {
+            const response: APIResponseFailure = makeFailureResponse(
+                err,
+                "Error while processing /MakeMove"
+            );
             res.send(response);
         });
 });

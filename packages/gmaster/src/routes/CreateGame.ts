@@ -3,7 +3,8 @@ import { Game, DbConnector } from "../db/db";
 import {
     CreateGameRequest,
     CreateGameResponse,
-    APIResponseFailure
+    APIResponseFailure,
+    ErrorCodes
 } from "@trulyacerbic/ttt-apis/gmaster-api";
 import { makeFailureResponse } from "./utils";
 
@@ -26,7 +27,7 @@ router.post("/CreateGame", function (req, res, next) {
         const response = makeFailureResponse(
             undefined,
             "Invalid arguments to create a new game",
-            0
+            ErrorCodes.BAD_ARGUMENTS
         );
         res.send(response);
         return;
@@ -51,11 +52,9 @@ router.post("/CreateGame", function (req, res, next) {
             res.send(response);
         })
         .catch(err => {
-            // TODO: replace with a proper error code
             const response = makeFailureResponse(
                 err,
-                "Failed to create a new game",
-                0
+                "Failed to create a new game"
             );
             res.send(response);
         });

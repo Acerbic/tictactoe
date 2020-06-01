@@ -6,7 +6,7 @@ import {
     CheckGameResponse,
     APIResponseFailure
 } from "@trulyacerbic/ttt-apis/gmaster-api";
-import { GameContext, GameEvent, GameSchema } from "../game/game-schema";
+import { GameState } from "../game/game-schema";
 import { GameStateValueToApi } from "../game/game-machine";
 import { makeFailureResponse } from "./utils";
 
@@ -22,11 +22,9 @@ router.get("/CheckGame/:gameId", async function (req, res, next) {
     gamesDb
         .LoadGame(gameId)
         .then(game => {
-            const current_state: State<
-                GameContext,
-                GameEvent,
-                GameSchema
-            > = State.create(JSON.parse(game.state));
+            const current_state: GameState = State.create(
+                JSON.parse(game.state)
+            );
             const response: CheckGameResponse = {
                 success: true,
                 state: GameStateValueToApi(current_state)
@@ -34,11 +32,9 @@ router.get("/CheckGame/:gameId", async function (req, res, next) {
             res.send(response);
         })
         .catch(err => {
-            // TODO: replace with a proper error code
             const response: APIResponseFailure = makeFailureResponse(
                 err,
-                "Game not found",
-                0
+                "Call to CheckGame failed"
             );
             res.send(response);
         });

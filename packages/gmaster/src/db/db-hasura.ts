@@ -1,6 +1,7 @@
 import { Game, DbConnector } from "./db";
 import { GameId } from "@trulyacerbic/ttt-apis/gmaster-api";
 import { query, Options } from "graphqurl";
+import { GameNotFoundError } from "../routes/utils";
 
 // TODO: more accurate error reporting (using response.error field from Hasura)
 
@@ -13,6 +14,8 @@ export class HasuraConnector implements DbConnector {
 
     /**
      * Load game record from the DB
+     *
+     * @throws GameNotFoundError, Error (from query() call)
      */
     async LoadGame(id: GameId): Promise<Game> {
         const q = `
@@ -37,13 +40,15 @@ export class HasuraConnector implements DbConnector {
             if (game?.id) {
                 return game;
             } else {
-                throw "No such game session";
+                throw new GameNotFoundError("No such game session");
             }
         });
     }
 
     /**
      * Update game record into DB
+     *
+     * @throws GameNotFoundError, Error (from query() call)
      */
     async SaveGame(
         id: GameId,
@@ -66,16 +71,18 @@ export class HasuraConnector implements DbConnector {
             headers: this.options.headers,
             variables: { id, state: game.state, board: game.board }
         }).then(r => {
-            if (r?.data) {
-                return r.data?.update_gamesession_by_pk;
+            if (r?.data?.update_gamesession_by_pk) {
+                return r.data.update_gamesession_by_pk.id;
             } else {
-                throw "Some error happened while updating a game";
+                throw new GameNotFoundError("No such game session");
             }
         });
     }
 
     /**
      * Obtain a unique unoccupied id in concurrent-safe manner
+     *
+     * @throws Error
      */
     async CreateGame(game: Game): Promise<GameId> {
         const m = `
@@ -96,13 +103,16 @@ export class HasuraConnector implements DbConnector {
             if (id) {
                 return id;
             } else {
-                throw "Failed to create a game";
+                throw Error("Failed to create a game");
             }
         });
     }
 
     /**
-     * Delete game
+     * Delete game.
+     * Request to delete a game with non-existant id does
+     * nothing (noop) and only detectable by returning `null`
+     * instead of the id of deleted game session.
      */
     async DropGame(id: GameId): Promise<any> {
         const m = `
@@ -118,14 +128,19 @@ export class HasuraConnector implements DbConnector {
             headers: this.options.headers,
             variables: { id }
         }).then(r => {
-            if (r?.data?.delete_gamesession_by_pk) {
-                return r.data.delete_gamesession_by_pk.id;
-            } else {
-                throw "Error while deleting a game";
-            }
+            return r.data.delete_gamesession_by_pk.id;
         });
     }
 
+    /**
+     * Check if game is exising in the DB. ATTN: beware of racing conditions --
+     * even if this call returns true, it might be stale short after in case of
+     * concurent requests
+     *
+     * @throws Error if id is malformed or other error happened
+     * @returns false if a gamesession with such id is not existing, true
+     * otherwise
+     */
     async HasGame(id: GameId): Promise<boolean> {
         const q = `
             query ($id: uuid!) {

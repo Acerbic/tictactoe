@@ -14,6 +14,14 @@ export type GameState = {
 export type GameId = string;
 export type PlayerId = string;
 
+export const enum ErrorCodes {
+    UNKNOWN_ERROR = 0,
+    BAD_ARGUMENTS = 1,
+    GAME_NOT_FOUND = 2,
+    ILLEGAL_MOVE,
+    GAME_ENDED_ALREADY
+}
+
 export interface APIResponseFailure {
     success: false;
     errorCode: number;

@@ -3,7 +3,8 @@ import { DbConnector } from "../db/db";
 import {
     GameId,
     DropGameResponse,
-    APIResponseFailure
+    APIResponseFailure,
+    ErrorCodes
 } from "@trulyacerbic/ttt-apis/gmaster-api";
 import { makeFailureResponse } from "./utils";
 
@@ -26,30 +27,25 @@ router.post("/DropGame/:gameId", function (req, res, next) {
                         res.send(response);
                     })
                     .catch(err => {
-                        // TODO: replace with a proper error code
                         const response = makeFailureResponse(
-                            undefined,
-                            "Failed to create a new game",
-                            0
+                            err,
+                            "Failed to create a new game"
                         );
                         res.send(response);
                     });
             } else {
-                // TODO: replace with a proper error code
                 const response = makeFailureResponse(
                     undefined,
                     "Can't drop - game not found",
-                    0
+                    ErrorCodes.GAME_NOT_FOUND
                 );
                 res.send(response);
             }
         })
         .catch(err => {
-            // TODO: replace with a proper error code
             const response = makeFailureResponse(
                 err,
-                "Failed when trying to find existing game",
-                0
+                "Failed when trying to find existing game"
             );
             res.send(response);
         });

@@ -2,7 +2,7 @@
  * Schema for xstate game machine
  */
 
-import { StateSchema, ExtractStateValue } from "xstate";
+import { StateSchema, State } from "xstate";
 import { PlayerId } from "@trulyacerbic/ttt-apis/gmaster-api";
 
 export interface GameContext {
@@ -74,3 +74,5 @@ type GameEvent_MOVE = {
 };
 
 export type GameEvent = GameEvent_MOVE;
+
+export type GameState = State<GameContext, GameEvent, GameSchema>;
