@@ -17,8 +17,10 @@ import {
     CreateGameResponse,
     MakeMoveResponse,
     CreateGameRequest,
-    MakeMoveRequest
+    MakeMoveRequest,
+    ErrorCodes
 } from "@trulyacerbic/ttt-apis/gmaster-api";
+import { GMasterError } from "../../connectors/gmaster_connector";
 
 export const state_machine: MachineConfig<
     GameRoomContext,
@@ -62,7 +64,11 @@ export const state_machine: MachineConfig<
                 src: "invoke_create_game",
                 onDone: {
                     target: "wait4move",
-                    actions: "emit_your_turn"
+                    actions: ["emit_your_turn"]
+                },
+                onError: {
+                    target: "end",
+                    actions: ["emit_server_error_fatal"]
                 }
             }
         },
@@ -97,6 +103,21 @@ export const state_machine: MachineConfig<
                             "call_dropgame"
                         ]
                     }
+                ],
+                onError: [
+                    {
+                        cond: (ctx, e) =>
+                            typeof e.data.rejectReason === "object" &&
+                            e.data.rejectReason instanceof GMasterError &&
+                            e.data.rejectReason.code ===
+                                ErrorCodes.ILLEGAL_MOVE,
+                        target: "wait4move",
+                        actions: "ack_invalid_move"
+                    },
+                    {
+                        target: "end",
+                        actions: "emit_server_error_fatal"
+                    }
                 ]
             }
         },
@@ -126,7 +147,7 @@ export const machine_options: Partial<MachineOptions<
          * call CreateGame Rest API on game master
          */
         invoke_create_game: ctx => {
-            if (ctx.current_player == ctx.player2) {
+            if (ctx.current_player === ctx.player2) {
                 [ctx.player1, ctx.player2] = [ctx.player2, ctx.player1];
             }
 
@@ -144,12 +165,15 @@ export const machine_options: Partial<MachineOptions<
                         ctx.game_id = response.gameId!;
                         return response;
                     } else {
-                        debuglog("Creating a game returned error", response);
-                        throw response;
+                        // This is a GMaster internally produced error.
+                        throw new GMasterError(response);
                     }
                 })
                 .catch(reason => {
-                    debuglog("Creating a game failed: ", reason);
+                    // This is a fetch-level error
+                    errorlog("Error during /CreateGame: ", reason);
+
+                    // will be processed in onError event handlers by xstate
                     throw reason;
                 });
         },
@@ -157,37 +181,42 @@ export const machine_options: Partial<MachineOptions<
         /**
          * Call MakeMove on game master.
          */
-        invoke_make_move: (ctx, event) => {
+        invoke_make_move: (ctx, e) => {
+            const event = e as GameRoom_PlayerMove;
             return ctx.gm_connect
                 .post<MakeMoveRequest, MakeMoveResponse>(
                     "MakeMove",
                     {
-                        playerId: (event as GameRoom_PlayerMove).player_id,
-                        move: (event as GameRoom_PlayerMove).move
+                        playerId: event.player_id,
+                        move: event.move
                     },
                     ctx.game_id
                 )
                 .then(response => {
                     if (response.success) {
                         ctx.latest_game_state = response.newState;
-                        return { type: "CALL_MAKEMOVE_ENDED", response };
+                        event.ack?.(true);
+                        return response;
                     } else {
-                        errorlog(
-                            `Call to MakeMove failed: [${response.errorCode}] - ${response.errorMessage}`
-                        );
-                        throw response;
-                        // TODO: handle non-success by the game master
+                        throw new GMasterError(response);
                     }
                 })
-                .catch((ex: any) => {
-                    errorlog("Exceptional thing happened: %o", ex);
+                .catch(reason => {
+                    errorlog("Error during calling /MakeMove: %o", reason);
+                    throw {
+                        srcEvent: event,
+                        rejectReason: reason
+                    };
                 });
         }
     },
 
     actions: {
         // casting it here allows for more flexible approach with definitions in actions.ts
-        ...(MachineActions as ActionFunctionMap<GameRoomContext, GameRoomEvent>)
+        ...((MachineActions as unknown) as ActionFunctionMap<
+            GameRoomContext,
+            GameRoomEvent
+        >)
     },
 
     guards: {

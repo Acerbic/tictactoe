@@ -78,7 +78,14 @@ export const clientMachine = Machine<ClientContext, ClientSchema, ClientEvent>(
                             },
                             moved: {
                                 on: {
-                                    S_NEXT_TURN: "#game-client.game.their_turn"
+                                    S_MOVE_ACCEPTED:
+                                        "#game-client.game.their_turn",
+                                    S_MOVE_REJECTED: {
+                                        target: "thinking",
+                                        actions: [
+                                            /* Show err message? */
+                                        ]
+                                    }
                                 }
                             }
                         }

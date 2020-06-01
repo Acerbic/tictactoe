@@ -29,7 +29,7 @@ router.post("/DropGame/:gameId", function (req, res, next) {
                     .catch(err => {
                         const response = makeFailureResponse(
                             err,
-                            "Failed to create a new game"
+                            "Failed to drop the game"
                         );
                         res.send(response);
                     });

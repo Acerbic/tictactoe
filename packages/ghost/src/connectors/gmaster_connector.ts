@@ -5,6 +5,8 @@
 // Seems like this is not needed in Node v14, but in LTS (12)
 // absense of this causes an error - Cannot find name 'URL'
 // @see https://github.com/DefinitelyTyped/DefinitelyTyped/issues/34960
+
+import { statelog, hostlog, errorlog, debuglog } from "../utils";
 import { URL } from "url";
 
 import {
@@ -14,11 +16,20 @@ import {
     GameMasterResponse,
     APIResponse,
     APIResponseFailure,
-    CheckGameResponse
+    CheckGameResponse,
+    ErrorCodes
 } from "@trulyacerbic/ttt-apis/gmaster-api";
 import fetch from "isomorphic-unfetch";
 
 const gmaster_url = process.env["GMASTER_URL"];
+
+export class GMasterError extends Error {
+    code: ErrorCodes;
+    constructor(apiRes: APIResponseFailure) {
+        super(apiRes.errorMessage);
+        this.code = apiRes.errorCode;
+    }
+}
 
 /**
  * Call a GMaster POST Rest command.
@@ -43,13 +54,17 @@ async function gmasterPost<
         },
         body: JSON.stringify(payload)
     });
-    const json = res.json();
-    json.catch((err: any) =>
-        console.error(
-            `gmaster.post (${url})[${JSON.stringify(payload)}]: ${err}`
-        )
-    );
-    return json;
+
+    // TODO: investigate returned code 404 from request
+    // res could be not 200 status, fetch doesn't catch?
+    return res.json().catch((err: any) => {
+        errorlog(
+            `gmaster.post (${url})[${JSON.stringify(
+                payload
+            )}]: ${err} \n ~~ \n ${res.body}`
+        );
+        throw err;
+    });
 }
 
 /**

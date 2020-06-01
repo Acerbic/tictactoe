@@ -86,7 +86,24 @@ describe("Logical errors", () => {
         expect(res2.success).toBe(false);
     });
 
-    it.todo("should fail attempt at droping non-existant game");
+    it("should fail dropping a game with bad ID", async () => {
+        const res: api.APIResponseFailure = (
+            await agent.post("/DropGame/xxxxx").expect(200)
+        ).body;
+
+        expect(res.success).toBe(false);
+    });
+
+    it("should fail attempt at droping non-existant game", async () => {
+        const res: api.APIResponseFailure = (
+            await agent
+                .post("/DropGame/00000000-0000-0000-0000-000000000000")
+                .expect(200)
+        ).body;
+
+        expect(res.success).toBe(false);
+        expect(res.errorCode).toBe(api.ErrorCodes.GAME_NOT_FOUND);
+    });
 
     describe(".. during a match", () => {
         const player1Id = "p1";

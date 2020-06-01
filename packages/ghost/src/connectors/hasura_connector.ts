@@ -31,7 +31,7 @@ export const getGameBoard: DBGetGameBoard = async function getGameBoard(
         if (game?.board) {
             return JSON.parse(game.board);
         } else {
-            throw "Can't get game board";
+            throw new Error("Can't get game board");
         }
     });
 };

@@ -61,5 +61,9 @@ export interface API {
         };
         // the following are not implemented yet
         ragequit: any;
+        server_error: {
+            message: string;
+            abandonGame: boolean;
+        };
     };
 }

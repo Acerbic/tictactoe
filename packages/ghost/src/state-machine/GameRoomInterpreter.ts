@@ -124,8 +124,8 @@ export class GameRoomInterpreter extends Interpreter<
             });
         });
 
-        socket.on("move", (move: any) => {
-            this.send({ type: "SOC_MOVE", player_id, move });
+        socket.on("move", (move: any, ack: Function) => {
+            this.send({ type: "SOC_MOVE", player_id, move, ack });
         });
 
         socket.once("imdone", () =>

@@ -23,7 +23,6 @@ router.post("/CreateGame", function (req, res, next) {
         player2Id.length < 1 ||
         player2Id === player1Id
     ) {
-        // TODO: replace with a proper error code
         const response = makeFailureResponse(
             undefined,
             "Invalid arguments to create a new game",

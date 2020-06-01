@@ -95,8 +95,7 @@ router.post("/MakeMove/:gameId", function (req, res, next) {
                     board: JSON.stringify(new_state.context.board)
                 })
                 .then(() => {
-                    // wait for saving to finish and
-                    // send result in reply
+                    // wait for saving to finish and send result in reply
                     const response: MakeMoveResponse = {
                         success: true,
                         newState: GameStateValueToApi(new_state)
@@ -104,7 +103,6 @@ router.post("/MakeMove/:gameId", function (req, res, next) {
                     res.send(response);
                 })
                 .catch(err => {
-                    // TODO: replace with a proper error code
                     const response = makeFailureResponse(
                         err,
                         "Failed to save the new game state"

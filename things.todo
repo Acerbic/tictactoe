@@ -15,16 +15,19 @@
 ✔ investigate how actual reconnection (not my ad-hoc solution atm) is ws handled in terms of events for both server and client @done(20-05-21 03:47)
 ✘ use test shard of prisma for testing @cancelled(20-05-20 05:08)
 ✘ implement switch to using "live" endpoints for integration run of the same tests in ghost @cancelled(20-05-20 05:09)
-☐ drop game if both clients quit
-☐ distinguis disconnect and quit?
-☐ drop Bootstrap, use Tailwind
+☐ drop game if both clients d/c?
+✔ distinguis disconnect and quit? @done(20-06-01 23:27)
+✔ drop Bootstrap, use Tailwind @done(20-06-01 23:27)
 ☐ see if css-modules can be injected as normal classes via JSX transform
-☐ namespace ghost socket usage
+✘ namespace ghost socket usage @cancelled(20-06-02 02:17)
 ✘ rename reconnect events to make it obvious it is a game-level reconnect, not transport-level @cancelled(20-05-21 03:48)
 ☐ do I need certs for HTTPS-endpoints deployment?
 ☐ login system with persistant account and deterministic playerId.
-☐ add ack to sending move from client
+✔ add ack to sending move from client @done(20-06-02 02:18)
 ✔ replace ENV *URI with *URl and full scheme+domain+port qualification @done(20-05-22 04:08)
-☐ fix client/ghost not recognizing erroneous moves
+✔ fix client/ghost not recognizing erroneous moves @done(20-06-02 02:18)
 ✔ Remove mentions of Prisma in the project (Types, names, etc.) @done(20-05-26 07:40)
 ☐ Update DOCS diagrams
+☐ ghost: check for APIResponseFailure inside gmaster_connector, not in the machine.services
+☐ client: handle ghost going d/c
+☐ auto clean old games from DB even if they aren't finished

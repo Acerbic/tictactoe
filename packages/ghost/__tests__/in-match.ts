@@ -245,7 +245,7 @@ describe("After game started", () => {
         client1.disconnect();
     });
 
-    test("can win the game as first player", done => {
+    test("can win the game as the first player", done => {
         const p1_done = new Promise(resolve => {
             const p1_moves = [
                 { row: 0, column: 0 },
@@ -289,7 +289,7 @@ describe("After game started", () => {
         Promise.all([p1_done, p2_done]).then(() => done());
     });
 
-    test("can win the game as second player", done => {
+    test("can win the game as the second player", done => {
         const p1_done = new Promise(resolve => {
             const p1_moves = [
                 { row: 0, column: 0 },
@@ -425,7 +425,7 @@ describe("After game started", () => {
         ];
         client2.on("your_turn", () => {
             if (client2_moves.length > 0) {
-                client1.emit("move", client2_moves.shift());
+                client2.emit("move", client2_moves.shift());
             }
         });
     });

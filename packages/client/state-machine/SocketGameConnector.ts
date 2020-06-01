@@ -19,7 +19,7 @@ const GHOST_URL = process.env.game_host_url!;
 export class SocketGameConnector implements GameConnector {
     setBoard: Function;
     setRoleAssigned: (r: string) => void;
-    socket: SocketIOClient.Socket | null = null;
+    socket: SocketIOClient.Socket;
     send: ClientEventSender;
     playerId: string;
 
@@ -33,29 +33,36 @@ export class SocketGameConnector implements GameConnector {
         this.setRoleAssigned = setRoleAssigned;
         this.send = send;
         this.playerId = playerId;
-        this.openSocket(playerId);
+        this.socket = this.openSocket(playerId);
+        this.socket.connect();
     }
 
     actions = {
         emit_iwannabetracer: (role: "first" | "second") => {
-            this.socket?.emit("iwannabetracer", role);
+            this.socket.emit("iwannabetracer", role);
         },
         emit_move: (row: number, column: number) => {
-            this.socket?.emit("move", { row, column });
+            this.socket.emit("move", { row, column }, (accepted: boolean) => {
+                if (!accepted) {
+                    this.send({
+                        type: "S_MOVE_REJECTED"
+                    });
+                }
+            });
         },
 
         emit_dropgame: () => {
-            this.socket?.close();
+            this.socket.close();
         },
 
         emit_imdone: () => {
-            this.socket?.emit("imdone");
-            this.socket?.close();
+            this.socket.emit("imdone");
+            this.socket.close();
         }
     };
 
-    private openSocket(playerId: string) {
-        this.socket = io(GHOST_URL, {
+    private openSocket(playerId: string): SocketIOClient.Socket {
+        const socket = io(GHOST_URL, {
             timeout: 2000,
             reconnection: true,
             query: {
@@ -65,10 +72,10 @@ export class SocketGameConnector implements GameConnector {
             reconnectionAttempts: 20
         });
 
-        if (!this.socket) {
+        if (!socket) {
             throw "Failed to create a socket";
         } else {
-            this.socket
+            socket
                 .on("connect", () => {
                     console.info("Socket -- connect");
                 })
@@ -103,30 +110,30 @@ export class SocketGameConnector implements GameConnector {
                     console.debug("Socket -- pong", latency);
                 });
 
-            this.attachListeners();
-            this.socket.connect();
+            this.attachListeners(socket);
+            return socket;
         }
     }
 
     /**
      * Listens on the socket and raises events for xstate machine / react state update
      */
-    private attachListeners = () => {
+    private attachListeners = (socket: SocketIOClient.Socket) => {
         // this one will be received if we are joining a new game
-        this.socket!.once("choose_role", this.s_choose_role);
+        socket.once("choose_role", this.s_choose_role);
         // this one will be received (instead of "choose_role") if we
         // are reconnecting to a match in progress
-        this.socket!.once("update", this.s_reconnection);
+        socket.once("update", this.s_reconnection);
 
         // those to follow "choose_role" in player configuration process
-        this.socket!.once("iamalreadytracer", this.s_iamalreadytracer);
-        this.socket!.once("you_are_it", this.s_you_are_it);
+        socket.once("iamalreadytracer", this.s_iamalreadytracer);
+        socket.once("you_are_it", this.s_you_are_it);
 
         // those messages are received as part of the game proceedings
-        this.socket!.on("your_turn", this.s_your_turn);
-        this.socket!.on("meme_accepted", this.s_move_accepted);
-        this.socket!.on("opponent_moved", this.s_opponent_moved);
-        this.socket!.on("gameover", this.s_gameover);
+        socket.on("your_turn", this.s_your_turn);
+        socket.on("meme_accepted", this.s_move_accepted);
+        socket.on("opponent_moved", this.s_opponent_moved);
+        socket.on("gameover", this.s_gameover);
     };
 
     private s_choose_role = () => {
@@ -159,8 +166,9 @@ export class SocketGameConnector implements GameConnector {
         console.log("its my turn!");
     };
 
+    // point of this if we use ack to determine validity of move submitted?
     private s_move_accepted = (response: API["out"]["meme_accepted"]) => {
-        this.send({ type: "S_NEXT_TURN" });
+        this.send({ type: "S_MOVE_ACCEPTED" });
         this.setBoard(response.board);
     };
 

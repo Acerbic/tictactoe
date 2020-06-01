@@ -100,6 +100,14 @@ export type UI_QuitGame = {
     type: "UI_QUIT_GAME";
 };
 
+export type S_MoveRejected = {
+    type: "S_MOVE_REJECTED";
+};
+
+export type S_MoveAccepted = {
+    type: "S_MOVE_ACCEPTED";
+};
+
 /**
  * Grouping of events that come from React
  * (due to user interactions)
@@ -120,6 +128,8 @@ export type Server_Event =
     | S_ReconnectedEvent
     | S_GameStartEvent
     | S_NextTurnEvent
+    | S_MoveRejected
+    | S_MoveAccepted
     | S_GameEndEvent;
 
 export type ClientEvent = UI_Event | Server_Event;

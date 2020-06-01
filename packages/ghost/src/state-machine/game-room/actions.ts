@@ -6,7 +6,13 @@ import { statelog, hostlog, errorlog, debuglog } from "../../utils";
 import debug from "debug";
 const actionlog = debug("ttt:ghost:action");
 
-import { ActionFunction, assign, spawn, Spawnable } from "xstate";
+import {
+    ActionFunction,
+    assign,
+    spawn,
+    Spawnable,
+    AnyEventObject
+} from "xstate";
 
 import {
     GameRoomContext,
@@ -43,10 +49,39 @@ function chain_promise<F = any, R = any>(
 }
 
 // shortcut to ActionFunction signature
-type ActionF<E extends GameRoomEvent = GameRoomEvent> = ActionFunction<
+type ActionF<E extends AnyEventObject = GameRoomEvent> = ActionFunction<
     GameRoomContext,
     E
 >;
+
+interface InvokeOnErrorEvent extends AnyEventObject {
+    data: any;
+}
+
+export const ack_invalid_move: ActionF<InvokeOnErrorEvent> = (ctx, e) => {
+    actionlog("ack_invalid_move", e.type);
+    e.data.srcEvent.ack?.(false);
+    // ctx.players.get(e.data.event.player_id)?.socket.emit("server_error", {
+    //     message:
+    //         "Roses are red\nViolets are blue\nYour move was bad\nAnd so are you.",
+    //     abandonGame: false
+    // });
+};
+
+export const emit_server_error_fatal: ActionF<InvokeOnErrorEvent> = (
+    ctx,
+    e
+) => {
+    actionlog("emit_server_error_fatal", e.type);
+    ctx.emits_sync.then(() => {
+        ctx.players.forEach(player_context =>
+            player_context.socket.emit("server_error", {
+                message: "Server did an oopsy... try again a few minutes later",
+                abandonGame: true
+            })
+        );
+    });
+};
 
 /**
  * Send 'iamalreadytracer' to both clients

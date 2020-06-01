@@ -112,6 +112,7 @@ export type GameRoom_PlayerMove = {
     type: "SOC_MOVE";
     player_id: PlayerId;
     move: any;
+    ack?: Function;
 };
 
 export type GameRoomEvent =
