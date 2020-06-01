@@ -9,7 +9,10 @@
     "start": "node ./bin/www",
     "build": "tsc",
     "clean": "rimraf dist",
-    "test": "HASURA_URL=http://localhost:8080/v1/graphql jest"
+    "test": "MOCK_DB=1 HASURA_URL=http://localhost:8080/v1/graphql jest",
+    "test:db": "HASURA_URL=http://localhost:8080/v1/graphql jest",
+    "test:server": "jest",
+    "test:server:local": "GMASTER_URL=http://localhost:3000 jest"
   },
   "dependencies": {
     "debug": "~4.1.1",

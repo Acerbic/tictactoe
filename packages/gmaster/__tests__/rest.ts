@@ -1,28 +1,16 @@
 /**
  * Testing REST API
  *
- * Must provide with env variable `ENDPOINT` to test a remote host running
- * gmaster, or variable `HASURA_URL` to instantiate the application from source
- * code.
+ * See note.md for details on env vars
  */
 
 import supertest from "supertest";
-import generateApp from "../src/app";
+import { generateAppExt } from "./__generateApp.wrap";
 
 import * as api from "@trulyacerbic/ttt-apis/gmaster-api";
 
-/**
- * If provided string endpoint (in the form of URI like
- * "http://localhost:3000"), use it. Otherwise, instantiate a new web
- * application from source code (in this case, don't forget to set up HASURA_URL
- * env variable to point to hasura storage)
- */
-const agent_app =
-    "string" === typeof process.env.ENDPOINT && process.env.ENDPOINT.length > 0
-        ? process.env.ENDPOINT
-        : generateApp();
 const agent: ReturnType<typeof supertest.agent> = supertest
-    .agent(agent_app)
+    .agent(generateAppExt())
     .type("json") as any; // :( bad type definitions in @types/supertest
 
 describe("REST apis", () => {

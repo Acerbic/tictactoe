@@ -1,60 +1,56 @@
 /**
- * Testing various modes of failure
+ * Testing various types of failures
  *
- * Must provide with env variable `ENDPOINT` to test a remote host running
- * gmaster, or variable `HASURA_URL` to instantiate the application from source
- * code.
+ * See `note.md` for means to configure generateAppExt.
  */
+
 import supertest from "supertest";
 import generateApp from "../src/app";
 
 import * as api from "@trulyacerbic/ttt-apis/gmaster-api";
 
-it("should fail to start the server if HASURA_URL unset", () => {
-    const oldHASURA_URL = process.env.HASURA_URL;
-    delete process.env.HASURA_URL;
-    expect(generateApp).toThrow();
-    process.env.HASURA_URL = "malformedurl";
-    expect(generateApp).toThrow();
-    process.env.HASURA_URL = oldHASURA_URL;
-});
+import { useRemoteGmaster, generateAppExt } from "./__generateApp.wrap";
 
-// TODO: fix to point to hasura
-it("should error if db storage is unavailable", async () => {
-    const oldHASURA_URL = process.env.HASURA_URL;
-    process.env.HASURA_URL = "http://localhost:59999"; // fakeout
-    const misdirectedApp = generateApp();
-    process.env.HASURA_URL = oldHASURA_URL;
-    const res: api.APIResponseFailure = (
-        await supertest(misdirectedApp)
-            .post("/CreateGame")
-            .type("json")
-            .send(<api.CreateGameRequest>{
-                player1Id: "p1",
-                player2Id: "p2"
-            })
-            .expect(200)
-    ).body;
+if (!useRemoteGmaster) {
+    describe("With local gmaster instance", () => {
+        it("should fail to start the server if HASURA_URL unset", () => {
+            const oldHASURA_URL = process.env.HASURA_URL;
+            delete process.env.HASURA_URL;
+            expect(generateApp).toThrow();
+            process.env.HASURA_URL = "malformedurl";
+            expect(generateApp).toThrow();
+            process.env.HASURA_URL = oldHASURA_URL;
+        });
 
-    expect(res.success).toBe(false);
-});
+        it("should error if db storage is unavailable", async () => {
+            const oldHASURA_URL = process.env.HASURA_URL;
+            process.env.HASURA_URL = "http://localhost:59999"; // fakeout
+            const misdirectedApp = generateApp();
+            process.env.HASURA_URL = oldHASURA_URL;
+            const res: api.APIResponseFailure = (
+                await supertest(misdirectedApp)
+                    .post("/CreateGame")
+                    .type("json")
+                    .send(<api.CreateGameRequest>{
+                        player1Id: "p1",
+                        player2Id: "p2"
+                    })
+                    .expect(200)
+            ).body;
+
+            expect(res.success).toBe(false);
+        });
+    });
+}
 
 describe("Logical errors", () => {
     let agent: ReturnType<typeof supertest.agent>;
 
     beforeAll(() => {
-        /**
-         * If provided string endpoint (in the form of URI like
-         * "http://localhost:3000"), use it. Otherwise, instantiate a new web
-         * application from source code (in this case, don't forget to set up HASURA_URL
-         * env variable to point to hasura storage)
-         */
-        const agent_app =
-            "string" === typeof process.env.ENDPOINT &&
-            process.env.ENDPOINT.length > 0
-                ? process.env.ENDPOINT
-                : generateApp();
-        agent = supertest.agent(agent_app).type("json") as any; // :( bad type definitions in @types/supertest
+        const agent_app_arg = generateAppExt();
+
+        // :( bad type definitions in @types/supertest
+        agent = supertest.agent(agent_app_arg).type("json") as any;
     });
 
     it("should prevent creating a game with two identical players", async () => {
