@@ -27,7 +27,10 @@ router.get("/CheckGame/:gameId", async function (req, res, next) {
             );
             const response: CheckGameResponse = {
                 success: true,
-                state: GameStateValueToApi(current_state)
+                state: Object.assign(
+                    { id: gameId, meta: game.meta },
+                    GameStateValueToApi(current_state)
+                )
             };
             res.send(response);
         })

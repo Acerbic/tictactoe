@@ -13,15 +13,19 @@ import { GameMachine, GameStateValueToApi } from "../game/game-machine";
 const router = express.Router();
 
 router.post("/CreateGame", function (req, res, next) {
-    const { player1Id, player2Id } = req.body as CreateGameRequest;
+    const {
+        player1Id: player1,
+        player2Id: player2,
+        meta
+    } = req.body as CreateGameRequest;
     const gamesDb = req.app.get("gamesDb") as DbConnector;
 
     if (
-        typeof player1Id !== "string" ||
-        typeof player2Id !== "string" ||
-        player1Id.length < 1 ||
-        player2Id.length < 1 ||
-        player2Id === player1Id
+        typeof player1 !== "string" ||
+        typeof player2 !== "string" ||
+        player1.length < 1 ||
+        player2.length < 1 ||
+        player2 === player1
     ) {
         const response = makeFailureResponse(
             undefined,
@@ -34,8 +38,8 @@ router.post("/CreateGame", function (req, res, next) {
 
     // Initial context for a new game
     const machineWithContext = GameMachine.withContext({
-        player1: player1Id,
-        player2: player2Id,
+        player1,
+        player2,
         // game board (3x3 table)
         board: [
             [null, null, null],
@@ -52,10 +56,9 @@ router.post("/CreateGame", function (req, res, next) {
 
     const game: Game = {
         state: JSON.stringify(machineWithContext.initialState),
-        player1: player1Id,
-        player2: player2Id,
-
-        board: JSON.stringify(machineWithContext.initialState.context.board)
+        player1,
+        player2,
+        meta
     };
 
     gamesDb
@@ -64,7 +67,10 @@ router.post("/CreateGame", function (req, res, next) {
             const response: CreateGameResponse = {
                 success: true,
                 gameId: gameId,
-                newState: GameStateValueToApi(machineWithContext.initialState)
+                newState: Object.assign(
+                    { id: gameId, meta: game.meta },
+                    GameStateValueToApi(machineWithContext.initialState)
+                )
             };
             res.send(response);
         })

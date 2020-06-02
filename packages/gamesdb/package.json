@@ -6,6 +6,7 @@
   "scripts": {
     "clean": "rimraf hasura.graphql",
     "deploy": "hasura migrate apply --project hasura && hasura metadata apply --project hasura",
+    "console": "hasura console --project hasura",
     "generate": "gq http://localhost:8080/v1/graphql --introspect > hasura.graphql"
   },
   "keywords": [

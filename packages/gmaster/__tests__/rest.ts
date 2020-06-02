@@ -26,7 +26,8 @@ describe("REST apis", () => {
         ).body;
 
         expect(res.success).toBeTruthy();
-        expect(res.newState).toEqual(<api.GameState>{
+        const { id, ...withoutID } = res.newState;
+        expect(withoutID).toEqual(<api.GameState>{
             player1: "p1",
             player2: "p2",
             board: [
@@ -72,7 +73,8 @@ describe("REST apis", () => {
         ).body;
 
         expect(res.success).toBeTruthy();
-        expect(res.state).toEqual(<api.GameState>{
+        const { id, ...withoutID } = res.state;
+        expect(withoutID).toEqual(<api.GameState>{
             player1: "p1",
             player2: "p2",
             board: [
@@ -104,7 +106,8 @@ describe("REST apis", () => {
         ).body;
 
         expect(res.success).toBeTruthy();
-        expect(res.newState).toEqual(<api.GameState>{
+        const { id, ...withoutID } = res.newState;
+        expect(withoutID).toEqual(<api.GameState>{
             player1: "p1",
             player2: "p2",
             board: [

@@ -91,14 +91,16 @@ router.post("/MakeMove/:gameId", function (req, res, next) {
             });
             gamesDb
                 .SaveGame(gameId, {
-                    state: JSON.stringify(new_state),
-                    board: JSON.stringify(new_state.context.board)
+                    state: JSON.stringify(new_state)
                 })
                 .then(() => {
                     // wait for saving to finish and send result in reply
                     const response: MakeMoveResponse = {
                         success: true,
-                        newState: GameStateValueToApi(new_state)
+                        newState: Object.assign(
+                            { id: gameId, meta: game.meta },
+                            GameStateValueToApi(new_state)
+                        )
                     };
                     res.send(response);
                 })

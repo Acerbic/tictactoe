@@ -24,8 +24,8 @@ export class HasuraConnector implements DbConnector {
                     id
                     player1
                     player2
-                    board
                     state
+                    meta
                 }
             }
         `;
@@ -52,13 +52,31 @@ export class HasuraConnector implements DbConnector {
      */
     async SaveGame(
         id: GameId,
-        game: Pick<Game, "state" | "board">
+        changes: Partial<Pick<Game, "state" | "meta">>
     ): Promise<any> {
+        const variables: any = { id };
+
+        const set_fields: string[] = [];
+        if (changes.state) {
+            variables.state = changes.state;
+            set_fields.push("state: $state");
+        }
+        if (typeof changes.meta !== "undefined") {
+            variables.meta = changes.meta;
+            set_fields.push("meta: $meta");
+        }
+
+        if (set_fields.length === 0) {
+            throw new Error(
+                "Attempted to update a game record with changed fields"
+            );
+        }
+
         const m = `
-            mutation ($id: uuid!, $state: String!, $board: String!) {
+            mutation ($id: uuid!, $state: String, $meta: String) {
                 update_gamesession_by_pk(
                     pk_columns: {id: $id},
-                    _set: {state: $state, board: $board}
+                    _set: {${set_fields.join(", ")}}
                 ) {
                     id
                 }
@@ -69,7 +87,7 @@ export class HasuraConnector implements DbConnector {
             endpoint: this.options.endpoint,
             query: m,
             headers: this.options.headers,
-            variables: { id, state: game.state, board: game.board }
+            variables
         }).then(r => {
             if (r?.data?.update_gamesession_by_pk) {
                 return r.data.update_gamesession_by_pk.id;

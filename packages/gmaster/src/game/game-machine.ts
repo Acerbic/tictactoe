@@ -138,7 +138,7 @@ function condDraw(ctx: GameContext) {
  */
 export function GameStateValueToApi(
     state: xstate.State<GameContext, GameEvent, GameSchema>
-): GameState {
+): Omit<GameState, "id" | "meta"> {
     const sv = state.value as GameStateValue;
 
     return {
