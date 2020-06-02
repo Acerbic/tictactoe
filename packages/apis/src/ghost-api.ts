@@ -35,29 +35,23 @@ export interface API {
     };
     in: {
         iwannabetracer: "first" | "second";
-        move: any;
+        move: any /* Uses ack function to return move validity */;
+        imdone: void;
         // the following are not implemented yet
         remind_me: any;
-        imdone: any;
     };
     out: {
         choose_role: void;
-        iamalreadytracer: void;
         you_are_it: {
             gameId: GameId;
             role: "first" | "second";
         };
-        your_turn: void;
-        opponent_moved: GameStateUpdate;
-        meme_accepted: GameStateUpdate;
+        // includes update on whos turn it is now for switching turns
+        update: GameStateUpdate;
+        // your_turn: void;
         gameover: {
             // null means a draw
             winner: PlayerId | null;
-        };
-        update: {
-            gameId: GameId;
-            board: GameBoard;
-            step: "my-turn" | "opponents-turn";
         };
         // the following are not implemented yet
         ragequit: any;

@@ -228,11 +228,43 @@ describe("After game started", () => {
         done();
     });
 
+    test.only("can pass turns between players", done => {
+        (getGameBoard as jest.MockedFunction<
+            DBGetGameBoard
+        >).mockResolvedValueOnce([
+            ["p1", null, null],
+            [null, null, null],
+            [null, null, null]
+        ]);
+
+        const p1_done = new Promise(resolve =>
+            client1
+                .once("update", data => {
+                    expect(data.game_state.game).toBe("wait");
+                    expect(data.game_state.turn).toBe("p2");
+                    expect(data.board[0][0]).toBe("p1");
+                    resolve();
+                })
+                .emit("move", { row: 0, column: 0 })
+        );
+
+        const p2_done = new Promise(resolve =>
+            client2.once("update", data => {
+                expect(data.game_state.turn).toBe("p2");
+                expect(data.game_state.game).toBe("wait");
+                expect(data.board[0][0]).toBe("p1");
+                resolve();
+            })
+        );
+
+        Promise.all([p1_done, p2_done]).then(() => done());
+    });
+
     test("can reconnect (immediately after start)", done => {
         client1.once("disconnect", () => {
             client1 = openClientSocket("p1");
             client1.once("update", data => {
-                expect(data.step).toBe("my-turn");
+                expect(data.game_state.turn).toBe("p1");
                 expect(data.board).toEqual([
                     [null, null, null],
                     [null, null, null],
@@ -407,7 +439,7 @@ describe("After game started", () => {
                     .mockName("in-test-name");
                 const client1_again = openClientSocket("p1");
                 client1_again.on("update", data => {
-                    expect(data.step).toBe("my-turn");
+                    expect(data.game_state.turn).toBe("p1");
                     expect(data.board).toEqual([
                         ["p1", "p1", "p2"],
                         ["p2", "p2", "p1"],

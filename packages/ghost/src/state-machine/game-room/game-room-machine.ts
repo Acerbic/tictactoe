@@ -87,7 +87,7 @@ export const state_machine: MachineConfig<
                         cond: ctx => ctx.latest_game_state!.game == "wait",
                         target: "wait4move",
                         actions: [
-                            "emit_opponent_moved",
+                            "emit_update_both",
                             "switch_player",
                             "emit_your_turn"
                         ]
@@ -98,7 +98,7 @@ export const state_machine: MachineConfig<
                             ctx.latest_game_state!.game == "draw",
                         target: "end",
                         actions: [
-                            "emit_opponent_moved",
+                            "emit_update_both",
                             "emit_gameover",
                             "call_dropgame"
                         ]

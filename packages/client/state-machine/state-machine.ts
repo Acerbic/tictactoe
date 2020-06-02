@@ -78,7 +78,7 @@ export const clientMachine = Machine<ClientContext, ClientSchema, ClientEvent>(
                             },
                             moved: {
                                 on: {
-                                    S_MOVE_ACCEPTED:
+                                    S_THEIR_TURN:
                                         "#game-client.game.their_turn",
                                     S_MOVE_REJECTED: {
                                         target: "thinking",
@@ -92,7 +92,7 @@ export const clientMachine = Machine<ClientContext, ClientSchema, ClientEvent>(
                     },
                     their_turn: {
                         on: {
-                            S_NEXT_TURN: "our_turn"
+                            S_OUR_TURN: "our_turn"
                         }
                     }
                 },

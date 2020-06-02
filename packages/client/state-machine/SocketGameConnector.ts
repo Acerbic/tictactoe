@@ -123,16 +123,18 @@ export class SocketGameConnector implements GameConnector {
         socket.once("choose_role", this.s_choose_role);
         // this one will be received (instead of "choose_role") if we
         // are reconnecting to a match in progress
-        socket.once("update", this.s_reconnection);
+        // socket.once("update", this.s_reconnection);
+
+        socket.on("update", this.s_update);
 
         // those to follow "choose_role" in player configuration process
         socket.once("iamalreadytracer", this.s_iamalreadytracer);
         socket.once("you_are_it", this.s_you_are_it);
 
         // those messages are received as part of the game proceedings
-        socket.on("your_turn", this.s_your_turn);
-        socket.on("meme_accepted", this.s_move_accepted);
-        socket.on("opponent_moved", this.s_opponent_moved);
+        // socket.on("your_turn", this.s_your_turn);
+        // socket.on("meme_accepted", this.s_move_accepted);
+        // socket.on("opponent_moved", this.s_opponent_moved);
         socket.on("gameover", this.s_gameover);
     };
 
@@ -147,7 +149,7 @@ export class SocketGameConnector implements GameConnector {
         this.setBoard(r.board);
         this.send({
             type: "S_RECONNECTED",
-            isMyTurn: r.step === "my-turn"
+            isMyTurn: r.game_state.turn === this.playerId
         });
     };
 
@@ -162,20 +164,30 @@ export class SocketGameConnector implements GameConnector {
         console.log("Role will be assigned by coin toss...");
     };
 
-    private s_your_turn = () => {
-        console.log("its my turn!");
+    private s_update = (data: API["out"]["update"]) => {
+        this.setBoard(data.board);
+        this.send({
+            type:
+                data.game_state.turn === this.playerId
+                    ? "S_OUR_TURN"
+                    : "S_THEIR_TURN"
+        });
     };
+
+    // private s_your_turn = () => {
+    //     console.log("its my turn!");
+    // };
 
     // point of this if we use ack to determine validity of move submitted?
-    private s_move_accepted = (response: API["out"]["meme_accepted"]) => {
-        this.send({ type: "S_MOVE_ACCEPTED" });
-        this.setBoard(response.board);
-    };
+    // private s_move_accepted = (response: API["out"]["meme_accepted"]) => {
+    //     this.send({ type: "S_MOVE_ACCEPTED" });
+    //     this.setBoard(response.board);
+    // };
 
-    private s_opponent_moved = (response: API["out"]["opponent_moved"]) => {
-        this.send({ type: "S_NEXT_TURN" });
-        this.setBoard(response.board);
-    };
+    // private s_opponent_moved = (response: API["out"]["opponent_moved"]) => {
+    //     this.send({ type: "S_NEXT_TURN" });
+    //     this.setBoard(response.board);
+    // };
 
     private s_gameover = (response: API["out"]["gameover"]) => {
         this.send({

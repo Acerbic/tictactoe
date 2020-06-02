@@ -58,6 +58,33 @@ interface InvokeOnErrorEvent extends AnyEventObject {
     data: any;
 }
 
+export const emit_update_both: ActionF = (ctx, event) => {
+    actionlog("emit_update_both");
+
+    ctx.getBoard(ctx.game_id!)
+        .then(board => {
+            // update reconnected player's knowledge
+            const data: API["out"]["update"] = {
+                board,
+                game_state: {
+                    turn: ctx.current_player!,
+                    game: ctx.latest_game_state?.game!
+                }
+            };
+
+            ctx.emits_sync = ctx.emits_sync.then(() => {
+                ctx.players.forEach(player_context => {
+                    debuglog(">> emitting update for ", player_context.id);
+                    player_context.socket.emit("update", data);
+                });
+            });
+        })
+        .catch(reason => {
+            //TODO:
+            throw reason;
+        });
+};
+
 export const ack_invalid_move: ActionF<InvokeOnErrorEvent> = (ctx, e) => {
     actionlog("ack_invalid_move", e.type);
     e.data.srcEvent.ack?.(false);
@@ -294,16 +321,20 @@ export const top_reconnect: ActionF<GameRoom_PlayerConnected> = (
     // reconnection during game in progress - update socket
     ctx.players.get(event.player_id)!.socket = event.socket;
 
-    ctx.getBoard(ctx.game_id!).then(board => {
-        // update reconnected player's knowledge
-        const data: API["out"]["update"] = {
-            gameId: ctx.game_id!,
-            board,
-            step:
-                ctx.current_player === event.player_id
-                    ? "my-turn"
-                    : "opponents-turn"
-        };
-        event.socket.emit("update", data);
-    });
+    ctx.getBoard(ctx.game_id!)
+        .then(board => {
+            // update reconnected player's knowledge
+            const data: API["out"]["update"] = {
+                board,
+                game_state: {
+                    turn: ctx.current_player!,
+                    game: ctx.latest_game_state?.game!
+                }
+            };
+            event.socket.emit("update", data);
+        })
+        .catch(reason => {
+            //TODO:
+            throw reason;
+        });
 };

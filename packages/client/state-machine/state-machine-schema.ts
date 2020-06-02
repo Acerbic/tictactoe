@@ -108,6 +108,14 @@ export type S_MoveAccepted = {
     type: "S_MOVE_ACCEPTED";
 };
 
+export type S_OurTurn = {
+    type: "S_OUR_TURN";
+};
+
+export type S_TheirTurn = {
+    type: "S_THEIR_TURN";
+};
+
 /**
  * Grouping of events that come from React
  * (due to user interactions)
@@ -127,6 +135,8 @@ export type Server_Event =
     | S_ConnectedEvent
     | S_ReconnectedEvent
     | S_GameStartEvent
+    | S_OurTurn
+    | S_TheirTurn
     | S_NextTurnEvent
     | S_MoveRejected
     | S_MoveAccepted
