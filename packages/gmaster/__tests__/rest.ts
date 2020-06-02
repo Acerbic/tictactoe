@@ -27,6 +27,13 @@ describe("REST apis", () => {
 
         expect(res.success).toBeTruthy();
         expect(res.newState).toEqual(<api.GameState>{
+            player1: "p1",
+            player2: "p2",
+            board: [
+                [null, null, null],
+                [null, null, null],
+                [null, null, null]
+            ],
             turn: "player1",
             game: "wait"
         });
@@ -66,6 +73,13 @@ describe("REST apis", () => {
 
         expect(res.success).toBeTruthy();
         expect(res.state).toEqual(<api.GameState>{
+            player1: "p1",
+            player2: "p2",
+            board: [
+                [null, null, null],
+                [null, null, null],
+                [null, null, null]
+            ],
             turn: "player1",
             game: "wait"
         });
@@ -91,6 +105,13 @@ describe("REST apis", () => {
 
         expect(res.success).toBeTruthy();
         expect(res.newState).toEqual(<api.GameState>{
+            player1: "p1",
+            player2: "p2",
+            board: [
+                [null, null, null],
+                [null, "p1", null],
+                [null, null, null]
+            ],
             turn: "player2",
             game: "wait"
         });

@@ -18,12 +18,13 @@ export const withUserLoginControl = (UserBar: React.FC<P>) => {
     const playerName = "TypicalUser";
 
     const [player, setPlayer] = useRecoilState(playerState);
+    const [pid] = React.useState(String(Math.random()));
 
     return (
         <UserBar
             onLogin={() => {
                 setPlayer({
-                    id: String(Math.random()),
+                    id: pid,
                     name: playerName
                 });
             }}

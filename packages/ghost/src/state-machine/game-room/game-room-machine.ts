@@ -158,10 +158,7 @@ export const machine_options: Partial<MachineOptions<
                 })
                 .then(response => {
                     if (response.success) {
-                        ctx.latest_game_state = {
-                            turn: "player1",
-                            game: "wait"
-                        };
+                        ctx.latest_game_state = response.newState;
                         ctx.game_id = response.gameId!;
                         return response;
                     } else {

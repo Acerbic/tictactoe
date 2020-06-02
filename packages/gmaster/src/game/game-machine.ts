@@ -11,20 +11,6 @@ import { GameState } from "@trulyacerbic/ttt-apis/gmaster-api";
 export const GameMachine = xstate.Machine<GameContext, GameSchema, GameEvent>(
     {
         id: "tictactoe",
-        context: {
-            // game board (3x3 table)
-            board: [
-                [null, null, null],
-                [null, null, null],
-                [null, null, null]
-            ],
-            // number of moves made so far
-            moves_made: 0,
-            // stores the move made by a player,
-            // since each move creates 2 transitions, it helps to know what caused
-            // it on the derived transitions
-            last_move: null
-        },
         type: "parallel",
         states: {
             /**
@@ -69,15 +55,18 @@ export const GameMachine = xstate.Machine<GameContext, GameSchema, GameEvent>(
     },
     {
         actions: {
-            applyMove: xstate.actions.assign({
-                board: (ctx: GameContext, event: any) => {
-                    // not sure, should I make a copy of the board object?
-                    ctx.board[event.move.row][event.move.column] =
-                        event.playerId;
-                    return ctx.board;
-                },
-                moves_made: (ctx: GameContext) => ctx.moves_made + 1,
-                last_move: (ctx: GameContext, event: any) => event
+            applyMove: xstate.assign((ctx: GameContext, event: any) => {
+                return {
+                    board: ctx.board.map((row, i) =>
+                        row.map((value, j) =>
+                            event.move.row === i && event.move.column === j
+                                ? event.playerId
+                                : value
+                        )
+                    ),
+                    moves_made: ctx.moves_made + 1,
+                    last_move: event
+                };
             })
         },
         guards: {
@@ -153,7 +142,10 @@ export function GameStateValueToApi(
     const sv = state.value as GameStateValue;
 
     return {
+        player1: state.context.player1,
+        player2: state.context.player2,
         turn: sv.turn,
+        board: state.context.board,
         game: sv.game as Exclude<GameStateValue["game"], "thinking">
     };
 }

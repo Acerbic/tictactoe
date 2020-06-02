@@ -23,10 +23,10 @@ import {
     GameRoom_PlayerPickRole,
     PlayerInfo
 } from "./game-room-schema";
-import { API } from "@trulyacerbic/ttt-apis/ghost-api";
-import { PlayerId } from "@trulyacerbic/ttt-apis/gmaster-api";
+import { API, GameBoard } from "@trulyacerbic/ttt-apis/ghost-api";
 
 import player_setup from "../player-setup/player-setup-machine";
+import { GMasterError } from "../../connectors/gmaster_connector";
 
 type PromiseOnFulfill<T> = Promise<T>["then"] extends (
     onfulfilled: infer A
@@ -61,15 +61,26 @@ interface InvokeOnErrorEvent extends AnyEventObject {
 export const emit_update_both: ActionF = (ctx, event) => {
     actionlog("emit_update_both");
 
-    ctx.getBoard(ctx.game_id!)
-        .then(board => {
+    ctx.gm_connect
+        .get("CheckGame", ctx.game_id!)
+        .then(response => {
+            if (response.success) {
+                return response.state;
+            } else {
+                throw new GMasterError(response);
+            }
+        })
+        .then(state => {
             // update reconnected player's knowledge
             const data: API["out"]["update"] = {
-                board,
+                board: state.board as GameBoard,
                 game_state: {
-                    turn: ctx.current_player!,
-                    game: ctx.latest_game_state?.game!
-                }
+                    turn: ctx.latest_game_state!.turn,
+                    game: ctx.latest_game_state!.game!
+                },
+                game_id: ctx.game_id!,
+                player1: ctx.latest_game_state!.player1,
+                player2: ctx.latest_game_state!.player2
             };
 
             ctx.emits_sync = ctx.emits_sync.then(() => {
@@ -157,8 +168,15 @@ export const emit_opponent_moved: ActionF = ctx => {
     const socket_moving = ctx.players.get(ctx.current_player!)!.socket;
 
     chain_promise(ctx, () =>
-        ctx
-            .getBoard(ctx.game_id!)
+        ctx.gm_connect
+            .get("CheckGame", ctx.game_id!)
+            .then(response => {
+                if (response.success) {
+                    return response.state.board as GameBoard;
+                } else {
+                    throw new GMasterError(response);
+                }
+            })
             .then(board => {
                 const turn = ctx[ctx.latest_game_state!.turn];
                 return new Promise((resolve, reject) => {
@@ -321,13 +339,24 @@ export const top_reconnect: ActionF<GameRoom_PlayerConnected> = (
     // reconnection during game in progress - update socket
     ctx.players.get(event.player_id)!.socket = event.socket;
 
-    ctx.getBoard(ctx.game_id!)
-        .then(board => {
+    ctx.gm_connect
+        .get("CheckGame", ctx.game_id!)
+        .then(response => {
+            if (response.success) {
+                return response.state;
+            } else {
+                throw new GMasterError(response);
+            }
+        })
+        .then(state => {
             // update reconnected player's knowledge
             const data: API["out"]["update"] = {
-                board,
+                game_id: ctx.game_id!,
+                player1: state.player1,
+                player2: state.player2,
+                board: state.board as GameBoard,
                 game_state: {
-                    turn: ctx.current_player!,
+                    turn: state.turn,
                     game: ctx.latest_game_state?.game!
                 }
             };

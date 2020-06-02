@@ -2,17 +2,21 @@
  * This is API to GMaster process
  */
 
+export type GameId = string;
+export type PlayerId = string;
+
 export type GameState = {
     // next turn belongs to...
     turn: "player1" | "player2";
+    // player1 always has the first turn;
+    player1: PlayerId;
+    player2: PlayerId;
+    board: Array<Array<PlayerId | null>>;
     // current game state (if "over", then `turn` field indicates the
     // player who would've been next, if the game was to continue,
     // i.e. the losing player)
     game: "wait" | "over" | "draw";
 };
-
-export type GameId = string;
-export type PlayerId = string;
 
 export const enum ErrorCodes {
     UNKNOWN_ERROR = 0,

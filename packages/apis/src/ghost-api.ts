@@ -10,13 +10,17 @@ export type GameBoard = [
     [string | null, string | null, string | null]
 ];
 
-type GameStateUpdate = {
+export type Role = "first" | "second";
+export interface GameStateUpdate {
     game_state: {
         game: GameState["game"];
-        turn: PlayerId;
+        turn: "player1" | "player2";
     };
     board: GameBoard;
-};
+    game_id: string;
+    player1: PlayerId;
+    player2: PlayerId;
+}
 
 /**
  * keyof API["in"] === names of messages to emit from client to server over ws
@@ -34,7 +38,7 @@ export interface API {
         playerId: PlayerId;
     };
     in: {
-        iwannabetracer: "first" | "second";
+        iwannabetracer: Role;
         move: any /* Uses ack function to return move validity */;
         imdone: void;
         // the following are not implemented yet
@@ -44,7 +48,7 @@ export interface API {
         choose_role: void;
         you_are_it: {
             gameId: GameId;
-            role: "first" | "second";
+            role: Role;
         };
         // includes update on whos turn it is now for switching turns
         update: GameStateUpdate;
@@ -53,11 +57,11 @@ export interface API {
             // null means a draw
             winner: PlayerId | null;
         };
-        // the following are not implemented yet
-        ragequit: any;
         server_error: {
             message: string;
             abandonGame: boolean;
         };
+        // the following are not implemented yet
+        ragequit: any;
     };
 }

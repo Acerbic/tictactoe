@@ -12,7 +12,6 @@ import { Interpreter } from "xstate/lib/interpreter";
 
 import { PlayerId } from "@trulyacerbic/ttt-apis/gmaster-api";
 import GMConnector from "../connectors/gmaster_connector";
-import { DBGetGameBoard } from "../connectors/hasura_connector";
 
 import {
     GameRoomContext,
@@ -24,7 +23,6 @@ import { Socket } from "socket.io";
 
 export type GameRoomInterpreterDependencies = {
     gmaster: GMConnector;
-    getGameBoard: DBGetGameBoard;
 };
 
 let roomCount = 1;
@@ -52,8 +50,7 @@ export class GameRoomInterpreter extends Interpreter<
                 players: new Map(),
                 emits_sync: Promise.resolve(),
 
-                gm_connect: deps.gmaster,
-                getBoard: deps.getGameBoard
+                gm_connect: deps.gmaster
             })
         );
         this.roomId = "#" + roomCount;

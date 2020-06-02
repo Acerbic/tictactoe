@@ -32,12 +32,30 @@ router.post("/CreateGame", function (req, res, next) {
         return;
     }
 
+    // Initial context for a new game
+    const machineWithContext = GameMachine.withContext({
+        player1: player1Id,
+        player2: player2Id,
+        // game board (3x3 table)
+        board: [
+            [null, null, null],
+            [null, null, null],
+            [null, null, null]
+        ],
+        // number of moves made so far
+        moves_made: 0,
+        // stores the move made by a player,
+        // since each move creates 2 transitions, it helps to know what caused
+        // it on the derived transitions
+        last_move: null
+    });
+
     const game: Game = {
-        state: JSON.stringify(GameMachine.initialState),
+        state: JSON.stringify(machineWithContext.initialState),
         player1: player1Id,
         player2: player2Id,
 
-        board: JSON.stringify(GameMachine.initialState.context.board)
+        board: JSON.stringify(machineWithContext.initialState.context.board)
     };
 
     gamesDb
@@ -46,7 +64,7 @@ router.post("/CreateGame", function (req, res, next) {
             const response: CreateGameResponse = {
                 success: true,
                 gameId: gameId,
-                newState: GameStateValueToApi(GameMachine.initialState)
+                newState: GameStateValueToApi(machineWithContext.initialState)
             };
             res.send(response);
         })

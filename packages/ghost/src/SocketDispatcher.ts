@@ -13,7 +13,6 @@ import { Socket, Server as SocServer } from "socket.io";
 
 import { GameRoomInterpreter } from "./state-machine/GameRoomInterpreter";
 import GmasterConnector from "./connectors/gmaster_connector";
-import { getGameBoard } from "./connectors/hasura_connector";
 import { PlayerId } from "@trulyacerbic/ttt-apis/gmaster-api";
 import {
     GameRoomEvent,
@@ -33,8 +32,7 @@ export class SocketDispatcher {
      * Injected dependencies to be provided to xstate Interperter
      */
     private deps = {
-        gmaster: new GmasterConnector(),
-        getGameBoard
+        gmaster: new GmasterConnector()
     };
 
     // NOTE: if game-room machine is implemented as actor in higher-order

@@ -63,3 +63,25 @@ export interface GhostInSocket
         data: P
     ): GhostInSocket;
 }
+
+export async function emitListen<
+    E extends keyof API["in"],
+    L extends keyof API["out"]
+>(
+    s: GhostInSocket,
+    emitType: E,
+    data: E extends keyof API["in"] ? API["in"][E] : never,
+    listenType: L | number
+): Promise<API["out"][L]> {
+    return new Promise(resolve => {
+        if (typeof listenType === "number") {
+            s.emit(emitType, data);
+            setTimeout(resolve, listenType);
+        } else {
+            s.once(listenType, response => resolve(response)).emit(
+                emitType,
+                data
+            );
+        }
+    });
+}

@@ -31,5 +31,8 @@
 ☐ ghost: check for APIResponseFailure inside gmaster_connector, not in the machine.services
 ☐ client: handle ghost going d/c
 ☐ auto clean old games from DB even if they aren't finished
-☐ include board info in GMAster's CheckGame (and avoid need for exposing DB access)
+✔ include board info in GMAster's CheckGame (and avoid need for exposing DB access) @done(20-06-02 15:19)
 ☐ fix reconnect - needs fuller info on game (who was the "first move")
+☐ make custom container around Hasura enging that incorporates migrations and meta
+☐ See if excessive calls to CheckGame could be removed from ghost since other calls to gmaster return updated state
+☐ unify return value from /CheckGame and "update" ws message

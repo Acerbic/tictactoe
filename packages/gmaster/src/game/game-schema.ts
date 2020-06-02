@@ -6,7 +6,9 @@ import { StateSchema, State } from "xstate";
 import { PlayerId } from "@trulyacerbic/ttt-apis/gmaster-api";
 
 export interface GameContext {
-    board: Array<Array<any>>;
+    board: Array<Array<PlayerId | null>>;
+    player1: PlayerId;
+    player2: PlayerId;
     moves_made: number;
     last_move: any;
 }

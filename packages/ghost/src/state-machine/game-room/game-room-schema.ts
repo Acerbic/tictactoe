@@ -17,7 +17,6 @@ import {
 } from "../player-setup/player-setup-schema";
 
 import GMConnector from "../../connectors/gmaster_connector";
-import { DBGetGameBoard } from "../../connectors/hasura_connector";
 import { GhostOutSocket } from "../../utils";
 
 export interface GameRoomSchema extends StateSchema<GameRoomContext> {
@@ -70,7 +69,6 @@ export interface GameRoomContext {
     // Probably should not keep this in StateContext, but it is easier to do this
     // as a form of dependency injection for actions/guards
     gm_connect: GMConnector;
-    getBoard: DBGetGameBoard;
 }
 
 /**

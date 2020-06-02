@@ -47,7 +47,7 @@ router.post("/MakeMove/:gameId", function (req, res, next) {
                 return;
             }
             let turn_player = ((state.value as any) as GameStateValue).turn!;
-            if (game[turn_player] !== playerId) {
+            if (state.context[turn_player] !== playerId) {
                 const response: APIResponseFailure = {
                     success: false,
                     errorMessage: "Wrong player",

@@ -1,5 +1,6 @@
-import { APIResponseFailure } from "@trulyacerbic/ttt-apis/gmaster-api";
 import GMC from "../gmaster_connector";
+
+export const { GMasterError } = jest.requireActual("../gmaster_connector");
 
 const m_gmasterPost = jest.fn<
     ReturnType<GMC["post"]>,
