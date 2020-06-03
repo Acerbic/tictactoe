@@ -32,7 +32,7 @@ const {
 
 import { app } from "../src/app";
 import { SocketDispatcher } from "../src/SocketDispatcher";
-import { GhostInSocket } from "./__utils";
+import { GhostInSocket, socListen } from "./__utils";
 
 describe("WS communication", () => {
     let httpServer: http.Server;
@@ -90,14 +90,14 @@ describe("WS communication", () => {
     beforeEach(done => {
         /* remocking implementations that were reset between tests */
         mocked_gmc_post.mockImplementation(endpoint =>
-            Promise.resolve(<gm_api.APIResponseFailure>{
+            Promise.reject(<gm_api.APIResponseFailure>{
                 success: false,
                 errorCode: 0,
                 errorMessage: "Mocked POST response for " + endpoint
             })
         );
         mocked_gmc_get.mockImplementation(endpoint =>
-            Promise.resolve(<gm_api.APIResponseFailure>{
+            Promise.reject(<gm_api.APIResponseFailure>{
                 success: false,
                 errorCode: 0,
                 errorMessage: "Mocked GET response for " + endpoint
@@ -114,31 +114,36 @@ describe("WS communication", () => {
         });
         new SocketDispatcher().attach(socServer);
 
-        // note: (not in official documentation tho, may change)
-        // (ioServer as any).httpServer === httpServer;
-
         socketsOpened = [];
+        let createdGameState;
         mocked_gmc_post.mockImplementationOnce((endpoint, payload) => {
             if (endpoint === "CreateGame") {
+                createdGameState = {
+                    id: "1111111",
+                    player1: (payload as gm_api.CreateGameRequest).player1Id,
+                    player2: (payload as gm_api.CreateGameRequest).player2Id,
+                    board: [
+                        [null, null, null],
+                        [null, null, null],
+                        [null, null, null]
+                    ],
+                    meta: (payload as gm_api.CreateGameRequest).meta ?? null,
+                    game: "wait",
+                    turn: "player1"
+                };
+                mocked_gmc_get.mockReset().mockResolvedValue(<
+                    gm_api.CheckGameResponse
+                >{
+                    success: true,
+                    state: createdGameState
+                });
                 return Promise.resolve(<gm_api.CreateGameResponse>{
                     success: true,
                     gameId: "1111111",
-                    newState: {
-                        id: "1111111",
-                        player1: "p1",
-                        player2: "p2",
-                        board: [
-                            [null, null, null],
-                            [null, null, null],
-                            [null, null, null]
-                        ],
-                        meta: null,
-                        game: "wait",
-                        turn: "player1"
-                    }
+                    newState: createdGameState
                 });
             } else {
-                return Promise.resolve({
+                return Promise.reject({
                     success: false,
                     errorMessage: "Bad Endpoint",
                     errorCode: 0
@@ -173,7 +178,7 @@ describe("WS communication", () => {
             done();
         });
         client.connect();
-    }, 1000);
+    });
 
     test("2 players can complete setup separately", done => {
         const client1 = openClientSocket("p1");
@@ -185,12 +190,17 @@ describe("WS communication", () => {
             client2.once("choose_role", () => {
                 client2.emit("iwannabetracer", "second");
             });
+
             client2.connect();
 
             const p1_done = new Promise(resolve => {
                 client1.once("you_are_it", data => {
                     expect(data.role).toBe("first");
-                    client1.once("your_turn", () => resolve());
+                    socListen(
+                        client1,
+                        "update",
+                        d => d.turn === "player1"
+                    ).then(resolve);
                 });
             });
             const p2_done = new Promise(resolve => {
@@ -219,7 +229,11 @@ describe("WS communication", () => {
             const p1_done = new Promise(resolve => {
                 client1.once("you_are_it", data => {
                     expect(data.role).toBe("first");
-                    client1.once("your_turn", () => resolve());
+                    socListen(
+                        client1,
+                        "update",
+                        d => d.turn === "player1"
+                    ).then(resolve);
                 });
             });
             const p2_done = new Promise(resolve => {
@@ -286,33 +300,6 @@ describe("WS communication", () => {
     });
 
     test("player can quit before the game start and another player take his place", done => {
-        mocked_gmc_post.mockReset().mockImplementationOnce(endpoint => {
-            if (endpoint === "CreateGame") {
-                return Promise.resolve(<gm_api.CreateGameResponse>{
-                    success: true,
-                    gameId: "1111111",
-                    newState: {
-                        id: "1111111",
-                        player1: "p3",
-                        player2: "p2",
-                        board: [
-                            [null, null, null],
-                            [null, null, null],
-                            [null, null, null]
-                        ],
-                        meta: null,
-                        game: "wait",
-                        turn: "player1"
-                    }
-                });
-            } else {
-                return Promise.resolve({
-                    success: false,
-                    errorMessage: "Bad Endpoint",
-                    errorCode: 0
-                });
-            }
-        });
         const client1 = openClientSocket("p1");
         const client2 = openClientSocket("p2");
         const client3 = openClientSocket("p3");
@@ -328,7 +315,11 @@ describe("WS communication", () => {
                     const p3_done = new Promise(resolve => {
                         client3.once("you_are_it", data => {
                             expect(data.role).toBe("first");
-                            client3.once("your_turn", () => resolve());
+                            socListen(
+                                client3,
+                                "update",
+                                d => d.turn === "player1"
+                            ).then(resolve);
                         });
                     });
                     const p2_done = new Promise(resolve => {

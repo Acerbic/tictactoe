@@ -33,7 +33,7 @@ const {
 
 import { app } from "../src/app";
 import { SocketDispatcher } from "../src/SocketDispatcher";
-import { GhostInSocket, emitListen } from "./__utils";
+import { GhostInSocket, socListen } from "./__utils";
 
 describe("After game started", () => {
     let httpServer: http.Server;
@@ -93,14 +93,14 @@ describe("After game started", () => {
     beforeEach(done => {
         /* remocking implementations that were reset between tests */
         mocked_gmc_post.mockImplementation(endpoint =>
-            Promise.resolve(<gm_api.APIResponseFailure>{
+            Promise.reject(<gm_api.APIResponseFailure>{
                 success: false,
                 errorCode: 0,
                 errorMessage: "Mocked POST response for " + endpoint
             })
         );
         mocked_gmc_get.mockImplementation(endpoint =>
-            Promise.resolve(<gm_api.APIResponseFailure>{
+            Promise.reject(<gm_api.APIResponseFailure>{
                 success: false,
                 errorCode: 0,
                 errorMessage: "Mocked GET response for " + endpoint
@@ -156,8 +156,13 @@ describe("After game started", () => {
                         success: true,
                         newState: gameState
                     });
+                case "DropGame":
+                    return Promise.resolve(<gm_api.DropGameResponse>{
+                        success: true
+                    });
+
                 default:
-                    return Promise.resolve({
+                    return Promise.reject({
                         success: false,
                         errorMessage: "Bad Endpoint: " + endpoint,
                         errorCode: 0
@@ -179,7 +184,10 @@ describe("After game started", () => {
                 })
                 .once("you_are_it", data => {
                     expect(data.role).toBe("first");
-                    client1.once("your_turn", () => resolve());
+                    client1.on(
+                        "update",
+                        ({ turn }) => turn === "player1" && resolve()
+                    );
                 });
             client1.connect();
         });
@@ -236,8 +244,8 @@ describe("After game started", () => {
         const p1_done = new Promise(resolve =>
             client1
                 .once("update", data => {
-                    expect(data.game_state.game).toBe("wait");
-                    expect(data.game_state.turn).toBe("player2");
+                    expect(data.game).toBe("wait");
+                    expect(data.turn).toBe("player2");
                     expect(data.board[0][0]).toBe("p1");
                     resolve();
                 })
@@ -246,8 +254,8 @@ describe("After game started", () => {
 
         const p2_done = new Promise(resolve =>
             client2.once("update", data => {
-                expect(data.game_state.turn).toBe("player2");
-                expect(data.game_state.game).toBe("wait");
+                expect(data.turn).toBe("player2");
+                expect(data.game).toBe("wait");
                 expect(data.board[0][0]).toBe("p1");
                 resolve();
             })
@@ -260,7 +268,7 @@ describe("After game started", () => {
         client1.once("disconnect", () => {
             client1 = openClientSocket("p1");
             client1.once("update", data => {
-                expect(data.game_state.turn).toBe("player1");
+                expect(data.turn).toBe("player1");
                 expect(data.board).toEqual([
                     [null, null, null],
                     [null, null, null],
@@ -278,15 +286,27 @@ describe("After game started", () => {
             c2 = client2;
         (async () => {
             let u: gh_api["out"]["update"];
+            const is_p1_turn = (d: gh_api["out"]["update"]) =>
+                d.turn === "player1";
+            const is_p2_turn = (d: gh_api["out"]["update"]) =>
+                d.turn === "player2";
 
-            u = await emitListen(c1, "move", { row: 0, column: 0 }, "update");
-            expect(u.game_state.turn).toBe("player2");
-            u = await emitListen(c2, "move", { row: 1, column: 0 }, "update");
-            expect(u.game_state.turn).toBe("player1");
+            // emit p1 move and wait for the first "update" coming back
+            c1.emit("move", { row: 0, column: 0 });
+            u = await socListen(c1, "update");
+            expect(u.turn).toBe("player2");
+
+            // emit p2 move and wait until turn is back in p1's corner
+            c2.emit("move", { row: 1, column: 0 });
+            u = await socListen(c1, "update", is_p1_turn);
             expect(u.board[0][0]).toBe("p1");
             expect(u.board[1][0]).toBe("p2");
-            await emitListen(c1, "move", { row: 0, column: 1 }, "update");
-            u = await emitListen(c2, "move", { row: 1, column: 1 }, "update");
+            c1.emit("move", { row: 0, column: 1 });
+
+            await socListen(c2, "update", is_p2_turn);
+            c2.emit("move", { row: 1, column: 1 });
+
+            await socListen(c1, "update", is_p1_turn);
 
             mocked_gmc_post.mockResolvedValueOnce(<gm_api.MakeMoveResponse>{
                 success: true,
@@ -300,7 +320,10 @@ describe("After game started", () => {
                     turn: "player2"
                 }
             });
-            u = await emitListen(c1, "move", { row: 0, column: 2 }, "update");
+            c1.emit("move", { row: 0, column: 2 });
+
+            const go = await socListen(c1, "gameover");
+            expect(go.winner).toBe("p1");
         })().then(done);
     });
 
@@ -314,17 +337,19 @@ describe("After game started", () => {
                 { row: 2, column: 2 }
             ];
             client1
-                .on("your_turn", () => {
-                    if (p1_moves.length <= 1) {
-                        mocked_gmc_post.mockResolvedValueOnce(<
-                            gm_api.MakeMoveResponse
-                        >{
-                            success: true,
-                            newState: { game: "draw", turn: "player2" }
-                        });
-                    }
+                .on("update", data => {
+                    if (data.turn === "player1") {
+                        if (p1_moves.length <= 1) {
+                            mocked_gmc_post.mockResolvedValueOnce(<
+                                gm_api.MakeMoveResponse
+                            >{
+                                success: true,
+                                newState: { game: "draw", turn: "player2" }
+                            });
+                        }
 
-                    client1.emit("move", p1_moves.shift());
+                        client1.emit("move", p1_moves.shift());
+                    }
                 })
                 .once("gameover", ({ winner }) => {
                     expect(winner).toBe(null);
@@ -341,8 +366,10 @@ describe("After game started", () => {
                 { row: 2, column: 1 }
             ];
             client2
-                .on("your_turn", () => {
-                    client2.emit("move", p2_moves.shift());
+                .on("update", data => {
+                    if (data.turn === "player2") {
+                        client2.emit("move", p2_moves.shift());
+                    }
                 })
                 .once("gameover", ({ winner }) => {
                     expect(winner).toBe(null);
@@ -361,11 +388,13 @@ describe("After game started", () => {
         ];
         client1
             .emit("move", client1_moves.shift())
-            .on("your_turn", () => {
-                if (client1_moves.length > 0) {
-                    client1.emit("move", client1_moves.shift());
-                } else {
-                    client1.disconnect();
+            .on("update", ({ turn }) => {
+                if (turn === "player1") {
+                    if (client1_moves.length > 0) {
+                        client1.emit("move", client1_moves.shift());
+                    } else {
+                        client1.disconnect();
+                    }
                 }
             })
             .once("disconnect", () => {
@@ -385,7 +414,7 @@ describe("After game started", () => {
                 });
                 const client1_again = openClientSocket("p1");
                 client1_again.on("update", data => {
-                    expect(data.game_state.turn).toBe("player1");
+                    expect(data.turn).toBe("player1");
                     expect(data.board).toEqual([
                         ["p1", "p1", "p2"],
                         ["p2", "p2", "p1"],
@@ -401,8 +430,8 @@ describe("After game started", () => {
             { row: 1, column: 1 },
             { row: 0, column: 2 }
         ];
-        client2.on("your_turn", () => {
-            if (client2_moves.length > 0) {
+        client2.on("update", ({ turn }) => {
+            if (turn === "player2" && client2_moves.length > 0) {
                 client2.emit("move", client2_moves.shift());
             }
         });

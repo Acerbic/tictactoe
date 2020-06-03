@@ -6,7 +6,7 @@ import {
     GameEvent,
     GameStateValue
 } from "./game-schema";
-import { GameState } from "@trulyacerbic/ttt-apis/gmaster-api";
+import { GameState, GameBoard } from "@trulyacerbic/ttt-apis/gmaster-api";
 
 export const GameMachine = xstate.Machine<GameContext, GameSchema, GameEvent>(
     {
@@ -63,7 +63,7 @@ export const GameMachine = xstate.Machine<GameContext, GameSchema, GameEvent>(
                                 ? event.playerId
                                 : value
                         )
-                    ),
+                    ) as GameBoard,
                     moves_made: ctx.moves_made + 1,
                     last_move: event
                 };

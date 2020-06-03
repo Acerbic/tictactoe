@@ -29,14 +29,21 @@ export class DbConnectorMock implements DbConnector {
             throw "No such game session";
         }
     });
-    SaveGame = jest.fn<Promise<any>, [GameId, Pick<Game, "state" | "board">]>(
-        async (id, update) => {
-            if (this.__games.has(id)) {
-                const old_game = this.__games.get(id);
-                this.__games.set(id, Object.assign({}, old_game, update));
-            } else {
-                throw "Some error happened while updating a game";
-            }
+    SaveGame = jest.fn<
+        Promise<any>,
+        [GameId, Partial<Pick<Game, "state" | "meta">>]
+    >(async (id, update) => {
+        if (
+            typeof update.meta === "undefined" &&
+            (typeof update.state === "undefined" || update.state === null)
+        ) {
+            throw "Some error happened while updating a game";
         }
-    );
+        if (this.__games.has(id)) {
+            const old_game = this.__games.get(id);
+            this.__games.set(id, Object.assign({}, old_game, update));
+        } else {
+            throw "Some error happened while updating a game";
+        }
+    });
 }

@@ -26,7 +26,8 @@ import {
     GameRoom_PlayerQuit,
     isGREvent
 } from "./game-room-schema";
-import { API, GameBoard } from "@trulyacerbic/ttt-apis/ghost-api";
+import { API } from "@trulyacerbic/ttt-apis/ghost-api";
+import { GameBoard } from "@trulyacerbic/ttt-apis/gmaster-api";
 
 import player_setup from "../player-setup/player-setup-machine";
 import {
@@ -70,18 +71,8 @@ export const emit_update_both: AF = (ctx, event) => {
     ctx.gm_connect
         .get("CheckGame", ctx.game_id!)
         .then(response => {
-            const state = response.state;
             // update reconnected player's knowledge
-            const data: API["out"]["update"] = {
-                board: state.board as GameBoard,
-                game_state: {
-                    turn: state.turn,
-                    game: state.game
-                },
-                game_id: ctx.game_id!,
-                player1: state.player1,
-                player2: state.player2
-            };
+            const data: API["out"]["update"] = response.state;
 
             ctx.emits_sync = ctx.emits_sync.then(() => {
                 ctx.players.forEach(player_context => {
@@ -135,45 +126,32 @@ export const emit_you_are_it: AF = ctx => {
             debuglog(">> emitting you_are_it for ", player_context.id);
             player_context.socket.emit("you_are_it", {
                 gameId: ctx.game_id!,
-                role:
-                    ctx.current_player == player_context.id ? "first" : "second"
+                role: ctx.player1 == player_context.id ? "first" : "second"
             });
         });
-    });
-};
-
-/**
- * Send 'your_turn' to a client
- */
-export const emit_your_turn: AF<
-    DoneInvokeEvent<CreateGameResponse> | DoneInvokeEvent<MakeMoveResponse>
-> = (ctx, e) => {
-    actionlog("emit_your_turn");
-    const playerId = e.data.newState[e.data.newState.turn];
-    const socket = ctx.players.get(playerId)!.socket;
-    ctx.emits_sync.then(() => {
-        socket.emit("your_turn");
     });
 };
 
 export const finalize_setup: AF = ctx => {
     actionlog("finalize_setup");
     const [p1, p2] = ctx.players.values();
+
+    // "player1" goes first
     ctx.player1 = p1.id;
     ctx.player2 = p2.id;
 
     if (p1.role_request === p2.role_request) {
         // role request conflict -> cointoss
-        ctx.current_player = Math.random() > 0.5 ? p1.id : p2.id;
+        if (Math.random() > 0.5) {
+            [ctx.player1, ctx.player2] = [p2.id, p1.id];
+        }
     } else {
-        ctx.current_player = p1.role_request == "second" ? p2.id : p1.id;
+        if (p1.role_request == "second") {
+            // different roles requested, but inversed to positions - flip
+            // positions
+            [ctx.player1, ctx.player2] = [p2.id, p1.id];
+        }
     }
-};
-
-export const switch_player: AF = ctx => {
-    actionlog("switch_player");
-    ctx.current_player =
-        ctx.current_player == ctx.player1 ? ctx.player2 : ctx.player1;
 };
 
 export const emit_gameover: AF<
@@ -290,18 +268,8 @@ export const top_reconnect: AF<GameRoom_PlayerConnected> = (ctx, event) => {
     ctx.gm_connect
         .get("CheckGame", ctx.game_id!)
         .then(response => {
-            const state = response.state;
             // update reconnected player's knowledge
-            const data: API["out"]["update"] = {
-                game_id: ctx.game_id!,
-                player1: state.player1,
-                player2: state.player2,
-                board: state.board as GameBoard,
-                game_state: {
-                    turn: state.turn,
-                    game: state.game
-                }
-            };
+            const data: API["out"]["update"] = response.state;
             event.socket.emit("update", data);
         })
         .catch(reason => {

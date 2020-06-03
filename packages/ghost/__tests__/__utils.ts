@@ -64,24 +64,25 @@ export interface GhostInSocket
     ): GhostInSocket;
 }
 
-export async function emitListen<
-    E extends keyof API["in"],
-    L extends keyof API["out"]
->(
+export async function socListen<L extends keyof API["out"]>(
     s: GhostInSocket,
-    emitType: E,
-    data: E extends keyof API["in"] ? API["in"][E] : never,
-    listenType: L | number
+    listenMsg: L,
+    predicate?: (data: API["out"][L]) => boolean
 ): Promise<API["out"][L]> {
     return new Promise(resolve => {
-        if (typeof listenType === "number") {
-            s.emit(emitType, data);
-            setTimeout(resolve, listenType);
-        } else {
-            s.once(listenType, response => resolve(response)).emit(
-                emitType,
-                data
-            );
-        }
+        const onceHandler = (response: API["out"][L]) => {
+            if (typeof predicate === "function") {
+                if (predicate(response)) {
+                    resolve(response);
+                } else {
+                    // repeat
+                    s.once(listenMsg, onceHandler);
+                }
+            } else {
+                resolve(response);
+            }
+        };
+
+        s.once(listenMsg, onceHandler);
     });
 }

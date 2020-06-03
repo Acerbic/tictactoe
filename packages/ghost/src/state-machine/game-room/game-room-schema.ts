@@ -48,7 +48,6 @@ export interface GameRoomContext {
     player2?: PlayerId;
 
     // id of the current player (the one who's turn is next)
-    current_player?: PlayerId;
 
     // game id in gamesDB of this game room (assigned after creation by game master)
     game_id?: GameId;

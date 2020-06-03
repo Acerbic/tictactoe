@@ -17,7 +17,8 @@ import {
     APIResponse,
     APIResponseFailure,
     CheckGameResponse,
-    ErrorCodes
+    ErrorCodes,
+    APIResponseSuccess
 } from "@trulyacerbic/ttt-apis/gmaster-api";
 import fetch from "isomorphic-unfetch";
 
@@ -40,7 +41,7 @@ export class GMasterError extends Error {
  */
 async function gmasterPost<
     TReq extends GameMasterPostRequest,
-    TRes extends APIResponse = APIResponse
+    TRes extends GameMasterResponse
 >(endpoint: string, payload: TReq, gameId?: GameId): Promise<TRes> {
     const url = new URL(endpoint + (gameId ? "/" + gameId : ""), gmaster_url);
     const res = await fetch(url.toString(), {
@@ -63,9 +64,9 @@ async function gmasterPost<
             );
             throw err;
         })
-        .then(response => {
+        .then((response: APIResponse) => {
             if (response.success) {
-                return response;
+                return response as TRes;
             } else {
                 // This is a GMaster internally produced error.
                 throw new GMasterError(response);
@@ -81,15 +82,15 @@ async function gmasterPost<
  */
 async function gmasterGet<
     TReq extends GameMasterGetRequest = any,
-    TRes extends APIResponse = CheckGameResponse
+    TRes extends GameMasterResponse = CheckGameResponse
 >(endpoint: string, gameId: GameId): Promise<TRes> {
     const url = new URL(endpoint + (gameId ? "/" + gameId : ""), gmaster_url);
     const res = await fetch(url.toString(), {
         method: "GET"
     });
-    return res.json().then(response => {
+    return res.json().then((response: APIResponse) => {
         if (response.success) {
-            return response;
+            return response as TRes;
         } else {
             // This is a GMaster internally produced error.
             throw new GMasterError(response);

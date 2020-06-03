@@ -4,23 +4,7 @@
 
 import { GameState, PlayerId, GameId } from "./gmaster-api";
 
-export type GameBoard = [
-    [string | null, string | null, string | null],
-    [string | null, string | null, string | null],
-    [string | null, string | null, string | null]
-];
-
 export type Role = "first" | "second";
-export interface GameStateUpdate {
-    game_state: {
-        game: GameState["game"];
-        turn: "player1" | "player2";
-    };
-    board: GameBoard;
-    game_id: string;
-    player1: PlayerId;
-    player2: PlayerId;
-}
 
 /**
  * keyof API["in"] === names of messages to emit from client to server over ws
@@ -51,7 +35,7 @@ export interface API {
             role: Role;
         };
         // includes update on whos turn it is now for switching turns
-        update: GameStateUpdate;
+        update: GameState;
         // your_turn: void;
         gameover: {
             // null means a draw

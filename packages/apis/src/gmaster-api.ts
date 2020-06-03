@@ -4,6 +4,11 @@
 
 export type GameId = string;
 export type PlayerId = string;
+export type GameBoard = [
+    [PlayerId | null, PlayerId | null, PlayerId | null],
+    [PlayerId | null, PlayerId | null, PlayerId | null],
+    [PlayerId | null, PlayerId | null, PlayerId | null]
+];
 
 /**
  * Game snapshot as exposed by gmaster API
@@ -15,7 +20,7 @@ export type GameState = {
     // player1 always has the first turn;
     player1: PlayerId;
     player2: PlayerId;
-    board: Array<Array<PlayerId | null>>;
+    board: GameBoard;
     // current game state (if "over", then `turn` field indicates the
     // player who would've been next, if the game was to continue,
     // i.e. the losing player)

@@ -141,13 +141,13 @@ export class SocketGameConnector implements GameConnector {
     };
 
     // reconnect to an existing game
-    private s_reconnection = (r: API["out"]["update"]) => {
-        this.setBoard(r.board);
-        this.send({
-            type: "S_RECONNECTED",
-            isMyTurn: r.game_state.turn === this.playerId
-        });
-    };
+    // private s_reconnection = (r: API["out"]["update"]) => {
+    //     this.setBoard(r.board);
+    //     this.send({
+    //         type: "S_RECONNECTED",
+    //         isMyTurn: r.turn === this.playerId
+    //     });
+    // };
 
     // received 'choose_role' message
     private s_you_are_it = ({ role }: API["out"]["you_are_it"]) => {
@@ -164,7 +164,7 @@ export class SocketGameConnector implements GameConnector {
         this.setBoard(data.board);
         this.send({
             type:
-                data.game_state.turn === this.playerId
+                data[data.turn] === this.playerId
                     ? "S_OUR_TURN"
                     : "S_THEIR_TURN"
         });

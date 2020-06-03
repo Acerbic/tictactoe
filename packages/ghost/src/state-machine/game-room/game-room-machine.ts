@@ -67,7 +67,7 @@ export const state_machine: MachineConfig<
                 src: "invoke_create_game",
                 onDone: {
                     target: "wait4move",
-                    actions: ["emit_your_turn"]
+                    actions: ["emit_update_both"]
                 },
                 onError: {
                     target: "end",
@@ -87,30 +87,26 @@ export const state_machine: MachineConfig<
                 src: "invoke_make_move",
                 onDone: [
                     {
-                        cond: (ctx, e: DoneInvokeEvent<MakeMoveResponse>) =>
-                            e.data.newState.game == "wait",
+                        cond: (_, e: DoneInvokeEvent<MakeMoveResponse>) =>
+                            e.data.newState.game === "wait",
                         target: "wait4move",
-                        actions: [
-                            "emit_update_both",
-                            "switch_player",
-                            "emit_your_turn"
-                        ]
+                        actions: ["emit_update_both"]
                     },
                     {
-                        cond: (ctx, e: DoneInvokeEvent<MakeMoveResponse>) =>
-                            e.data.newState.game == "over" ||
-                            e.data.newState.game == "draw",
+                        cond: (_, e: DoneInvokeEvent<MakeMoveResponse>) =>
+                            e.data.newState.game === "over" ||
+                            e.data.newState.game === "draw",
                         target: "end",
                         actions: [
                             "emit_update_both",
-                            "emit_gameover",
+                            "emit_gameover" /* possible racing with emit_update_both */,
                             "call_dropgame"
                         ]
                     }
                 ],
                 onError: [
                     {
-                        cond: (ctx, e) =>
+                        cond: (_, e) =>
                             typeof e.data.rejectReason === "object" &&
                             e.data.rejectReason instanceof GMasterError &&
                             e.data.rejectReason.code ===
@@ -151,10 +147,6 @@ export const machine_options: Partial<MachineOptions<
          * call CreateGame Rest API on game master
          */
         invoke_create_game: ctx => {
-            if (ctx.current_player === ctx.player2) {
-                [ctx.player1, ctx.player2] = [ctx.player2, ctx.player1];
-            }
-
             return ctx.gm_connect
                 .post<CreateGameRequest, CreateGameResponse>("CreateGame", {
                     player1Id: ctx.player1!,

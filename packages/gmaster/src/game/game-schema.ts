@@ -3,10 +3,10 @@
  */
 
 import { StateSchema, State } from "xstate";
-import { PlayerId } from "@trulyacerbic/ttt-apis/gmaster-api";
+import { PlayerId, GameBoard } from "@trulyacerbic/ttt-apis/gmaster-api";
 
 export interface GameContext {
-    board: Array<Array<PlayerId | null>>;
+    board: GameBoard;
     player1: PlayerId;
     player2: PlayerId;
     moves_made: number;
