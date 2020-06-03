@@ -41,11 +41,7 @@ export class GMasterError extends Error {
 async function gmasterPost<
     TReq extends GameMasterPostRequest,
     TRes extends APIResponse = APIResponse
->(
-    endpoint: string,
-    payload: TReq,
-    gameId?: GameId
-): Promise<TRes | APIResponseFailure> {
+>(endpoint: string, payload: TReq, gameId?: GameId): Promise<TRes> {
     const url = new URL(endpoint + (gameId ? "/" + gameId : ""), gmaster_url);
     const res = await fetch(url.toString(), {
         method: "POST",
@@ -57,14 +53,24 @@ async function gmasterPost<
 
     // TODO: investigate returned code 404 from request
     // res could be not 200 status, fetch doesn't catch?
-    return res.json().catch((err: any) => {
-        errorlog(
-            `gmaster.post (${url})[${JSON.stringify(
-                payload
-            )}]: ${err} \n ~~ \n ${res.body}`
-        );
-        throw err;
-    });
+    return res
+        .json()
+        .catch((err: any) => {
+            errorlog(
+                `gmaster.post (${url})[${JSON.stringify(
+                    payload
+                )}]: ${err} \n ~~ \n ${res.body}`
+            );
+            throw err;
+        })
+        .then(response => {
+            if (response.success) {
+                return response;
+            } else {
+                // This is a GMaster internally produced error.
+                throw new GMasterError(response);
+            }
+        });
 }
 
 /**
@@ -76,12 +82,19 @@ async function gmasterPost<
 async function gmasterGet<
     TReq extends GameMasterGetRequest = any,
     TRes extends APIResponse = CheckGameResponse
->(endpoint: string, gameId: GameId): Promise<TRes | APIResponseFailure> {
+>(endpoint: string, gameId: GameId): Promise<TRes> {
     const url = new URL(endpoint + (gameId ? "/" + gameId : ""), gmaster_url);
     const res = await fetch(url.toString(), {
         method: "GET"
     });
-    return res.json();
+    return res.json().then(response => {
+        if (response.success) {
+            return response;
+        } else {
+            // This is a GMaster internally produced error.
+            throw new GMasterError(response);
+        }
+    });
 }
 
 class GMConnector {

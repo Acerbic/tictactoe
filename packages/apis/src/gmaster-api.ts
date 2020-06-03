@@ -47,7 +47,7 @@ export type APIResponse = APIResponseFailure | APIResponseSuccess;
 export interface CreateGameRequest {
     player1Id: PlayerId;
     player2Id: PlayerId;
-    meta: any;
+    meta?: any;
 }
 export interface CreateGameResponse extends APIResponseSuccess {
     gameId: GameId;

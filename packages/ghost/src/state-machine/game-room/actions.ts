@@ -26,7 +26,6 @@ import {
 import { API, GameBoard } from "@trulyacerbic/ttt-apis/ghost-api";
 
 import player_setup from "../player-setup/player-setup-machine";
-import { GMasterError } from "../../connectors/gmaster_connector";
 
 type PromiseOnFulfill<T> = Promise<T>["then"] extends (
     onfulfilled: infer A
@@ -64,13 +63,7 @@ export const emit_update_both: ActionF = (ctx, event) => {
     ctx.gm_connect
         .get("CheckGame", ctx.game_id!)
         .then(response => {
-            if (response.success) {
-                return response.state;
-            } else {
-                throw new GMasterError(response);
-            }
-        })
-        .then(state => {
+            const state = response.state;
             // update reconnected player's knowledge
             const data: API["out"]["update"] = {
                 board: state.board as GameBoard,
@@ -171,13 +164,7 @@ export const emit_opponent_moved: ActionF = ctx => {
         ctx.gm_connect
             .get("CheckGame", ctx.game_id!)
             .then(response => {
-                if (response.success) {
-                    return response.state.board as GameBoard;
-                } else {
-                    throw new GMasterError(response);
-                }
-            })
-            .then(board => {
+                const board = response.state.board as GameBoard;
                 const turn = ctx[ctx.latest_game_state!.turn];
                 return new Promise((resolve, reject) => {
                     socket_waiting.emit("opponent_moved", {
@@ -342,13 +329,7 @@ export const top_reconnect: ActionF<GameRoom_PlayerConnected> = (
     ctx.gm_connect
         .get("CheckGame", ctx.game_id!)
         .then(response => {
-            if (response.success) {
-                return response.state;
-            } else {
-                throw new GMasterError(response);
-            }
-        })
-        .then(state => {
+            const state = response.state;
             // update reconnected player's knowledge
             const data: API["out"]["update"] = {
                 game_id: ctx.game_id!,

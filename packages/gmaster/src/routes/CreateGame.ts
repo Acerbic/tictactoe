@@ -58,7 +58,7 @@ router.post("/CreateGame", function (req, res, next) {
         state: JSON.stringify(machineWithContext.initialState),
         player1,
         player2,
-        meta
+        meta: meta || null
     };
 
     gamesDb

@@ -157,14 +157,9 @@ export const machine_options: Partial<MachineOptions<
                     player2Id: ctx.player2!
                 })
                 .then(response => {
-                    if (response.success) {
-                        ctx.latest_game_state = response.newState;
-                        ctx.game_id = response.gameId!;
-                        return response;
-                    } else {
-                        // This is a GMaster internally produced error.
-                        throw new GMasterError(response);
-                    }
+                    ctx.latest_game_state = response.newState;
+                    ctx.game_id = response.gameId!;
+                    return response;
                 })
                 .catch(reason => {
                     // This is a fetch-level error
@@ -190,13 +185,9 @@ export const machine_options: Partial<MachineOptions<
                     ctx.game_id
                 )
                 .then(response => {
-                    if (response.success) {
-                        ctx.latest_game_state = response.newState;
-                        event.ack?.(true);
-                        return response;
-                    } else {
-                        throw new GMasterError(response);
-                    }
+                    ctx.latest_game_state = response.newState;
+                    event.ack?.(true);
+                    return response;
                 })
                 .catch(reason => {
                     errorlog("Error during calling /MakeMove: %o", reason);
