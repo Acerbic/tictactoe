@@ -34,5 +34,5 @@
 ✔ include board info in GMAster's CheckGame (and avoid need for exposing DB access) @done(20-06-02 15:19)
 ☐ fix reconnect - needs fuller info on game (who was the "first move")
 ☐ make custom container around Hasura enging that incorporates migrations and meta
-☐ See if excessive calls to CheckGame could be removed from ghost since other calls to gmaster return updated state
+✘ See if excessive calls to CheckGame could be removed from ghost since other calls to gmaster return updated state @cancelled(20-06-03 15:27)
 ☐ unify return value from /CheckGame and "update" ws message

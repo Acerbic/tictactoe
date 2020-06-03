@@ -123,7 +123,19 @@ describe("WS communication", () => {
                 return Promise.resolve(<gm_api.CreateGameResponse>{
                     success: true,
                     gameId: "1111111",
-                    newState: { game: "wait", turn: "player1" }
+                    newState: {
+                        id: "1111111",
+                        player1: "p1",
+                        player2: "p2",
+                        board: [
+                            [null, null, null],
+                            [null, null, null],
+                            [null, null, null]
+                        ],
+                        meta: null,
+                        game: "wait",
+                        turn: "player1"
+                    }
                 });
             } else {
                 return Promise.resolve({
@@ -274,6 +286,33 @@ describe("WS communication", () => {
     });
 
     test("player can quit before the game start and another player take his place", done => {
+        mocked_gmc_post.mockReset().mockImplementationOnce(endpoint => {
+            if (endpoint === "CreateGame") {
+                return Promise.resolve(<gm_api.CreateGameResponse>{
+                    success: true,
+                    gameId: "1111111",
+                    newState: {
+                        id: "1111111",
+                        player1: "p3",
+                        player2: "p2",
+                        board: [
+                            [null, null, null],
+                            [null, null, null],
+                            [null, null, null]
+                        ],
+                        meta: null,
+                        game: "wait",
+                        turn: "player1"
+                    }
+                });
+            } else {
+                return Promise.resolve({
+                    success: false,
+                    errorMessage: "Bad Endpoint",
+                    errorCode: 0
+                });
+            }
+        });
         const client1 = openClientSocket("p1");
         const client2 = openClientSocket("p2");
         const client3 = openClientSocket("p3");

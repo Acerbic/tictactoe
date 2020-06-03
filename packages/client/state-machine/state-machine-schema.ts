@@ -102,6 +102,7 @@ export type UI_QuitGame = {
 
 export type S_MoveRejected = {
     type: "S_MOVE_REJECTED";
+    move: { row: number; column: number };
 };
 
 export type S_MoveAccepted = {

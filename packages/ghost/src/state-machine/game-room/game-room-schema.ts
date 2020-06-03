@@ -4,7 +4,7 @@
  * players to join, be in progress, or be finished
  */
 
-import { StateSchema, Actor } from "xstate";
+import { StateSchema, Actor, AnyEventObject } from "xstate";
 import {
     PlayerId,
     GameId,
@@ -52,9 +52,6 @@ export interface GameRoomContext {
 
     // game id in gamesDB of this game room (assigned after creation by game master)
     game_id?: GameId;
-
-    // latest game state, reported after a move was accepted by game master
-    latest_game_state?: GameState;
 
     // holds records for who connected to this room.
     // this also tracks player's socket for disconnection/reconnection
@@ -120,3 +117,13 @@ export type GameRoomEvent =
     | GameRoom_PlayerPickRole
     | GameRoom_PlayerReady
     | GameRoom_PlayerMove;
+
+/**
+ * Narrow some `AnyEventObject` to one of the `GameRoomEvent` variants
+ */
+export function isGREvent<
+    E extends AnyEventObject,
+    T extends GameRoomEvent["type"]
+>(e: E, t: T): e is E extends { type: T } ? E : never {
+    return e.type === t;
+}

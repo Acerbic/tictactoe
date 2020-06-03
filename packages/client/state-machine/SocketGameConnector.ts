@@ -12,7 +12,7 @@
 import io from "socket.io-client";
 
 import { GameConnector, ClientEventSender } from "./state-machine-schema";
-import { API } from "@trulyacerbic/ttt-apis/ghost-api";
+import { API, Role } from "@trulyacerbic/ttt-apis/ghost-api";
 
 const GHOST_URL = process.env.game_host_url!;
 
@@ -38,23 +38,23 @@ export class SocketGameConnector implements GameConnector {
     }
 
     actions = {
-        emit_iwannabetracer: (role: "first" | "second") => {
+        emit_iwannabetracer: (role: Role) => {
             this.socket.emit("iwannabetracer", role);
         },
         emit_move: (row: number, column: number) => {
             this.socket.emit("move", { row, column }, (accepted: boolean) => {
                 if (!accepted) {
+                    // "Roses are red\nViolets are blue\nYour move was bad\nAnd so are you."
                     this.send({
-                        type: "S_MOVE_REJECTED"
+                        type: "S_MOVE_REJECTED",
+                        move: { row, column }
                     });
                 }
             });
         },
-
         emit_dropgame: () => {
             this.socket.close();
         },
-
         emit_imdone: () => {
             this.socket.emit("imdone");
             this.socket.close();
@@ -121,20 +121,16 @@ export class SocketGameConnector implements GameConnector {
     private attachListeners = (socket: SocketIOClient.Socket) => {
         // this one will be received if we are joining a new game
         socket.once("choose_role", this.s_choose_role);
-        // this one will be received (instead of "choose_role") if we
-        // are reconnecting to a match in progress
-        // socket.once("update", this.s_reconnection);
 
+        // downflow of the game situation from the source of truth, also this
+        // will be received (instead of "choose_role") if we are reconnecting to
+        // a match in progress. As part of the game, this will inform about turns
+        // progression as well as board changes
         socket.on("update", this.s_update);
 
-        // those to follow "choose_role" in player configuration process
+        // game setup negotiation
         socket.once("iamalreadytracer", this.s_iamalreadytracer);
         socket.once("you_are_it", this.s_you_are_it);
-
-        // those messages are received as part of the game proceedings
-        // socket.on("your_turn", this.s_your_turn);
-        // socket.on("meme_accepted", this.s_move_accepted);
-        // socket.on("opponent_moved", this.s_opponent_moved);
         socket.on("gameover", this.s_gameover);
     };
 
@@ -173,21 +169,6 @@ export class SocketGameConnector implements GameConnector {
                     : "S_THEIR_TURN"
         });
     };
-
-    // private s_your_turn = () => {
-    //     console.log("its my turn!");
-    // };
-
-    // point of this if we use ack to determine validity of move submitted?
-    // private s_move_accepted = (response: API["out"]["meme_accepted"]) => {
-    //     this.send({ type: "S_MOVE_ACCEPTED" });
-    //     this.setBoard(response.board);
-    // };
-
-    // private s_opponent_moved = (response: API["out"]["opponent_moved"]) => {
-    //     this.send({ type: "S_NEXT_TURN" });
-    //     this.setBoard(response.board);
-    // };
 
     private s_gameover = (response: API["out"]["gameover"]) => {
         this.send({

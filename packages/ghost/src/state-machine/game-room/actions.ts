@@ -11,7 +11,8 @@ import {
     assign,
     spawn,
     Spawnable,
-    AnyEventObject
+    AnyEventObject,
+    DoneInvokeEvent
 } from "xstate";
 
 import {
@@ -21,11 +22,17 @@ import {
     GameRoom_PlayerDisconnected,
     GameRoom_PlayerReady,
     GameRoom_PlayerPickRole,
-    PlayerInfo
+    PlayerInfo,
+    GameRoom_PlayerQuit,
+    isGREvent
 } from "./game-room-schema";
 import { API, GameBoard } from "@trulyacerbic/ttt-apis/ghost-api";
 
 import player_setup from "../player-setup/player-setup-machine";
+import {
+    CreateGameResponse,
+    MakeMoveResponse
+} from "@trulyacerbic/ttt-apis/gmaster-api";
 
 type PromiseOnFulfill<T> = Promise<T>["then"] extends (
     onfulfilled: infer A
@@ -48,7 +55,7 @@ function chain_promise<F = any, R = any>(
 }
 
 // shortcut to ActionFunction signature
-type ActionF<E extends AnyEventObject = GameRoomEvent> = ActionFunction<
+type AF<E extends AnyEventObject = GameRoomEvent> = ActionFunction<
     GameRoomContext,
     E
 >;
@@ -57,7 +64,7 @@ interface InvokeOnErrorEvent extends AnyEventObject {
     data: any;
 }
 
-export const emit_update_both: ActionF = (ctx, event) => {
+export const emit_update_both: AF = (ctx, event) => {
     actionlog("emit_update_both");
 
     ctx.gm_connect
@@ -68,12 +75,12 @@ export const emit_update_both: ActionF = (ctx, event) => {
             const data: API["out"]["update"] = {
                 board: state.board as GameBoard,
                 game_state: {
-                    turn: ctx.latest_game_state!.turn,
-                    game: ctx.latest_game_state!.game!
+                    turn: state.turn,
+                    game: state.game
                 },
                 game_id: ctx.game_id!,
-                player1: ctx.latest_game_state!.player1,
-                player2: ctx.latest_game_state!.player2
+                player1: state.player1,
+                player2: state.player2
             };
 
             ctx.emits_sync = ctx.emits_sync.then(() => {
@@ -89,20 +96,12 @@ export const emit_update_both: ActionF = (ctx, event) => {
         });
 };
 
-export const ack_invalid_move: ActionF<InvokeOnErrorEvent> = (ctx, e) => {
+export const ack_invalid_move: AF<InvokeOnErrorEvent> = (ctx, e) => {
     actionlog("ack_invalid_move", e.type);
     e.data.srcEvent.ack?.(false);
-    // ctx.players.get(e.data.event.player_id)?.socket.emit("server_error", {
-    //     message:
-    //         "Roses are red\nViolets are blue\nYour move was bad\nAnd so are you.",
-    //     abandonGame: false
-    // });
 };
 
-export const emit_server_error_fatal: ActionF<InvokeOnErrorEvent> = (
-    ctx,
-    e
-) => {
+export const emit_server_error_fatal: AF<InvokeOnErrorEvent> = (ctx, e) => {
     actionlog("emit_server_error_fatal", e.type);
     ctx.emits_sync.then(() => {
         ctx.players.forEach(player_context =>
@@ -117,7 +116,7 @@ export const emit_server_error_fatal: ActionF<InvokeOnErrorEvent> = (
 /**
  * Send 'iamalreadytracer' to both clients
  */
-export const emit_iamalreadytracer: ActionF = ctx => {
+export const emit_iamalreadytracer: AF = ctx => {
     actionlog("emit_iamalreadytracer");
     ctx.emits_sync.then(() => {
         ctx.players.forEach(player_context =>
@@ -129,7 +128,7 @@ export const emit_iamalreadytracer: ActionF = ctx => {
 /**
  * Send 'you_are_it' to both clients
  */
-export const emit_you_are_it: ActionF = ctx => {
+export const emit_you_are_it: AF = ctx => {
     actionlog("emit_you_are_it");
     ctx.emits_sync.then(() => {
         ctx.players.forEach(player_context => {
@@ -146,50 +145,18 @@ export const emit_you_are_it: ActionF = ctx => {
 /**
  * Send 'your_turn' to a client
  */
-export const emit_your_turn: ActionF = ctx => {
+export const emit_your_turn: AF<
+    DoneInvokeEvent<CreateGameResponse> | DoneInvokeEvent<MakeMoveResponse>
+> = (ctx, e) => {
     actionlog("emit_your_turn");
-    const socket = ctx.players.get(ctx.current_player!)!.socket;
+    const playerId = e.data.newState[e.data.newState.turn];
+    const socket = ctx.players.get(playerId)!.socket;
     ctx.emits_sync.then(() => {
         socket.emit("your_turn");
     });
 };
 
-export const emit_opponent_moved: ActionF = ctx => {
-    const [p1, p2] = ctx.players.values();
-
-    const socket_waiting = ctx.current_player == p1.id ? p2.socket : p1.socket;
-    const socket_moving = ctx.players.get(ctx.current_player!)!.socket;
-
-    chain_promise(ctx, () =>
-        ctx.gm_connect
-            .get("CheckGame", ctx.game_id!)
-            .then(response => {
-                const board = response.state.board as GameBoard;
-                const turn = ctx[ctx.latest_game_state!.turn];
-                return new Promise((resolve, reject) => {
-                    socket_waiting.emit("opponent_moved", {
-                        game_state: Object.assign({}, ctx.latest_game_state, {
-                            turn
-                        }),
-                        board
-                    });
-                    socket_moving.emit("meme_accepted", {
-                        game_state: Object.assign({}, ctx.latest_game_state, {
-                            turn
-                        }),
-                        board
-                    });
-                    resolve();
-                });
-            })
-            .catch(rejection => {
-                errorlog("GetGameBoard rejection: " + rejection);
-                // TODO: handle exception
-            })
-    );
-};
-
-export const finalize_setup: ActionF = ctx => {
+export const finalize_setup: AF = ctx => {
     actionlog("finalize_setup");
     const [p1, p2] = ctx.players.values();
     ctx.player1 = p1.id;
@@ -203,15 +170,18 @@ export const finalize_setup: ActionF = ctx => {
     }
 };
 
-export const switch_player: ActionF = ctx => {
+export const switch_player: AF = ctx => {
     actionlog("switch_player");
     ctx.current_player =
         ctx.current_player == ctx.player1 ? ctx.player2 : ctx.player1;
 };
 
-export const emit_gameover: ActionF = (ctx, e) => {
+export const emit_gameover: AF<
+    GameRoom_PlayerQuit | DoneInvokeEvent<MakeMoveResponse>
+> = (ctx, e) => {
     let winner: API["out"]["gameover"]["winner"] = null;
-    if (e.type === "SOC_PLAYER_QUIT") {
+
+    if (isGREvent(e, "SOC_PLAYER_QUIT")) {
         // game ended with a rage quit
         if (ctx.player1 === e.player_id) {
             winner = ctx.player2!;
@@ -222,8 +192,8 @@ export const emit_gameover: ActionF = (ctx, e) => {
         }
     } else {
         // normal game finish
-        if (ctx.latest_game_state!.game == "over") {
-            if (ctx.latest_game_state!.turn === "player1") {
+        if (e.data.newState.game == "over") {
+            if (e.data.newState.turn === "player1") {
                 winner = ctx.player2!;
             } else {
                 winner = ctx.player1!;
@@ -238,7 +208,7 @@ export const emit_gameover: ActionF = (ctx, e) => {
     });
 };
 
-export const call_dropgame: ActionF = ctx => {
+export const call_dropgame: AF = ctx => {
     ctx.gm_connect.post("DropGame", {}, ctx.game_id);
 };
 
@@ -267,10 +237,7 @@ export const initiate_player_setup = assign<
  * Conditionally forwards event to a child actor
  * (actor must be not in final state)
  */
-export const forward_soc_event: ActionF<GameRoom_PlayerPickRole> = (
-    ctx,
-    event
-) => {
+export const forward_soc_event: AF<GameRoom_PlayerPickRole> = (ctx, event) => {
     actionlog("forward_soc_event", event.player_id, event.type);
     const pinfo = ctx.players.get(event.player_id);
     if (pinfo?.setup_actor.state && !pinfo.setup_actor.state.done) {
@@ -278,7 +245,7 @@ export const forward_soc_event: ActionF<GameRoom_PlayerPickRole> = (
     }
 };
 
-export const add_ready_player: ActionF<GameRoom_PlayerReady> = (
+export const add_ready_player: AF<GameRoom_PlayerReady> = (
     ctx,
     { player_id, desired_role }
 ) => {
@@ -307,10 +274,7 @@ export const clear_player_setup = assign<
     };
 });
 
-export const top_disconnect: ActionF<GameRoom_PlayerDisconnected> = (
-    ctx,
-    event
-) => {
+export const top_disconnect: AF<GameRoom_PlayerDisconnected> = (ctx, event) => {
     // disconnect during game in progress - don't drop the game,
     // await reconnection instead
     // TODO: inform players of disconnect
@@ -318,10 +282,7 @@ export const top_disconnect: ActionF<GameRoom_PlayerDisconnected> = (
     actionlog("top-disconnect", event.player_id);
 };
 
-export const top_reconnect: ActionF<GameRoom_PlayerConnected> = (
-    ctx,
-    event
-) => {
+export const top_reconnect: AF<GameRoom_PlayerConnected> = (ctx, event) => {
     actionlog("top-reconnect", event.player_id);
     // reconnection during game in progress - update socket
     ctx.players.get(event.player_id)!.socket = event.socket;
@@ -338,7 +299,7 @@ export const top_reconnect: ActionF<GameRoom_PlayerConnected> = (
                 board: state.board as GameBoard,
                 game_state: {
                     turn: state.turn,
-                    game: ctx.latest_game_state?.game!
+                    game: state.game
                 }
             };
             event.socket.emit("update", data);

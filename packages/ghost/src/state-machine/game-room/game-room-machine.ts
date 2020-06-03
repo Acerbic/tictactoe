@@ -4,7 +4,12 @@
 
 import { statelog, hostlog, errorlog, debuglog } from "../../utils";
 
-import { MachineConfig, MachineOptions, ActionFunctionMap } from "xstate";
+import {
+    MachineConfig,
+    MachineOptions,
+    ActionFunctionMap,
+    DoneInvokeEvent
+} from "xstate";
 import * as MachineActions from "./actions";
 
 import {
@@ -50,8 +55,6 @@ export const state_machine: MachineConfig<
         roles_setup: {
             after: {
                 // zero-delay instead of transient transition to enforce actions stack execution
-                // unfortunately this creates a miniscule "uncertainty" period, in which
-                // socket disconnect/connect events could be lost or misinterpreted
                 0: {
                     target: "creating_game",
                     actions: ["finalize_setup"]
@@ -84,7 +87,8 @@ export const state_machine: MachineConfig<
                 src: "invoke_make_move",
                 onDone: [
                     {
-                        cond: ctx => ctx.latest_game_state!.game == "wait",
+                        cond: (ctx, e: DoneInvokeEvent<MakeMoveResponse>) =>
+                            e.data.newState.game == "wait",
                         target: "wait4move",
                         actions: [
                             "emit_update_both",
@@ -93,9 +97,9 @@ export const state_machine: MachineConfig<
                         ]
                     },
                     {
-                        cond: ctx =>
-                            ctx.latest_game_state!.game == "over" ||
-                            ctx.latest_game_state!.game == "draw",
+                        cond: (ctx, e: DoneInvokeEvent<MakeMoveResponse>) =>
+                            e.data.newState.game == "over" ||
+                            e.data.newState.game == "draw",
                         target: "end",
                         actions: [
                             "emit_update_both",
@@ -157,7 +161,6 @@ export const machine_options: Partial<MachineOptions<
                     player2Id: ctx.player2!
                 })
                 .then(response => {
-                    ctx.latest_game_state = response.newState;
                     ctx.game_id = response.gameId!;
                     return response;
                 })
@@ -185,7 +188,6 @@ export const machine_options: Partial<MachineOptions<
                     ctx.game_id
                 )
                 .then(response => {
-                    ctx.latest_game_state = response.newState;
                     event.ack?.(true);
                     return response;
                 })
