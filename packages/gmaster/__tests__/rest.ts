@@ -36,7 +36,8 @@ describe("REST apis", () => {
                 [null, null, null]
             ],
             turn: "player1",
-            game: "wait"
+            game: "wait",
+            meta: null
         });
         expect(typeof res.gameId).toBe("string");
         expect(res.gameId.length).toBeGreaterThan(1);
@@ -83,7 +84,8 @@ describe("REST apis", () => {
                 [null, null, null]
             ],
             turn: "player1",
-            game: "wait"
+            game: "wait",
+            meta: null
         });
     });
 
@@ -116,7 +118,8 @@ describe("REST apis", () => {
                 [null, null, null]
             ],
             turn: "player2",
-            game: "wait"
+            game: "wait",
+            meta: null
         });
     });
 });

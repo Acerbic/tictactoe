@@ -124,6 +124,7 @@ describe("After game started", () => {
 
         // mock implementations to prepare for a game
         const gameState: gm_api.GameState = {
+            id: "1111111",
             player1: "p1",
             player2: "p2",
             board: [
@@ -131,7 +132,7 @@ describe("After game started", () => {
                 [null, null, null],
                 [null, null, null]
             ],
-
+            meta: null,
             game: "wait",
             turn: "player1"
         };
@@ -290,10 +291,11 @@ describe("After game started", () => {
             mocked_gmc_post.mockResolvedValueOnce(<gm_api.MakeMoveResponse>{
                 success: true,
                 newState: {
+                    id: "1111111",
                     player1: u.player1,
                     player2: u.player2,
                     board: u.board,
-
+                    meta: null,
                     game: "over",
                     turn: "player2"
                 }
