@@ -1,10 +1,12 @@
 FROM node:lts-alpine
-RUN apk add yarn && npm i lerna -g
+RUN apk add yarn
 WORKDIR /app
 
 # Common dependencies among projects
-COPY ["package.json", "lerna.json", "yarn.lock", "./"]
+COPY ["package.json", "yarn.lock", "./"]
+COPY packages/apis ./packages/apis
 RUN yarn --pure-lockfile
+RUN yarn workspace @trulyacerbic/ttt-apis build
 
 # parameters to run this Dockerfile
 ARG GHOST_PORT=3060
@@ -16,17 +18,12 @@ EXPOSE $GHOST_PORT
 EXPOSE 9229
 CMD cd ./packages/ghost && yarn dev
 
-# copy prebuilt @trulyacerbic/ttt-apis & crosslink
-COPY packages/apis ./packages/apis
+# install deps for this package & crosslink
 COPY ["packages/ghost/package.json", "./packages/ghost/"]
-
-# NOTE: seems like bootstrap doesn't scope to a single package
-#       and installs all dependencies for all present workspaces
-#       at the time - i.e. installs "ghost" and "@trulyacerbic/ttt-apis"
-RUN lerna bootstrap --scope="ghost" -- --pure-lockfile
+RUN yarn --pure-lockfile
 
 # copy the rest
 COPY packages/ghost ./packages/ghost
 
 # compile TypeScript
-RUN lerna run build --scope="ghost"
+RUN yarn workspace ghost build

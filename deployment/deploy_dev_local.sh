@@ -1,5 +1,7 @@
 #!/usr/bin/bash
 
-lerna bootstrap && \
-lerna run build && \
+yarn && \
+yarn workspace @trulyacerbic/ttt-apis build && \
+yarn workspace gmaster build && \
+yarn workspace ghost build && \
 sudo docker-compose --file deployment/docker-compose-hasura-only.yml up -d --build

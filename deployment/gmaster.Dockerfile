@@ -1,10 +1,12 @@
 FROM node:lts-alpine
-RUN apk add yarn && npm i lerna -g
+RUN apk add yarn
 WORKDIR /app
 
 # Common dependencies among projects
-COPY ["package.json", "lerna.json", "yarn.lock", "./"]
+COPY ["package.json", "yarn.lock", "./"]
+COPY packages/apis ./packages/apis
 RUN yarn --pure-lockfile
+RUN yarn workspace @trulyacerbic/ttt-apis build
 
 # parameters to run this Dockerfile
 ARG GMASTER_PORT=3000
@@ -14,17 +16,12 @@ ENV GMASTER_PORT=$GMASTER_PORT
 EXPOSE $GMASTER_PORT
 CMD cd ./packages/gmaster && yarn start
 
-# copy prebuilt @trulyacerbic/ttt-apis & crosslink
-COPY packages/apis ./packages/apis
+# install deps for this package & crosslink
 COPY ["packages/gmaster/package.json", "./packages/gmaster/"]
+RUN yarn --pure-lockfile
 
-# NOTE: seems like bootstrap doesn't scope to a single package
-#       and installs all dependencies for all present workspaces
-#       at the time - i.e. installs "gmaster" and "@trulyacerbic/ttt-apis"
-RUN lerna bootstrap --scope="gmaster" -- --pure-lockfile
-
-# copy the rest
+# copy the rest of project's files
 COPY packages/gmaster ./packages/gmaster
 
-# compile TypeScript
-RUN lerna run build --scope="gmaster"
+# build
+RUN yarn workspace gmaster build

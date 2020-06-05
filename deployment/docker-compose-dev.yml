@@ -30,7 +30,7 @@ services:
             context: ..
             args:
                 GMASTER_PORT: 3000
-        image: gmaster:latest
+        image: ttt/gmaster:latest
         environment:
             HASURA_URL: http://graphql-engine:8080/v1/graphql
         restart: always
@@ -41,7 +41,7 @@ services:
             context: ..
             args:
                 GHOST_PORT: 3060
-        image: ghost:latest
+        image: ttt/ghost:latest
         environment:
             HASURA_URL: http://graphql-engine:8080/v1/graphql
             GMASTER_URL: http://gmaster:3000
@@ -57,7 +57,7 @@ services:
             context: ..
             args:
                 CLIENT_PORT: 3030
-        image: tttclient:latest
+        image: ttt/client:latest
         environment:
             # so, in principle ghost server can be anywhere independent of
             # client server, thus we need to point to it explicitly for runtime
