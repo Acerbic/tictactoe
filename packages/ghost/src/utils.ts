@@ -11,18 +11,8 @@ export const debuglog = debug("ttt:ghost:debug");
 import { Socket } from "socket.io";
 import { API } from "@trulyacerbic/ttt-apis/ghost-api";
 
-// server socket
+// server-side socket narrowed to emit API messages
 export interface GhostOutSocket extends Socket {
-    // NOTE: had to duplicate definiton somewhat to achieve both
-    //  editor suggestion on known declared API events and
-    //  ability to emit non-API events without limitation
-    // emit<
-    //     T extends string | symbol,
-    //     P extends T extends keyof API["out"] ? [API["out"][T]] : any[]
-    // >(
-    //     e: T,
-    //     ...data: P
-    // ): boolean;
     emit<T extends keyof API["out"], P extends API["out"][T]>(
         e: T,
         ...data: P extends void ? [] : [P]

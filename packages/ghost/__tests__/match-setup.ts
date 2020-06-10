@@ -2,20 +2,20 @@
  * Simulation of incoming connections and setup of a new game.
  */
 
-// TODO: fix reconnection testing that broke after switching to Hasura
-
 // allow step debugging
 const EXTEND_SOCKET_TIMEOUTS = process.env.VSCODE_CLI ? true : false;
 
-import ioClient from "socket.io-client";
+import ioClient, { Socket } from "socket.io-client";
 import http from "http";
 import ioServer from "socket.io";
 import { AddressInfo } from "net";
+import { sign } from "jsonwebtoken";
 
 // in case we need em
 import GmasterConnector from "../src/connectors/gmaster_connector";
 jest.mock("../src/connectors/gmaster_connector");
 import * as gm_api from "@trulyacerbic/ttt-apis/gmaster-api";
+import { API as gh_api, JWTSession } from "@trulyacerbic/ttt-apis/ghost-api";
 
 /**
  * Destructuring + casting
@@ -44,6 +44,17 @@ describe("WS communication", () => {
 
     // helper to open a socket communication from emulated client.
     function openClientSocket(playerId: string): GhostInSocket {
+        const query: gh_api["connection"] = {
+            playerName: playerId,
+            token: sign(
+                <JWTSession>{
+                    playerId,
+                    playerName: playerId
+                },
+                process.env.JWT_SECRET!
+            )
+        };
+
         // Do not hardcode server port and address, square brackets are used for IPv6
         const socket = ioClient(
             `http://[${httpServerAddr.address}]:${httpServerAddr.port}`,
@@ -53,9 +64,7 @@ describe("WS communication", () => {
                 transports: ["websocket"],
                 autoConnect: false,
                 timeout: EXTEND_SOCKET_TIMEOUTS ? 1000000 : 20000,
-                query: {
-                    playerId
-                }
+                query
             }
         );
         socketsOpened.push(socket);
@@ -194,7 +203,7 @@ describe("WS communication", () => {
             client2.connect();
 
             const p1_done = new Promise(resolve => {
-                client1.once("you_are_it", data => {
+                client1.once("game_started", data => {
                     expect(data.role).toBe("first");
                     socListen(
                         client1,
@@ -204,7 +213,7 @@ describe("WS communication", () => {
                 });
             });
             const p2_done = new Promise(resolve => {
-                client2.once("you_are_it", data => {
+                client2.once("game_started", data => {
                     expect(data.role).toBe("second");
                     resolve();
                 });
@@ -227,7 +236,7 @@ describe("WS communication", () => {
             client2.connect();
 
             const p1_done = new Promise(resolve => {
-                client1.once("you_are_it", data => {
+                client1.once("game_started", data => {
                     expect(data.role).toBe("first");
                     socListen(
                         client1,
@@ -237,7 +246,7 @@ describe("WS communication", () => {
                 });
             });
             const p2_done = new Promise(resolve => {
-                client2.once("you_are_it", data => {
+                client2.once("game_started", data => {
                     expect(data.role).toBe("second");
                     resolve();
                 });
@@ -261,13 +270,13 @@ describe("WS communication", () => {
 
             let role_1: string, role_2: string;
             const p1_done = new Promise(resolve => {
-                client1.once("you_are_it", ({ role }) => {
+                client1.once("game_started", ({ role }) => {
                     role_1 = role;
                     resolve();
                 });
             });
             const p2_done = new Promise(resolve => {
-                client2.once("you_are_it", ({ role }) => {
+                client2.once("game_started", ({ role }) => {
                     role_2 = role;
                     resolve();
                 });
@@ -287,7 +296,7 @@ describe("WS communication", () => {
 
         client1.once("choose_role", () => {
             const client2 = openClientSocket("p1");
-            client2.once("disconnect", () => done());
+            (client2 as typeof Socket).once("disconnect", () => done());
             client2.once("choose_role", () => {
                 fail(
                     "Can't have second connection opened with the same playerId"
@@ -313,7 +322,7 @@ describe("WS communication", () => {
                     client3.emit("iwannabetracer", "first");
 
                     const p3_done = new Promise(resolve => {
-                        client3.once("you_are_it", data => {
+                        client3.once("game_started", data => {
                             expect(data.role).toBe("first");
                             socListen(
                                 client3,
@@ -323,7 +332,7 @@ describe("WS communication", () => {
                         });
                     });
                     const p2_done = new Promise(resolve => {
-                        client2.once("you_are_it", data => {
+                        client2.once("game_started", data => {
                             expect(data.role).toBe("second");
                             resolve();
                         });
@@ -351,7 +360,7 @@ describe("WS communication", () => {
         client1.once("choose_role", () => {
             client1.emit("iwannabetracer", "first");
             client2.once("choose_role", () => {
-                client1.once("disconnect", () => {
+                (client1 as typeof Socket).once("disconnect", () => {
                     client2.emit("iwannabetracer", "second");
                     client1_again.once("choose_role", () => done());
                     client1_again.connect();

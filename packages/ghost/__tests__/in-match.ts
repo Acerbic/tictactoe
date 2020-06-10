@@ -5,7 +5,7 @@
 // allow step debugging
 const EXTEND_SOCKET_TIMEOUTS = process.env.VSCODE_CLI ? true : false;
 
-import ioClient from "socket.io-client";
+import ioClient, { Socket } from "socket.io-client";
 import http from "http";
 import ioServer from "socket.io";
 import { AddressInfo } from "net";
@@ -16,7 +16,7 @@ import { AddressInfo } from "net";
 import GmasterConnector from "../src/connectors/gmaster_connector";
 jest.mock("../src/connectors/gmaster_connector");
 import * as gm_api from "@trulyacerbic/ttt-apis/gmaster-api";
-import { API as gh_api } from "@trulyacerbic/ttt-apis/ghost-api";
+import { API as gh_api, JWTSession } from "@trulyacerbic/ttt-apis/ghost-api";
 
 /**
  * Destructuring + casting
@@ -34,6 +34,7 @@ const {
 import { app } from "../src/app";
 import { SocketDispatcher } from "../src/SocketDispatcher";
 import { GhostInSocket, socListen } from "./__utils";
+import { sign } from "jsonwebtoken";
 
 describe("After game started", () => {
     let httpServer: http.Server;
@@ -47,6 +48,17 @@ describe("After game started", () => {
 
     // helper to open a socket communication from emulated client.
     function openClientSocket(playerId: string): GhostInSocket {
+        const query: gh_api["connection"] = {
+            playerName: playerId,
+            token: sign(
+                <JWTSession>{
+                    playerId,
+                    playerName: playerId
+                },
+                process.env.JWT_SECRET!
+            )
+        };
+
         // Do not hardcode server port and address, square brackets are used for IPv6
         const socket = ioClient(
             `http://[${httpServerAddr.address}]:${httpServerAddr.port}`,
@@ -56,9 +68,7 @@ describe("After game started", () => {
                 transports: ["websocket"],
                 autoConnect: false,
                 timeout: EXTEND_SOCKET_TIMEOUTS ? 1000000 : 20000,
-                query: {
-                    playerId
-                }
+                query
             }
         );
         socketsOpened.push(socket);
@@ -182,7 +192,7 @@ describe("After game started", () => {
                 .once("choose_role", () => {
                     client1.emit("iwannabetracer", "first");
                 })
-                .once("you_are_it", data => {
+                .once("game_started", data => {
                     expect(data.role).toBe("first");
                     client1.on(
                         "update",
@@ -197,7 +207,7 @@ describe("After game started", () => {
                 .once("choose_role", () => {
                     client2.emit("iwannabetracer", "second");
                 })
-                .once("you_are_it", data => {
+                .once("game_started", data => {
                     expect(data.role).toBe("second");
                     resolve();
                 });
@@ -265,7 +275,7 @@ describe("After game started", () => {
     });
 
     test("can reconnect (immediately after start)", done => {
-        client1.once("disconnect", () => {
+        (client1 as typeof Socket).once("disconnect", () => {
             client1 = openClientSocket("p1");
             client1.once("update", data => {
                 expect(data.turn).toBe("player1");
@@ -386,44 +396,43 @@ describe("After game started", () => {
             { row: 0, column: 1 },
             { row: 1, column: 2 }
         ];
-        client1
-            .emit("move", client1_moves.shift())
-            .on("update", ({ turn }) => {
-                if (turn === "player1") {
-                    if (client1_moves.length > 0) {
-                        client1.emit("move", client1_moves.shift());
-                    } else {
-                        client1.disconnect();
-                    }
+        client1.emit("move", client1_moves.shift()).on("update", ({ turn }) => {
+            if (turn === "player1") {
+                if (client1_moves.length > 0) {
+                    client1.emit("move", client1_moves.shift());
+                } else {
+                    client1.disconnect();
                 }
-            })
-            .once("disconnect", () => {
-                mocked_gmc_get.mockResolvedValueOnce(<gm_api.CheckGameResponse>{
-                    success: true,
-                    state: {
-                        board: [
-                            ["p1", "p1", "p2"],
-                            ["p2", "p2", "p1"],
-                            [null, null, null]
-                        ],
-                        game: "wait",
-                        turn: "player1",
-                        player1: "p1",
-                        player2: "p2"
-                    }
-                });
-                const client1_again = openClientSocket("p1");
-                client1_again.on("update", data => {
-                    expect(data.turn).toBe("player1");
-                    expect(data.board).toEqual([
+            }
+        });
+
+        (client1 as typeof Socket).once("disconnect", () => {
+            mocked_gmc_get.mockResolvedValueOnce(<gm_api.CheckGameResponse>{
+                success: true,
+                state: {
+                    board: [
                         ["p1", "p1", "p2"],
                         ["p2", "p2", "p1"],
                         [null, null, null]
-                    ]);
-                    done();
-                });
-                client1_again.connect();
+                    ],
+                    game: "wait",
+                    turn: "player1",
+                    player1: "p1",
+                    player2: "p2"
+                }
             });
+            const client1_again = openClientSocket("p1");
+            client1_again.on("update", data => {
+                expect(data.turn).toBe("player1");
+                expect(data.board).toEqual([
+                    ["p1", "p1", "p2"],
+                    ["p2", "p2", "p1"],
+                    [null, null, null]
+                ]);
+                done();
+            });
+            client1_again.connect();
+        });
 
         const client2_moves: gh_api["in"]["move"][] = [
             { row: 1, column: 0 },

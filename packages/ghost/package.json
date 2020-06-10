@@ -7,10 +7,10 @@
   "private": true,
   "scripts": {
     "build": "tsc",
-    "start": "cross-env DEBUG=*,-engine*,-express:router,-binding,-socket.io* JWT_SECRET=123 node ./dist/server.js",
-    "dev": "cross-env DEBUG=*,-engine*,-express*,-binding,-socket.io* JWT_SECRET=123 node --inspect=0.0.0.0 ./dist/server.js",
+    "start": "cross-env DEBUG=*,-engine*,-express:router,-binding,-socket.io* node ./dist/server.js",
+    "dev": "cross-env DEBUG=*,-engine*,-express*,-binding,-socket.io* node --inspect=0.0.0.0 ./dist/server.js",
     "clean": "rimraf dist",
-    "test": "jest"
+    "test": "cross-env JWT_SECRET=1234567 jest"
   },
   "dependencies": {
     "cross-env": "^7.0.2",

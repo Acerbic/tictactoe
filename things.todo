@@ -13,4 +13,4 @@
 ☐ e2e testing @created(05-06-2020 15:19)
 ☐ client global state should be in one place if possible
 ☐ make client-ghost reconnection flow more clean (discreeet from bare `update`)
-☐ fix ghost tests
+
