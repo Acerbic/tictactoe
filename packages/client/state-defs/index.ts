@@ -1,13 +1,25 @@
-import { atom, selector, RecoilState } from "recoil";
+import decode from "jwt-decode";
+import { atom, selector } from "recoil";
 
-type PlayerState = {
-    name: string;
-    id: string;
-} | null;
+import { PlayerAuthState, playerAuthState } from "./playerAuth";
+import { JWTSession } from "@trulyacerbic/ttt-apis/ghost-api";
+export type { PlayerAuthState };
+export { playerAuthState };
 
-export const playerState = atom<PlayerState>({
-    key: "app-player",
-    default: null
+export const playerIdState = selector<string | null>({
+    key: "player-id",
+    get: ({ get }) => {
+        const player = get(playerAuthState);
+        if (!player?.token) {
+            return null;
+        }
+        try {
+            const decoded = decode(player.token) as JWTSession;
+            return decoded.playerId;
+        } catch (e) {
+            return null;
+        }
+    }
 });
 
 export const roleAssignedState = atom<"first" | "second" | null>({

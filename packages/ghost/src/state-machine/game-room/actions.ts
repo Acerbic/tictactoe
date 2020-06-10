@@ -27,13 +27,9 @@ import {
     isGREvent
 } from "./game-room-schema";
 import { API } from "@trulyacerbic/ttt-apis/ghost-api";
-import { GameBoard } from "@trulyacerbic/ttt-apis/gmaster-api";
 
 import player_setup from "../player-setup/player-setup-machine";
-import {
-    CreateGameResponse,
-    MakeMoveResponse
-} from "@trulyacerbic/ttt-apis/gmaster-api";
+import { MakeMoveResponse } from "@trulyacerbic/ttt-apis/gmaster-api";
 
 type PromiseOnFulfill<T> = Promise<T>["then"] extends (
     onfulfilled: infer A
@@ -65,7 +61,7 @@ interface InvokeOnErrorEvent extends AnyEventObject {
     data: any;
 }
 
-export const emit_update_both: AF = (ctx, event) => {
+export const emit_update_both: AF = ctx => {
     actionlog("emit_update_both");
 
     ctx.gm_connect
@@ -74,7 +70,7 @@ export const emit_update_both: AF = (ctx, event) => {
             // update reconnected player's knowledge
             const data: API["out"]["update"] = response.state;
 
-            ctx.emits_sync = ctx.emits_sync.then(() => {
+            chain_promise(ctx, () => {
                 ctx.players.forEach(player_context => {
                     debuglog(">> emitting update for ", player_context.id);
                     player_context.socket.emit("update", data);
@@ -94,42 +90,32 @@ export const ack_invalid_move: AF<InvokeOnErrorEvent> = (ctx, e) => {
 
 export const emit_server_error_fatal: AF<InvokeOnErrorEvent> = (ctx, e) => {
     actionlog("emit_server_error_fatal", e.type);
-    ctx.emits_sync.then(() => {
-        ctx.players.forEach(player_context =>
-            player_context.socket.emit("server_error", {
-                message: "Server did an oopsy... try again a few minutes later",
-                abandonGame: true
-            })
-        );
-    });
+    ctx.players.forEach(player_context =>
+        player_context.socket.emit("server_error", {
+            message: "Server did an oopsy... try again a few minutes later",
+            abandonGame: true
+        })
+    );
 };
 
-/**
- * Send 'iamalreadytracer' to both clients
- */
-export const emit_iamalreadytracer: AF = ctx => {
-    actionlog("emit_iamalreadytracer");
-    ctx.emits_sync.then(() => {
-        ctx.players.forEach(player_context =>
-            player_context.socket.emit("iamalreadytracer")
-        );
-    });
-};
+export const emit_game_started: AF<AnyEventObject> = (ctx, e) => {
+    actionlog("emit_game_started");
 
-/**
- * Send 'you_are_it' to both clients
- */
-export const emit_you_are_it: AF = ctx => {
-    actionlog("emit_you_are_it");
-    ctx.emits_sync.then(() => {
+    // e.type === "done.invoke.invoke_create_game"
+    chain_promise(ctx, () => {
         ctx.players.forEach(player_context => {
-            debuglog(">> emitting you_are_it for ", player_context.id);
-            player_context.socket.emit("you_are_it", {
+            debuglog(">> emitting game_started for ", player_context.id);
+            player_context.socket.emit("game_started", {
+                opponentName: "????",
                 gameId: ctx.game_id!,
                 role: ctx.player1 == player_context.id ? "first" : "second"
             });
         });
     });
+
+    // sorta cheat - actions order is unreliable and update message must be
+    // emitted AFTER game_started
+    chain_promise(ctx, () => emit_update_both(ctx, e as any, undefined as any));
 };
 
 export const finalize_setup: AF = ctx => {
@@ -179,7 +165,7 @@ export const emit_gameover: AF<
         }
     }
 
-    ctx.emits_sync.then(() => {
+    chain_promise(ctx, () => {
         ctx.players.forEach(player_context =>
             player_context.socket.emit("gameover", { winner })
         );
@@ -273,6 +259,12 @@ export const top_reconnect: AF<GameRoom_PlayerConnected> = (ctx, event) => {
             event.socket.emit("update", data);
         })
         .catch(reason => {
+            errorlog(
+                "Failed 'top_reconnect' update sequence, for player id %s on socket %s. Reason: ",
+                event.player_id,
+                event.socket.id,
+                reason
+            );
             //TODO:
             throw reason;
         });

@@ -6,6 +6,11 @@ import { GameState, PlayerId, GameId } from "./gmaster-api";
 
 export type Role = "first" | "second";
 
+export interface JWTSession {
+    playerId: string;
+    playerName: string;
+}
+
 /**
  * keyof API["in"] === names of messages to emit from client to server over ws
  * keyof API["out"] === names of messages to emit from server to client over ws
@@ -19,7 +24,8 @@ export interface API {
      * the contents is a `query` param to the opening call
      */
     connection: {
-        playerId: PlayerId;
+        token?: string;
+        playerName?: string;
     };
     in: {
         iwannabetracer: Role;
@@ -29,10 +35,16 @@ export interface API {
         remind_me: any;
     };
     out: {
+        connection_ack: {
+            // JWT signed token includes playerName and assigned playerId;
+            token: string;
+        };
+
         choose_role: void;
-        you_are_it: {
+        game_started: {
             gameId: GameId;
             role: Role;
+            opponentName: string;
         };
         // includes update on whos turn it is now for switching turns
         update: GameState;

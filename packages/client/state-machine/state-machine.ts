@@ -1,13 +1,7 @@
 import {
     ClientSchema,
     ClientContext,
-    ClientEvent,
-    S_ReconnectedEvent,
-    S_GameStartEvent,
-    S_GameEndEvent,
-    UI_NewGameEvent,
-    UI_RolePickedEvent,
-    UI_MoveChosenEvent
+    ClientEvent
 } from "./state-machine-schema";
 
 import { Machine, assign } from "xstate";
@@ -31,15 +25,20 @@ export const clientMachine = Machine<ClientContext, ClientSchema, ClientEvent>(
             awaiting_connection: {
                 on: {
                     S_CONNECTED: "role_picking",
-                    S_RECONNECTED: [
-                        {
-                            cond: "reconnected_our_turn",
-                            target: "game.our_turn"
-                        },
-                        {
-                            target: "game.their_turn"
-                        }
-                    ]
+
+                    // this is ugly. duplication and out of place logicking
+                    S_OUR_TURN: "game.our_turn",
+                    S_THEIR_TURN: "game.their_turn"
+
+                    // S_RECONNECTED: [
+                    //     {
+                    //         cond: "reconnected_our_turn",
+                    //         target: "game.our_turn"
+                    //     },
+                    //     {
+                    //         target: "game.their_turn"
+                    //     }
+                    // ]
                 }
             },
             role_picking: {
@@ -132,8 +131,8 @@ export const clientMachine = Machine<ClientContext, ClientSchema, ClientEvent>(
     },
     {
         guards: {
-            reconnected_our_turn: (_, e) =>
-                e.type === "S_RECONNECTED" && e.isMyTurn,
+            // reconnected_our_turn: (_, e) =>
+            //     e.type === "S_RECONNECTED" && e.isMyTurn,
             started_with_our_turn: (_, e) =>
                 e.type === "S_GAME_START" && e.role === "first",
             draw: (_, e) => e.type === "S_GAME_END" && e.outcome === "meh",

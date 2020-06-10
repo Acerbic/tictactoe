@@ -2,7 +2,7 @@ import React from "react";
 import { useRecoilValue } from "recoil";
 
 import {
-    playerState,
+    playerIdState,
     roleAssignedState,
     opponentRoleAssignedState
 } from "../state-defs";
@@ -15,7 +15,7 @@ interface P {
 }
 
 export const GameBoardCell: React.FC<P> = props => {
-    const player = useRecoilValue(playerState);
+    const playerId = useRecoilValue(playerIdState);
     const ourRole = useRecoilValue(roleAssignedState);
 
     // FIXME: causes React warning - possibly a Recoil bug, related to
@@ -26,7 +26,7 @@ export const GameBoardCell: React.FC<P> = props => {
     const cellRole: "first" | "second" | null =
         props.cellTokenPlayerId === null
             ? null
-            : props.cellTokenPlayerId === player!.id
+            : props.cellTokenPlayerId === playerId
             ? ourRole!
             : opponentRole;
 

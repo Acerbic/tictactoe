@@ -82,27 +82,26 @@ export class GameRoomInterpreter extends Interpreter<
         };
     }
 
-    onSocketConnection(socket: Socket) {
+    onSocketConnection(socket: Socket, playerId: PlayerId, playerName: string) {
         // check connection query arguments
-        const player_id: PlayerId = socket.handshake.query.playerId;
-        if (!player_id) {
+        if (!playerId) {
             errorlog("Socket tried to connect without player ID. Refusing.");
             socket.disconnect(true);
             return;
         }
-        debuglog(`a user with id = ${player_id} connecting: ${socket.id}`);
+        debuglog(`a user with id = ${playerId} connecting: ${socket.id}`);
 
         // attach variety of socket event handlers
         socket.on("disconnect", () => {
             debuglog(
                 "user disconnected (id=%s), socket=%s",
-                player_id,
+                playerId,
                 socket.id
             );
             this.send({
                 type: "SOC_DISCONNECT",
                 socket,
-                player_id
+                player_id: playerId
             });
         });
 
@@ -116,24 +115,24 @@ export class GameRoomInterpreter extends Interpreter<
         socket.once("iwannabetracer", (role: "first" | "second") => {
             this.send({
                 type: "SOC_IWANNABETRACER",
-                player_id,
+                player_id: playerId,
                 role
             });
         });
 
         socket.on("move", (move: any, ack: Function) => {
-            this.send({ type: "SOC_MOVE", player_id, move, ack });
+            this.send({ type: "SOC_MOVE", player_id: playerId, move, ack });
         });
 
         socket.once("imdone", () =>
-            this.send({ type: "SOC_PLAYER_QUIT", player_id })
+            this.send({ type: "SOC_PLAYER_QUIT", player_id: playerId })
         );
 
         // raise machine EVENT - SOC_CONNECT
-        debuglog("User %s connected", player_id);
+        debuglog("User %s connected", playerId);
         this.send({
             type: "SOC_CONNECT",
-            player_id,
+            player_id: playerId,
             socket
         });
     }

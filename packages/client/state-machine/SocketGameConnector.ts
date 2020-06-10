@@ -10,30 +10,26 @@
  */
 
 import io from "socket.io-client";
+import decode from "jwt-decode";
 
+import { API, Role, JWTSession } from "@trulyacerbic/ttt-apis/ghost-api";
 import { GameConnector, ClientEventSender } from "./state-machine-schema";
-import { API, Role } from "@trulyacerbic/ttt-apis/ghost-api";
+import { PlayerAuthState } from "../state-defs";
 
 const GHOST_URL = process.env.game_host_url!;
 
 export class SocketGameConnector implements GameConnector {
-    setBoard: Function;
-    setRoleAssigned: (r: string) => void;
-    socket: SocketIOClient.Socket;
-    send: ClientEventSender;
-    playerId: string;
+    private socket: SocketIOClient.Socket;
+    private playerId?: string;
 
     constructor(
-        setBoard: SocketGameConnector["setBoard"],
-        setRoleAssigned: SocketGameConnector["setRoleAssigned"],
-        send: ClientEventSender,
-        playerId: string
+        private setBoard: Function,
+        private setRoleAssigned: (role: Role) => void,
+        private setAuthTokenReceived: (token: string) => void,
+        private send: ClientEventSender,
+        player: PlayerAuthState
     ) {
-        this.setBoard = setBoard;
-        this.setRoleAssigned = setRoleAssigned;
-        this.send = send;
-        this.playerId = playerId;
-        this.socket = this.openSocket(playerId);
+        this.socket = this.openSocket(player);
         this.socket.connect();
     }
 
@@ -61,13 +57,16 @@ export class SocketGameConnector implements GameConnector {
         }
     };
 
-    private openSocket(playerId: string): SocketIOClient.Socket {
+    private openSocket(player: PlayerAuthState): SocketIOClient.Socket {
+        const query: API["connection"] = Object.assign(
+            {},
+            { playerName: player.name },
+            player.token ? { token: player.token } : undefined
+        );
         const socket = io(GHOST_URL, {
             timeout: 2000,
             reconnection: true,
-            query: {
-                playerId
-            },
+            query,
             autoConnect: false,
             reconnectionAttempts: 20
         });
@@ -119,8 +118,15 @@ export class SocketGameConnector implements GameConnector {
      * Listens on the socket and raises events for xstate machine / react state update
      */
     private attachListeners = (socket: SocketIOClient.Socket) => {
+        socket.once("connection_ack", this.s_connection_ack);
+
+        // game setup negotiation
         // this one will be received if we are joining a new game
         socket.once("choose_role", this.s_choose_role);
+
+        // this will be sent as a conclusion of game setup, indicating the
+        // actual game start
+        socket.once("game_started", this.s_game_started);
 
         // downflow of the game situation from the source of truth, also this
         // will be received (instead of "choose_role") if we are reconnecting to
@@ -128,13 +134,25 @@ export class SocketGameConnector implements GameConnector {
         // progression as well as board changes
         socket.on("update", this.s_update);
 
-        // game setup negotiation
-        socket.once("iamalreadytracer", this.s_iamalreadytracer);
-        socket.once("you_are_it", this.s_you_are_it);
+        // termination
         socket.on("gameover", this.s_gameover);
+
+        // socket.on("ragequit", ...);
+        // socket.on("server_error", ...);
+    };
+
+    /**
+     * This might potentially throw if decoding fails
+     */
+    private s_connection_ack = ({ token }: API["out"]["connection_ack"]) => {
+        console.debug("SOCKET: got s_connection_ack");
+        const authData = decode(token) as JWTSession;
+        this.playerId = authData.playerId;
+        this.setAuthTokenReceived(token);
     };
 
     private s_choose_role = () => {
+        console.debug("SOCKET: got s_choose_role");
         this.send({
             type: "S_CONNECTED"
         });
@@ -149,21 +167,25 @@ export class SocketGameConnector implements GameConnector {
     //     });
     // };
 
-    // received 'choose_role' message
-    private s_you_are_it = ({ role }: API["out"]["you_are_it"]) => {
+    private s_game_started = ({ role }: API["out"]["game_started"]) => {
+        console.debug("SOCKET: got s_game_started");
         console.log("I am " + role);
         this.setRoleAssigned(role);
         this.send({ type: "S_GAME_START", role });
     };
 
-    private s_iamalreadytracer = () => {
-        console.log("Role will be assigned by coin toss...");
-    };
-
     private s_update = (data: API["out"]["update"]) => {
+        console.debug("SOCKET: got s_update");
+
+        // FIXME: since update is moonlighting for reconnect event:
+        this.setRoleAssigned(
+            data.player1 === this.playerId ? "first" : "second"
+        );
+
         this.setBoard(data.board);
         this.send({
             type:
+                // its a bit convoluted way to determine who is "data.turn" player
                 data[data.turn] === this.playerId
                     ? "S_OUR_TURN"
                     : "S_THEIR_TURN"

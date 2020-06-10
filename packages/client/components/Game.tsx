@@ -5,6 +5,7 @@
 import React, { useState } from "react";
 import { useRecoilValue, useRecoilCallback } from "recoil";
 import { useMachine } from "@xstate/react";
+import decode from "jwt-decode";
 
 import { GameBoard, GameBoardProps } from "./GameBoard";
 import StateMessage from "./StateMessage";
@@ -15,7 +16,8 @@ import { QuitButton } from "./QuitButton";
 
 import { clientMachine } from "../state-machine/state-machine";
 import { SocketGameConnector } from "../state-machine/SocketGameConnector";
-import { playerState, roleAssignedState } from "../state-defs";
+import { playerAuthState, roleAssignedState } from "../state-defs";
+import { JWTSession, Role } from "@trulyacerbic/ttt-apis/ghost-api";
 
 const initialBoard: GameBoardProps["board"] = [
     [null, null, null],
@@ -24,20 +26,45 @@ const initialBoard: GameBoardProps["board"] = [
 ];
 
 export const Game: React.FC = () => {
-    // const [gameId, setGameId] = useState(null);
+    const player = useRecoilValue(playerAuthState);
 
-    const player = useRecoilValue(playerState);
-    const roleAssigner = useRecoilCallback(
+    // generate a function that when called would set roleAssingedState
+    // (to be called from outside of React hooks infrastructure)
+    const roleAssigner = useRecoilCallback<[Role], void>(
         ({ set }, role) => {
             set(roleAssignedState, role);
         },
-        [player]
+        [roleAssignedState]
     );
+
+    // generate a function that when called would set playerAuthState
+    // (to be called from outside of React hooks infrastructure)
+    const playerAuthSetter = useRecoilCallback<[string], void>(
+        ({ set }, token) => {
+            const payload: JWTSession = decode(token);
+
+            set(playerAuthState, {
+                name: payload.playerName,
+                token
+            });
+        },
+        [playerAuthState]
+    );
+
     const [board, setBoard] = useState(initialBoard);
 
-    const [state, send] = useMachine(clientMachine);
+    const [state, send, intrp] = useMachine(clientMachine);
+    intrp.onTransition(e => {
+        console.debug("MACHINE: transision -> %s", e.value.toString(), e);
+    });
+    intrp.onSend(e => {
+        console.debug("MACHINE: send raised", e);
+    });
+    intrp.onEvent(e => {
+        console.debug("MACHINE: event raised", e);
+    });
 
-    // FIXME: submitting incorrect move (occupied cells)
+    // TODO: check against submitting incorrect move (occupied cells)
     const cellClicked = (row: number, column: number) => {
         console.log(`clicked ${row} - ${column}`);
         if (!state.matches("game.our_turn")) {
@@ -56,13 +83,17 @@ export const Game: React.FC = () => {
 
     const startNewGame = () => {
         setBoard(initialBoard);
+        if (!player) {
+            throw new Error("Player Session object is not initiated properly");
+        }
 
         // initiate new connection to game server
         const con = new SocketGameConnector(
             setBoard,
             roleAssigner,
+            playerAuthSetter,
             send,
-            player!.id
+            player
         );
 
         // switch state to a new game start
@@ -83,11 +114,11 @@ export const Game: React.FC = () => {
 
     let stateRendered: JSX.Element = <></>;
     switch (true) {
-        case !player:
-            stateRendered = (
-                <PopBanner>Sorry, need to login to play.</PopBanner>
-            );
-            break;
+        // case !playerId:
+        //     stateRendered = (
+        //         <PopBanner>Sorry, need to login to play.</PopBanner>
+        //     );
+        //     break;
 
         case state.matches("initial"):
             stateRendered = (

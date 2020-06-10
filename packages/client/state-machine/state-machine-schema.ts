@@ -56,10 +56,10 @@ export interface ClientSchema extends StateSchema<ClientContext> {
 export type S_ConnectedEvent = {
     type: "S_CONNECTED";
 };
-export type S_ReconnectedEvent = {
-    type: "S_RECONNECTED";
-    isMyTurn: boolean;
-};
+// export type S_ReconnectedEvent = {
+//     type: "S_RECONNECTED";
+//     isMyTurn: boolean;
+// };
 
 // export type S_RoomDroppedEvent = {
 //     type: "ROOM_DROPPED";
@@ -105,9 +105,9 @@ export type S_MoveRejected = {
     move: { row: number; column: number };
 };
 
-export type S_MoveAccepted = {
-    type: "S_MOVE_ACCEPTED";
-};
+// export type S_MoveAccepted = {
+//     type: "S_MOVE_ACCEPTED";
+// };
 
 export type S_OurTurn = {
     type: "S_OUR_TURN";
@@ -134,13 +134,13 @@ export type UI_Event =
 export type Server_Event =
     // | S_RoomDroppedEvent
     | S_ConnectedEvent
-    | S_ReconnectedEvent
+    // | S_ReconnectedEvent
     | S_GameStartEvent
     | S_OurTurn
     | S_TheirTurn
     | S_NextTurnEvent
     | S_MoveRejected
-    | S_MoveAccepted
+    // | S_MoveAccepted
     | S_GameEndEvent;
 
 export type ClientEvent = UI_Event | Server_Event;

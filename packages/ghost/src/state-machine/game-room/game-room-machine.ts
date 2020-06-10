@@ -62,12 +62,11 @@ export const state_machine: MachineConfig<
             }
         },
         creating_game: {
-            onEntry: "emit_you_are_it",
             invoke: {
                 src: "invoke_create_game",
                 onDone: {
                     target: "wait4move",
-                    actions: ["emit_update_both"]
+                    actions: ["emit_game_started"]
                 },
                 onError: {
                     target: "end",

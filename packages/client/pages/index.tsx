@@ -32,7 +32,6 @@ export const IndexPage: React.FC = () => {
             <div className="fixed right-0 top-0" style={{ zIndex: 200 }}>
                 {withUserLoginControl(UserBar)}
             </div>
-
             <Game></Game>
         </div>
     );

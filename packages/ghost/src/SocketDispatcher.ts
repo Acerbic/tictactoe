@@ -10,15 +10,19 @@
 import { statelog, hostlog, errorlog, debuglog } from "./utils";
 
 import { Socket, Server as SocServer } from "socket.io";
+import { StateListener } from "xstate/lib/interpreter";
+import { decode, verify } from "jsonwebtoken";
 
+import { PlayerId } from "@trulyacerbic/ttt-apis/gmaster-api";
+import { API, JWTSession } from "@trulyacerbic/ttt-apis/ghost-api";
 import { GameRoomInterpreter } from "./state-machine/GameRoomInterpreter";
 import GmasterConnector from "./connectors/gmaster_connector";
-import { PlayerId } from "@trulyacerbic/ttt-apis/gmaster-api";
 import {
     GameRoomEvent,
     GameRoomContext
 } from "./state-machine/game-room/game-room-schema";
-import { StateListener } from "xstate/lib/interpreter";
+
+import { validate, regenerate, generate } from "./auth/auth";
 
 export class SocketDispatcher {
     /**
@@ -118,21 +122,48 @@ export class SocketDispatcher {
         return newRoom;
     }
 
+    private generateUuid(): string {
+        // FIXME: TODO:
+        return String(Math.random());
+    }
+
     attach(ioServer: SocServer) {
         // attach important socket handlers
         ioServer.on("connection", socket => {
-            // TODO: auth
-            const player_id = socket.handshake.query.playerId;
+            const conn_query: API["connection"] = socket.handshake.query;
 
+            let token: string;
+            let player_id: PlayerId;
+            let player_name: string;
+
+            // establish authenticated identity
+            if (conn_query.token && validate(conn_query.token)) {
+                token = regenerate(conn_query.token, conn_query.playerName);
+                const payload: JWTSession = decode(token) as JWTSession;
+                player_id = payload.playerId;
+                player_name = payload.playerName;
+            } else {
+                player_id = this.generateUuid();
+                player_name = conn_query.playerName || "Anonymous";
+                token = generate(player_name, player_id);
+            }
+
+            // confirm to client and refresh the token for the upcoming game
+            socket.emit("connection_ack", {
+                token
+            });
+
+            // proceed to game logic
             try {
                 const room = this.getRoomForSocketEvent(socket.id, player_id);
 
                 hostlog(
-                    "On-connection for player %s, dropping to room: %s",
+                    "On-connection for player (%s) %s, dropping to room: %s",
                     player_id,
+                    player_name,
                     room.roomId
                 );
-                room.onSocketConnection(socket);
+                room.onSocketConnection(socket, player_id, player_name);
             } catch (e) {
                 hostlog(
                     "Error during connection for player id [%s]",
