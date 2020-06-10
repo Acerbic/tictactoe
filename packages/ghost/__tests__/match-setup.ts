@@ -32,66 +32,15 @@ const {
 
 import { app } from "../src/app";
 import { SocketDispatcher } from "../src/SocketDispatcher";
-import { GhostInSocket, socListen } from "./__utils";
+import { socListen } from "./__utils";
+import ClientSockets from "./__ClientSockets";
 
 describe("WS communication", () => {
     let httpServer: http.Server;
     let httpServerAddr: AddressInfo;
     let socServer: ioServer.Server;
 
-    // keeps track of opened sockets to close them between tests
-    let socketsOpened: Array<SocketIOClient.Socket>;
-
-    // helper to open a socket communication from emulated client.
-    function openClientSocket(playerId: string): GhostInSocket {
-        const query: gh_api["connection"] = {
-            playerName: playerId,
-            token: sign(
-                <JWTSession>{
-                    playerId,
-                    playerName: playerId
-                },
-                process.env.JWT_SECRET!
-            )
-        };
-
-        // Do not hardcode server port and address, square brackets are used for IPv6
-        const socket = ioClient(
-            `http://[${httpServerAddr.address}]:${httpServerAddr.port}`,
-            {
-                reconnection: false, // <-- assume connection reliable during testing
-                forceNew: true, // <-- simulate several distinct connection sources
-                transports: ["websocket"],
-                autoConnect: false,
-                timeout: EXTEND_SOCKET_TIMEOUTS ? 1000000 : 20000,
-                query
-            }
-        );
-        socketsOpened.push(socket);
-        socket
-            .on("disconnect", (reason: any) => {
-                let z = playerId;
-            })
-            .on("reconnect", (attemptNum: any) => {
-                let z = playerId;
-            })
-            .on("connect_error", (error: any) => {
-                let z = playerId;
-            })
-            .on("connect_timeout", (timeout: any) => {
-                let z = playerId;
-            })
-            .on("error", (error: any) => {
-                let z = playerId;
-            })
-            .on("reconnect_error", (error: any) => {
-                let z = playerId;
-            })
-            .on("reconnect_failed", () => {
-                let z = playerId;
-            });
-        return socket as GhostInSocket;
-    }
+    let socs: ClientSockets;
 
     /**
      * Setup WS & HTTP servers
@@ -123,7 +72,10 @@ describe("WS communication", () => {
         });
         new SocketDispatcher().attach(socServer);
 
-        socketsOpened = [];
+        socs = new ClientSockets(
+            `http://[${httpServerAddr.address}]:${httpServerAddr.port}`
+        );
+
         let createdGameState;
         mocked_gmc_post.mockImplementationOnce((endpoint, payload) => {
             if (endpoint === "CreateGame") {
@@ -167,12 +119,7 @@ describe("WS communication", () => {
      *  Cleanup WS & HTTP servers
      */
     afterEach(done => {
-        socketsOpened.forEach(s => {
-            // Cleanup
-            if (s.connected) {
-                s.disconnect();
-            }
-        });
+        socs.cleanUp();
         socServer.close();
         httpServer.close();
         mocked_gmc_post.mockReset();
@@ -182,7 +129,7 @@ describe("WS communication", () => {
     });
 
     test("player should be able to connect", done => {
-        const client = openClientSocket("player");
+        const client = socs.openClientSocket("player");
         client.once("choose_role", () => {
             done();
         });
@@ -190,11 +137,11 @@ describe("WS communication", () => {
     });
 
     test("2 players can complete setup separately", done => {
-        const client1 = openClientSocket("p1");
+        const client1 = socs.openClientSocket("p1");
 
         client1.once("choose_role", () => {
             client1.emit("iwannabetracer", "first");
-            const client2 = openClientSocket("p2");
+            const client2 = socs.openClientSocket("p2");
 
             client2.once("choose_role", () => {
                 client2.emit("iwannabetracer", "second");
@@ -225,10 +172,10 @@ describe("WS communication", () => {
     });
 
     test("2 players can complete setup in parallel", done => {
-        const client1 = openClientSocket("p1");
+        const client1 = socs.openClientSocket("p1");
 
         client1.once("choose_role", () => {
-            const client2 = openClientSocket("p2");
+            const client2 = socs.openClientSocket("p2");
             client2.once("choose_role", () => {
                 client1.emit("iwannabetracer", "first");
                 client2.emit("iwannabetracer", "second");
@@ -258,10 +205,10 @@ describe("WS communication", () => {
     });
 
     test("role conflict is resolved", done => {
-        const client1 = openClientSocket("p1");
+        const client1 = socs.openClientSocket("p1");
 
         client1.once("choose_role", () => {
-            const client2 = openClientSocket("p2");
+            const client2 = socs.openClientSocket("p2");
             client2.once("choose_role", () => {
                 client1.emit("iwannabetracer", "first");
                 client2.emit("iwannabetracer", "first");
@@ -292,10 +239,11 @@ describe("WS communication", () => {
     });
 
     test("disallow the same player have 2 connections simultaneously", done => {
-        const client1 = openClientSocket("p1");
+        let client1_token: string;
+        const client1 = socs.openClientSocket("p1");
 
         client1.once("choose_role", () => {
-            const client2 = openClientSocket("p1");
+            const client2 = socs.openClientSocket("p1", client1_token);
             (client2 as typeof Socket).once("disconnect", () => done());
             client2.once("choose_role", () => {
                 fail(
@@ -305,13 +253,15 @@ describe("WS communication", () => {
             });
             client2.connect();
         });
-        client1.connect();
+        client1
+            .once("connection_ack", ({ token }) => (client1_token = token))
+            .connect();
     });
 
     test("player can quit before the game start and another player take his place", done => {
-        const client1 = openClientSocket("p1");
-        const client2 = openClientSocket("p2");
-        const client3 = openClientSocket("p3");
+        const client1 = socs.openClientSocket("p1");
+        const client2 = socs.openClientSocket("p2");
+        const client3 = socs.openClientSocket("p3");
 
         client1.once("choose_role", () => {
             client2.once("choose_role", () => {
@@ -339,7 +289,7 @@ describe("WS communication", () => {
                     });
 
                     Promise.all([p3_done, p2_done]).then(() => {
-                        const client1_again = openClientSocket("p1");
+                        const client1_again = socs.openClientSocket("p1");
                         client1_again.once("choose_role", () => done());
                         client1_again.connect();
                     });
@@ -353,9 +303,9 @@ describe("WS communication", () => {
     });
 
     test("player can disconnect before match started and on reconnection his setup is reset", done => {
-        const client1 = openClientSocket("p1");
-        const client2 = openClientSocket("p2");
-        const client1_again = openClientSocket("p1");
+        const client1 = socs.openClientSocket("p1");
+        const client2 = socs.openClientSocket("p2");
+        const client1_again = socs.openClientSocket("p1");
 
         client1.once("choose_role", () => {
             client1.emit("iwannabetracer", "first");

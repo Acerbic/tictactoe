@@ -1,32 +1,23 @@
 import { API } from "@trulyacerbic/ttt-apis/ghost-api";
 
 /**
- * Overloading methods to restrict emits to API definitions
+ * client socket narrowed to emit API messages
  */
-interface GhostInSocketEmitter extends SocketIOClient.Emitter {
+export interface GhostInSocket
+    extends Omit<SocketIOClient.Socket, "emit" | "on" | "once"> {
     emit<T extends keyof API["in"], P extends API["in"][T]>(
         e: T,
         ...data: P extends void ? [] : [P]
-    ): GhostInSocketEmitter;
+    ): GhostInSocket;
 
     once<T extends keyof API["out"], P extends API["out"][T]>(
         e: T,
         fn: (...a: P extends void ? [] : [P]) => any
-    ): GhostInSocketEmitter;
+    ): GhostInSocket;
 
     on<T extends keyof API["out"], P extends API["out"][T]>(
         e: T,
         fn: (...data: P extends void ? [] : [P]) => any
-    ): GhostInSocketEmitter;
-}
-
-// client socket narrowed to emit API messages
-export interface GhostInSocket
-    extends Omit<SocketIOClient.Socket, "emit" | "on" | "once">,
-        Omit<GhostInSocketEmitter, "emit"> {
-    emit<T extends keyof API["in"], P extends API["in"][T]>(
-        e: T,
-        ...data: P extends void ? [] : [P]
     ): GhostInSocket;
 }
 

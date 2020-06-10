@@ -5,7 +5,7 @@
 // allow step debugging
 const EXTEND_SOCKET_TIMEOUTS = process.env.VSCODE_CLI ? true : false;
 
-import ioClient, { Socket } from "socket.io-client";
+import { Socket } from "socket.io-client";
 import http from "http";
 import ioServer from "socket.io";
 import { AddressInfo } from "net";
@@ -34,7 +34,8 @@ const {
 import { app } from "../src/app";
 import { SocketDispatcher } from "../src/SocketDispatcher";
 import { GhostInSocket, socListen } from "./__utils";
-import { sign } from "jsonwebtoken";
+import ClientSockets from "./__ClientSockets";
+import { decode } from "jsonwebtoken";
 
 describe("After game started", () => {
     let httpServer: http.Server;
@@ -42,60 +43,12 @@ describe("After game started", () => {
     let socServer: ioServer.Server;
     let client1: GhostInSocket;
     let client2: GhostInSocket;
+    let client1_token: string;
+    let client2_token: string;
+    let player1Id: gm_api.PlayerId;
+    let player2Id: gm_api.PlayerId;
 
-    // keeps track of opened sockets to close them between tests
-    let socketsOpened: Array<SocketIOClient.Socket>;
-
-    // helper to open a socket communication from emulated client.
-    function openClientSocket(playerId: string): GhostInSocket {
-        const query: gh_api["connection"] = {
-            playerName: playerId,
-            token: sign(
-                <JWTSession>{
-                    playerId,
-                    playerName: playerId
-                },
-                process.env.JWT_SECRET!
-            )
-        };
-
-        // Do not hardcode server port and address, square brackets are used for IPv6
-        const socket = ioClient(
-            `http://[${httpServerAddr.address}]:${httpServerAddr.port}`,
-            {
-                reconnection: false, // <-- assume connection reliable during testing
-                forceNew: true, // <-- simulate several distinct connection sources
-                transports: ["websocket"],
-                autoConnect: false,
-                timeout: EXTEND_SOCKET_TIMEOUTS ? 1000000 : 20000,
-                query
-            }
-        );
-        socketsOpened.push(socket);
-        socket
-            .on("disconnect", (reason: any) => {
-                let z = playerId;
-            })
-            .on("reconnect", (attemptNum: any) => {
-                let z = playerId;
-            })
-            .on("connect_error", (error: any) => {
-                let z = playerId;
-            })
-            .on("connect_timeout", (timeout: any) => {
-                let z = playerId;
-            })
-            .on("error", (error: any) => {
-                let z = playerId;
-            })
-            .on("reconnect_error", (error: any) => {
-                let z = playerId;
-            })
-            .on("reconnect_failed", () => {
-                let z = playerId;
-            });
-        return socket as GhostInSocket;
-    }
+    let socs: ClientSockets;
 
     /**
      * Setup WS & HTTP servers
@@ -127,16 +80,15 @@ describe("After game started", () => {
         });
         new SocketDispatcher().attach(socServer);
 
-        // note: (not in official documentation tho, may change)
-        // (ioServer as any).httpServer === httpServer;
-
-        socketsOpened = [];
+        socs = new ClientSockets(
+            `http://[${httpServerAddr.address}]:${httpServerAddr.port}`
+        );
 
         // mock implementations to prepare for a game
         const gameState: gm_api.GameState = {
             id: "1111111",
-            player1: "p1",
-            player2: "p2",
+            player1: "?????",
+            player2: "?????",
             board: [
                 [null, null, null],
                 [null, null, null],
@@ -187,8 +139,11 @@ describe("After game started", () => {
         });
 
         const p1_done = new Promise(resolve => {
-            client1 = openClientSocket("p1");
+            client1 = socs!.openClientSocket("p1");
             client1
+                .once("connection_ack", ({ token }) => {
+                    client1_token = token;
+                })
                 .once("choose_role", () => {
                     client1.emit("iwannabetracer", "first");
                 })
@@ -202,8 +157,11 @@ describe("After game started", () => {
             client1.connect();
         });
         const p2_done = new Promise(resolve => {
-            client2 = openClientSocket("p2");
+            client2 = socs!.openClientSocket("p2");
             client2
+                .once("connection_ack", ({ token }) => {
+                    client2_token = token;
+                })
                 .once("choose_role", () => {
                     client2.emit("iwannabetracer", "second");
                 })
@@ -214,19 +172,21 @@ describe("After game started", () => {
             client2.connect();
         });
 
-        Promise.all([p1_done, p2_done]).then(() => done());
+        Promise.all([p1_done, p2_done]).then(() => {
+            player1Id = (decode(client1_token) as JWTSession).playerId;
+            player2Id = (decode(client2_token) as JWTSession).playerId;
+            gameState.player1 = player1Id;
+            gameState.player2 = player2Id;
+
+            done();
+        });
     });
 
     /**
      *  Cleanup WS & HTTP servers
      */
     afterEach(done => {
-        socketsOpened.forEach(s => {
-            // Cleanup
-            if (s.connected) {
-                s.disconnect();
-            }
-        });
+        socs!.cleanUp();
         socServer.close();
         httpServer.close();
         mocked_gmc_post.mockReset();
@@ -240,14 +200,14 @@ describe("After game started", () => {
             success: true,
             state: {
                 board: [
-                    ["p1", null, null],
+                    [player1Id, null, null],
                     [null, null, null],
                     [null, null, null]
                 ],
                 game: "wait",
                 turn: "player2",
-                player1: "p1",
-                player2: "p2"
+                player1: player1Id,
+                player2: player2Id
             }
         });
 
@@ -256,7 +216,7 @@ describe("After game started", () => {
                 .once("update", data => {
                     expect(data.game).toBe("wait");
                     expect(data.turn).toBe("player2");
-                    expect(data.board[0][0]).toBe("p1");
+                    expect(data.board[0][0]).toBe(player1Id);
                     resolve();
                 })
                 .emit("move", { row: 0, column: 0 })
@@ -266,7 +226,7 @@ describe("After game started", () => {
             client2.once("update", data => {
                 expect(data.turn).toBe("player2");
                 expect(data.game).toBe("wait");
-                expect(data.board[0][0]).toBe("p1");
+                expect(data.board[0][0]).toBe(player1Id);
                 resolve();
             })
         );
@@ -276,7 +236,7 @@ describe("After game started", () => {
 
     test("can reconnect (immediately after start)", done => {
         (client1 as typeof Socket).once("disconnect", () => {
-            client1 = openClientSocket("p1");
+            client1 = socs!.openClientSocket("p1", client1_token);
             client1.once("update", data => {
                 expect(data.turn).toBe("player1");
                 expect(data.board).toEqual([
@@ -309,8 +269,8 @@ describe("After game started", () => {
             // emit p2 move and wait until turn is back in p1's corner
             c2.emit("move", { row: 1, column: 0 });
             u = await socListen(c1, "update", is_p1_turn);
-            expect(u.board[0][0]).toBe("p1");
-            expect(u.board[1][0]).toBe("p2");
+            expect(u.board[0][0]).toBe(player1Id);
+            expect(u.board[1][0]).toBe(player2Id);
             c1.emit("move", { row: 0, column: 1 });
 
             await socListen(c2, "update", is_p2_turn);
@@ -333,7 +293,7 @@ describe("After game started", () => {
             c1.emit("move", { row: 0, column: 2 });
 
             const go = await socListen(c1, "gameover");
-            expect(go.winner).toBe("p1");
+            expect(go.winner).toBe(player1Id);
         })().then(done);
     });
 
@@ -411,22 +371,22 @@ describe("After game started", () => {
                 success: true,
                 state: {
                     board: [
-                        ["p1", "p1", "p2"],
-                        ["p2", "p2", "p1"],
+                        [player1Id, player1Id, player2Id],
+                        [player2Id, player2Id, player1Id],
                         [null, null, null]
                     ],
                     game: "wait",
                     turn: "player1",
-                    player1: "p1",
-                    player2: "p2"
+                    player1: player1Id,
+                    player2: player2Id
                 }
             });
-            const client1_again = openClientSocket("p1");
+            const client1_again = socs!.openClientSocket("p1", client1_token);
             client1_again.on("update", data => {
                 expect(data.turn).toBe("player1");
                 expect(data.board).toEqual([
-                    ["p1", "p1", "p2"],
-                    ["p2", "p2", "p1"],
+                    [player1Id, player1Id, player2Id],
+                    [player2Id, player2Id, player1Id],
                     [null, null, null]
                 ]);
                 done();
