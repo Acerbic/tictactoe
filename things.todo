@@ -3,7 +3,7 @@
 ☐ drop game if both clients d/c?
 ☐ see if css-modules can be injected as normal classes via JSX transform
 ☐ do I need certs for HTTPS-endpoints deployment?
-☐ login system with persistant account and deterministic playerId.
+✔ login system with persistant account and deterministic playerId. @done(10-06-2020 18:31)
 ☐ Update DOCS diagrams
 ☐ client: handle ghost going d/c
 ☐ auto clean old games from DB even if they aren't finished
@@ -13,3 +13,4 @@
 ☐ e2e testing @created(05-06-2020 15:19)
 ☐ client global state should be in one place if possible
 ☐ make client-ghost reconnection flow more clean (discreeet from bare `update`)
+☐ fix ghost tests

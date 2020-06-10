@@ -78,6 +78,11 @@ export const emit_update_both: AF = ctx => {
             });
         })
         .catch(reason => {
+            errorlog(
+                "emit_update_both failed for game id %s, reason:",
+                ctx.game_id,
+                emit_update_both
+            );
             //TODO:
             throw reason;
         });
