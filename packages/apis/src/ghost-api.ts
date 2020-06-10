@@ -28,19 +28,37 @@ export interface API {
         playerName?: string;
     };
     in: {
+        // join existing game or start a new one
+        start_game: { gameId?: GameId } | void;
+
+        // in response to "choose_role"
         iwannabetracer: Role;
+
+        // in-between receiving "game_started" and "gameover"
         move: any /* Uses ack function to return move validity */;
+
+        // signal to abort the game (conceed)
         imdone: void;
-        // the following are not implemented yet
+
+        // the following are not implemented yet:
+        // request out-of-order update on game in progress
         remind_me: any;
     };
     out: {
         connection_ack: {
             // JWT signed token includes playerName and assigned playerId;
             token: string;
+            // if true, then this playerId is in active match right now (will be
+            // followed by "update"); if false, the client must emit "start_game"
+            // to proceed
+            isInGame: boolean;
         };
 
+        // in response to "start_game"
         choose_role: void;
+
+        // after client receives this the game is ready to be played and the
+        // client can send "move" messages
         game_started: {
             gameId: GameId;
             role: Role;
@@ -48,15 +66,19 @@ export interface API {
         };
         // includes update on whos turn it is now for switching turns
         update: GameState;
-        // your_turn: void;
+
+        // after the game concluded for any reason - be it victory, draw or rage quit
         gameover: {
             // null means a draw
             winner: PlayerId | null;
         };
+
+        // some sort of internal mistake happened, the client should reset
         server_error: {
             message: string;
             abandonGame: boolean;
         };
+
         // the following are not implemented yet
         ragequit: any;
     };

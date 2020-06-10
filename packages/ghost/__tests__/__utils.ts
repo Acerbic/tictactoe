@@ -51,3 +51,17 @@ export async function socListen<
         s.once(listenMsg, onceHandler);
     });
 }
+
+export async function socListenAfter<
+    L extends keyof API["out"],
+    P extends API["out"][L]
+>(
+    after: Function,
+    s: GhostInSocket,
+    listenMsg: L,
+    predicate?: (...data: P extends void ? [] : [P]) => boolean
+): Promise<API["out"][L]> {
+    const promise = socListen(s, listenMsg, predicate);
+    after();
+    return promise;
+}

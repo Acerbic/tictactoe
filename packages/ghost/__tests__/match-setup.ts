@@ -5,17 +5,15 @@
 // allow step debugging
 const EXTEND_SOCKET_TIMEOUTS = process.env.VSCODE_CLI ? true : false;
 
-import ioClient, { Socket } from "socket.io-client";
+import { Socket } from "socket.io-client";
 import http from "http";
 import ioServer from "socket.io";
 import { AddressInfo } from "net";
-import { sign } from "jsonwebtoken";
 
 // in case we need em
 import GmasterConnector from "../src/connectors/gmaster_connector";
 jest.mock("../src/connectors/gmaster_connector");
 import * as gm_api from "@trulyacerbic/ttt-apis/gmaster-api";
-import { API as gh_api, JWTSession } from "@trulyacerbic/ttt-apis/ghost-api";
 
 /**
  * Destructuring + casting
@@ -32,7 +30,7 @@ const {
 
 import { app } from "../src/app";
 import { SocketDispatcher } from "../src/SocketDispatcher";
-import { socListen } from "./__utils";
+import { socListen, socListenAfter } from "./__utils";
 import ClientSockets from "./__ClientSockets";
 
 describe("WS communication", () => {
@@ -128,90 +126,102 @@ describe("WS communication", () => {
         done();
     });
 
-    test("player should be able to connect", done => {
+    test("player should be able to connect via websocket", done => {
         const client = socs.openClientSocket("player");
-        client.once("choose_role", () => {
+        client.once("connection_ack", data => {
+            expect(data.isInGame).toBe(false);
+            expect(data.token).not.toBeFalsy();
             done();
         });
         client.connect();
     });
 
-    test("2 players can complete setup separately", done => {
-        const client1 = socs.openClientSocket("p1");
+    test("player can initiate new game", async () => {
+        const client = socs.openClientSocket("player");
+        client.connect();
+        const { isInGame } = await socListen(client, "connection_ack");
+        expect(isInGame).toBe(false);
 
-        client1.once("choose_role", () => {
-            client1.emit("iwannabetracer", "first");
-            const client2 = socs.openClientSocket("p2");
-
-            client2.once("choose_role", () => {
-                client2.emit("iwannabetracer", "second");
-            });
-
-            client2.connect();
-
-            const p1_done = new Promise(resolve => {
-                client1.once("game_started", data => {
-                    expect(data.role).toBe("first");
-                    socListen(
-                        client1,
-                        "update",
-                        d => d.turn === "player1"
-                    ).then(resolve);
-                });
-            });
-            const p2_done = new Promise(resolve => {
-                client2.once("game_started", data => {
-                    expect(data.role).toBe("second");
-                    resolve();
-                });
-            });
-
-            Promise.all([p1_done, p2_done]).then(() => done());
-        });
-        client1.connect();
+        client.emit("start_game");
+        await socListen(client, "choose_role");
     });
 
-    test("2 players can complete setup in parallel", done => {
-        const client1 = socs.openClientSocket("p1");
+    test("2 players can complete setup separately", async () => {
+        const c1 = socs.openClientSocket("p1");
 
-        client1.once("choose_role", () => {
-            const client2 = socs.openClientSocket("p2");
-            client2.once("choose_role", () => {
-                client1.emit("iwannabetracer", "first");
-                client2.emit("iwannabetracer", "second");
+        await socListenAfter(() => c1.connect(), c1, "connection_ack");
+        await socListenAfter(() => c1.emit("start_game"), c1, "choose_role");
+        const p1_done = new Promise(resolve => {
+            // note - can't use socListenAfter().then() because messages
+            // "game_start" and "update" arrive on the same tick (immediately
+            // one after another), and by the time .then() is executed,
+            // Socket.io would consider "update" event unhandled
+            c1.once("game_started", data => {
+                expect(data.role).toBe("first");
+                socListen(c1, "update", d => d.turn === "player1").then(
+                    resolve
+                );
             });
-            client2.connect();
-
-            const p1_done = new Promise(resolve => {
-                client1.once("game_started", data => {
-                    expect(data.role).toBe("first");
-                    socListen(
-                        client1,
-                        "update",
-                        d => d.turn === "player1"
-                    ).then(resolve);
-                });
-            });
-            const p2_done = new Promise(resolve => {
-                client2.once("game_started", data => {
-                    expect(data.role).toBe("second");
-                    resolve();
-                });
-            });
-
-            Promise.all([p1_done, p2_done]).then(() => done());
+            c1.emit("iwannabetracer", "first");
         });
-        client1.connect();
+
+        const c2 = socs.openClientSocket("p2");
+        await socListenAfter(() => c2.connect(), c2, "connection_ack");
+        await socListenAfter(() => c2.emit("start_game"), c2, "choose_role");
+        const p2_done = socListenAfter(
+            () => c2.emit("iwannabetracer", "second"),
+            c2,
+            "game_started"
+        ).then(data => {
+            expect(data.role).toBe("second");
+        });
+
+        return Promise.all([p1_done, p2_done]);
+    });
+
+    test("2 players can complete setup in parallel", async () => {
+        const c1 = socs.openClientSocket("p1");
+        const c2 = socs.openClientSocket("p2");
+
+        await socListenAfter(() => c1.connect(), c1, "connection_ack");
+        await socListenAfter(() => c2.connect(), c2, "connection_ack");
+        await socListenAfter(() => c1.emit("start_game"), c1, "choose_role");
+        await socListenAfter(() => c2.emit("start_game"), c2, "choose_role");
+
+        const p2_done = new Promise(resolve => {
+            c2.once("game_started", data => {
+                expect(data.role).toBe("second");
+                socListen(c2, "update", d => d.turn === "player1").then(
+                    resolve
+                );
+            });
+            c2.emit("iwannabetracer", "second");
+        });
+
+        const p1_done = new Promise(resolve => {
+            c1.once("game_started", data => {
+                expect(data.role).toBe("first");
+                socListen(c1, "update", d => d.turn === "player1").then(
+                    resolve
+                );
+            });
+            c1.emit("iwannabetracer", "first");
+        });
+
+        Promise.all([p1_done, p2_done]);
     });
 
     test("role conflict is resolved", done => {
         const client1 = socs.openClientSocket("p1");
+        const client2 = socs.openClientSocket("p2");
 
         client1.once("choose_role", () => {
-            const client2 = socs.openClientSocket("p2");
             client2.once("choose_role", () => {
                 client1.emit("iwannabetracer", "first");
                 client2.emit("iwannabetracer", "first");
+            });
+            client2.once("connection_ack", () => {
+                client2.emit("start_game");
             });
             client2.connect();
 
@@ -235,6 +245,10 @@ describe("WS communication", () => {
                 done();
             });
         });
+
+        client1.once("connection_ack", () => {
+            client1.emit("start_game");
+        });
         client1.connect();
     });
 
@@ -251,10 +265,16 @@ describe("WS communication", () => {
                 );
                 done();
             });
+            client2.once("connection_ack", () => {
+                client2.emit("start_game");
+            });
             client2.connect();
         });
         client1
-            .once("connection_ack", ({ token }) => (client1_token = token))
+            .once("connection_ack", ({ token }) => {
+                client1_token = token;
+                client1.emit("start_game");
+            })
             .connect();
     });
 
@@ -291,14 +311,27 @@ describe("WS communication", () => {
                     Promise.all([p3_done, p2_done]).then(() => {
                         const client1_again = socs.openClientSocket("p1");
                         client1_again.once("choose_role", () => done());
+                        client1_again.once("connection_ack", () => {
+                            client1_again.emit("start_game");
+                        });
+
                         client1_again.connect();
                     });
                 });
+                client3.once("connection_ack", () => {
+                    client3.emit("start_game");
+                });
                 client3.connect();
+            });
+            client2.once("connection_ack", () => {
+                client2.emit("start_game");
             });
             client2.connect();
         });
 
+        client1.once("connection_ack", () => {
+            client1.emit("start_game");
+        });
         client1.connect();
     });
 
@@ -313,13 +346,22 @@ describe("WS communication", () => {
                 (client1 as typeof Socket).once("disconnect", () => {
                     client2.emit("iwannabetracer", "second");
                     client1_again.once("choose_role", () => done());
+                    client1_again.once("connection_ack", () => {
+                        client1_again.emit("start_game");
+                    });
                     client1_again.connect();
                 });
                 client1.disconnect();
             });
+            client2.once("connection_ack", () => {
+                client2.emit("start_game");
+            });
             client2.connect();
         });
 
+        client1.once("connection_ack", () => {
+            client1.emit("start_game");
+        });
         client1.connect();
     });
 });

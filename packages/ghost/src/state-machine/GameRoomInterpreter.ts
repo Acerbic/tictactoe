@@ -5,7 +5,13 @@
  * in its field.
  */
 
-import { statelog, hostlog, errorlog, debuglog } from "../utils";
+import {
+    statelog,
+    hostlog,
+    errorlog,
+    debuglog,
+    GhostOutSocket
+} from "../utils";
 
 import { Machine, Actor } from "xstate";
 import { Interpreter } from "xstate/lib/interpreter";
@@ -82,7 +88,11 @@ export class GameRoomInterpreter extends Interpreter<
         };
     }
 
-    onSocketConnection(socket: Socket, playerId: PlayerId, playerName: string) {
+    onSocketConnection(
+        socket: GhostOutSocket,
+        playerId: PlayerId,
+        playerName: string
+    ) {
         // check connection query arguments
         if (!playerId) {
             errorlog("Socket tried to connect without player ID. Refusing.");
@@ -92,7 +102,7 @@ export class GameRoomInterpreter extends Interpreter<
         debuglog(`a user with id = ${playerId} connecting: ${socket.id}`);
 
         // attach variety of socket event handlers
-        socket.on("disconnect", () => {
+        (socket as Socket).on("disconnect", () => {
             debuglog(
                 "user disconnected (id=%s), socket=%s",
                 playerId,
@@ -120,7 +130,8 @@ export class GameRoomInterpreter extends Interpreter<
             });
         });
 
-        socket.on("move", (move: any, ack: Function) => {
+        // lil casting to use ack function
+        (socket as Socket).on("move", (move: any, ack: Function) => {
             this.send({ type: "SOC_MOVE", player_id: playerId, move, ack });
         });
 

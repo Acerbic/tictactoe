@@ -143,6 +143,7 @@ describe("After game started", () => {
             client1
                 .once("connection_ack", ({ token }) => {
                     client1_token = token;
+                    client1.emit("start_game");
                 })
                 .once("choose_role", () => {
                     client1.emit("iwannabetracer", "first");
@@ -161,6 +162,7 @@ describe("After game started", () => {
             client2
                 .once("connection_ack", ({ token }) => {
                     client2_token = token;
+                    client2.emit("start_game");
                 })
                 .once("choose_role", () => {
                     client2.emit("iwannabetracer", "second");

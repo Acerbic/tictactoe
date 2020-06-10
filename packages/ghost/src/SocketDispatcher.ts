@@ -7,7 +7,7 @@
  * GameRoomInterperter, to which it forwards the new opened socket.
  */
 
-import { statelog, hostlog, errorlog, debuglog } from "./utils";
+import { statelog, hostlog, errorlog, debuglog, GhostOutSocket } from "./utils";
 
 import { Socket, Server as SocServer } from "socket.io";
 import { StateListener } from "xstate/lib/interpreter";
@@ -52,6 +52,10 @@ export class SocketDispatcher {
     private dropRoom(room: GameRoomInterpreter) {
         this.activeGameRooms.delete(room.state.context.player1!);
         this.activeGameRooms.delete(room.state.context.player2!);
+    }
+
+    private isPlayerInGame(playerId: PlayerId): boolean {
+        return this.activeGameRooms.has(playerId);
     }
 
     private getRoomForSocketEvent(
@@ -123,34 +127,69 @@ export class SocketDispatcher {
 
     attach(ioServer: SocServer) {
         // attach important socket handlers
-        ioServer.on("connection", socket => {
+        ioServer.on("connection", (socket: GhostOutSocket) => {
             const conn_query: API["connection"] = socket.handshake.query;
 
             const { playerId, playerName, token } = regenerate(conn_query);
+            const isInGame = this.isPlayerInGame(playerId);
 
             // confirm to client and refresh the token for the upcoming game
             socket.emit("connection_ack", {
-                token
+                token,
+                isInGame
             });
 
-            // proceed to game logic
-            try {
-                const room = this.getRoomForSocketEvent(socket.id, playerId);
+            if (isInGame) {
+                // player is alreary in a match that is ongoing
+                try {
+                    const room = this.getRoomForSocketEvent(
+                        socket.id,
+                        playerId
+                    );
 
-                hostlog(
-                    "On-connection for player (%s) %s, dropping to room: %s",
-                    playerId,
-                    playerName,
-                    room.roomId
-                );
-                room.onSocketConnection(socket, playerId, playerName);
-            } catch (e) {
-                hostlog(
-                    "Error during connection for player id [%s]",
-                    playerId,
-                    e
-                );
-                socket.disconnect(true);
+                    hostlog(
+                        "Player (%s) %s is rejoining room %s",
+                        playerId,
+                        playerName,
+                        room.roomId
+                    );
+                    room.onSocketConnection(socket, playerId, playerName);
+                } catch (e) {
+                    hostlog(
+                        "Error during reconnection for player id [%s]",
+                        playerId,
+                        e
+                    );
+                    socket.disconnect(true);
+                }
+            } else {
+                // waiting for the player to initiate a new game or join one from the lobby
+                socket.once("start_game", (data?) => {
+                    // TODO:  player is trying to join a specific game
+                    // player is creating a new game room
+
+                    try {
+                        const room = this.getRoomForSocketEvent(
+                            socket.id,
+                            playerId
+                        );
+
+                        hostlog(
+                            "On-connection for player (%s) %s, dropping to room: %s",
+                            playerId,
+                            playerName,
+                            room.roomId
+                        );
+                        room.onSocketConnection(socket, playerId, playerName);
+                    } catch (e) {
+                        hostlog(
+                            "Error during connection for player id [%s]",
+                            playerId,
+                            e
+                        );
+                        socket.disconnect(true);
+                    }
+                });
             }
         });
     }
