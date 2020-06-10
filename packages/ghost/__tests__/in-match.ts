@@ -358,14 +358,14 @@ describe("After game started", () => {
                             });
                         }
 
-                        client1.emit("move", p1_moves.shift());
+                        client1.emit("move", p1_moves.shift()!);
                     }
                 })
                 .once("gameover", ({ winner }) => {
                     expect(winner).toBe(null);
                     resolve();
                 })
-                .emit("move", p1_moves.shift());
+                .emit("move", p1_moves.shift()!);
         });
 
         const p2_done = new Promise(resolve => {
@@ -378,7 +378,7 @@ describe("After game started", () => {
             client2
                 .on("update", data => {
                     if (data.turn === "player2") {
-                        client2.emit("move", p2_moves.shift());
+                        client2.emit("move", p2_moves.shift()!);
                     }
                 })
                 .once("gameover", ({ winner }) => {

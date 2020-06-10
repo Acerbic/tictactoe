@@ -183,7 +183,7 @@ describe("WS communication", () => {
 
     test("player should be able to connect", done => {
         const client = openClientSocket("player");
-        client.once("choose_role", (message: any) => {
+        client.once("choose_role", () => {
             done();
         });
         client.connect();
