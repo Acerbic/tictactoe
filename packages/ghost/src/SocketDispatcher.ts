@@ -11,10 +11,9 @@ import { statelog, hostlog, errorlog, debuglog } from "./utils";
 
 import { Socket, Server as SocServer } from "socket.io";
 import { StateListener } from "xstate/lib/interpreter";
-import { decode, verify } from "jsonwebtoken";
 
 import { PlayerId } from "@trulyacerbic/ttt-apis/gmaster-api";
-import { API, JWTSession } from "@trulyacerbic/ttt-apis/ghost-api";
+import { API } from "@trulyacerbic/ttt-apis/ghost-api";
 import { GameRoomInterpreter } from "./state-machine/GameRoomInterpreter";
 import GmasterConnector from "./connectors/gmaster_connector";
 import {
@@ -22,7 +21,7 @@ import {
     GameRoomContext
 } from "./state-machine/game-room/game-room-schema";
 
-import { validate, regenerate, generate } from "./auth/auth";
+import { regenerate } from "./auth";
 
 export class SocketDispatcher {
     /**
@@ -122,31 +121,12 @@ export class SocketDispatcher {
         return newRoom;
     }
 
-    private generateUuid(): string {
-        // FIXME: TODO:
-        return String(Math.random());
-    }
-
     attach(ioServer: SocServer) {
         // attach important socket handlers
         ioServer.on("connection", socket => {
             const conn_query: API["connection"] = socket.handshake.query;
 
-            let token: string;
-            let player_id: PlayerId;
-            let player_name: string;
-
-            // establish authenticated identity
-            if (conn_query.token && validate(conn_query.token)) {
-                token = regenerate(conn_query.token, conn_query.playerName);
-                const payload: JWTSession = decode(token) as JWTSession;
-                player_id = payload.playerId;
-                player_name = payload.playerName;
-            } else {
-                player_id = this.generateUuid();
-                player_name = conn_query.playerName || "Anonymous";
-                token = generate(player_name, player_id);
-            }
+            const { playerId, playerName, token } = regenerate(conn_query);
 
             // confirm to client and refresh the token for the upcoming game
             socket.emit("connection_ack", {
@@ -155,19 +135,19 @@ export class SocketDispatcher {
 
             // proceed to game logic
             try {
-                const room = this.getRoomForSocketEvent(socket.id, player_id);
+                const room = this.getRoomForSocketEvent(socket.id, playerId);
 
                 hostlog(
                     "On-connection for player (%s) %s, dropping to room: %s",
-                    player_id,
-                    player_name,
+                    playerId,
+                    playerName,
                     room.roomId
                 );
-                room.onSocketConnection(socket, player_id, player_name);
+                room.onSocketConnection(socket, playerId, playerName);
             } catch (e) {
                 hostlog(
                     "Error during connection for player id [%s]",
-                    player_id,
+                    playerId,
                     e
                 );
                 socket.disconnect(true);
