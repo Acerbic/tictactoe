@@ -3,6 +3,7 @@ import React from "react";
 import { withUserLoginControl } from "../components/withUserLoginControl";
 import { UserBar } from "../components/UserBar";
 import { Game } from "../components/Game";
+import { GameDisplay } from "../components/GameDisplay";
 import { useRecoilValue } from "recoil";
 import { bgIndexState } from "../state-defs";
 
@@ -32,7 +33,7 @@ export const IndexPage: React.FC = () => {
             <div className="fixed right-0 top-0" style={{ zIndex: 200 }}>
                 {withUserLoginControl(UserBar)}
             </div>
-            <Game></Game>
+            <Game gameDisplay={GameDisplay}></Game>
         </div>
     );
 };
