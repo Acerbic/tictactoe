@@ -133,6 +133,13 @@ export class SocketDispatcher {
             const { playerId, playerName, token } = regenerate(conn_query);
             const isInGame = this.isPlayerInGame(playerId);
 
+            hostlog(
+                "Player (%s) %s connected on socket  %s",
+                playerId,
+                playerName,
+                socket.id
+            );
+
             // confirm to client and refresh the token for the upcoming game
             socket.emit("connection_ack", {
                 token,
@@ -175,7 +182,7 @@ export class SocketDispatcher {
                         );
 
                         hostlog(
-                            "On-connection for player (%s) %s, dropping to room: %s",
+                            "Room chosen for player (%s) %s --  %s",
                             playerId,
                             playerName,
                             room.roomId

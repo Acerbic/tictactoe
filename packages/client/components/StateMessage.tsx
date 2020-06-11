@@ -18,16 +18,19 @@ export const StateMessage: React.FC<P> = ({ state }) => {
     let sm = "";
     switch (true) {
         case state.matches("initial"):
-            sm = "Ready to connect to the game";
-            break;
-        case state.matches("awaiting_connection"):
             sm = "Waiting for server response...";
+            break;
+        case state.matches("lobby"):
+            sm = "Ready to connect to or create a new game";
             break;
         case state.matches("role_picking"):
             sm = "Choose your destiny!";
             break;
         case state.matches("waiting4opponent"):
             sm = "Waiting for the opponent to join...";
+            break;
+        case state.matches("game.reconnecting"):
+            sm = "... reconnecting ...";
             break;
         case state.matches("game.our_turn"):
             sm = "Your turn! Destroy them!";

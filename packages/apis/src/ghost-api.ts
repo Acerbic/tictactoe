@@ -6,6 +6,7 @@ import { GameState, PlayerId, GameId } from "./gmaster-api";
 
 export type Role = "first" | "second";
 
+export type RoomId = string;
 export interface JWTSession {
     playerId: string;
     playerName: string;
@@ -28,8 +29,8 @@ export interface API {
         playerName?: string;
     };
     in: {
-        // join existing game or start a new one
-        start_game: { gameId?: GameId } | void;
+        // join existing room or start a new one
+        start_game: { roomId: RoomId } | void;
 
         // in response to "choose_role"
         iwannabetracer: Role;

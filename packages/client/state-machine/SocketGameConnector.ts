@@ -12,7 +12,12 @@
 import io from "socket.io-client";
 import decode from "jwt-decode";
 
-import { API, Role, JWTSession } from "@trulyacerbic/ttt-apis/ghost-api";
+import {
+    API,
+    Role,
+    JWTSession,
+    RoomId
+} from "@trulyacerbic/ttt-apis/ghost-api";
 import { GameConnector, ClientEventSender } from "./state-machine-schema";
 import { PlayerAuthState } from "../state-defs";
 
@@ -34,6 +39,9 @@ export class SocketGameConnector implements GameConnector {
     }
 
     actions = {
+        emit_start_game: (roomId?: RoomId) => {
+            this.socket.emit("start_game", (roomId && { roomId }) || undefined);
+        },
         emit_iwannabetracer: (role: Role) => {
             this.socket.emit("iwannabetracer", role);
         },
@@ -144,28 +152,26 @@ export class SocketGameConnector implements GameConnector {
     /**
      * This might potentially throw if decoding fails
      */
-    private s_connection_ack = ({ token }: API["out"]["connection_ack"]) => {
+    private s_connection_ack = ({
+        token,
+        isInGame
+    }: API["out"]["connection_ack"]) => {
         console.debug("SOCKET: got s_connection_ack");
         const authData = decode(token) as JWTSession;
         this.playerId = authData.playerId;
         this.setAuthTokenReceived(token);
+
+        if (isInGame) {
+            this.send({ type: "S_RECONNECTED" });
+        }
     };
 
     private s_choose_role = () => {
         console.debug("SOCKET: got s_choose_role");
         this.send({
-            type: "S_CONNECTED"
+            type: "S_CHOOSE_ROLE"
         });
     };
-
-    // reconnect to an existing game
-    // private s_reconnection = (r: API["out"]["update"]) => {
-    //     this.setBoard(r.board);
-    //     this.send({
-    //         type: "S_RECONNECTED",
-    //         isMyTurn: r.turn === this.playerId
-    //     });
-    // };
 
     private s_game_started = ({ role }: API["out"]["game_started"]) => {
         console.debug("SOCKET: got s_game_started");

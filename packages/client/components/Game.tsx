@@ -2,7 +2,7 @@
  * Main content of the page. Instantiates xstate, root of game-related display.
  */
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRecoilValue, useRecoilCallback } from "recoil";
 import { useMachine } from "@xstate/react";
 import decode from "jwt-decode";
@@ -54,15 +54,39 @@ export const Game: React.FC = () => {
     const [board, setBoard] = useState(initialBoard);
 
     const [state, send, intrp] = useMachine(clientMachine);
-    intrp.onTransition(e => {
-        console.debug("MACHINE: transision -> %s", e.value.toString(), e);
-    });
-    intrp.onSend(e => {
-        console.debug("MACHINE: send raised", e);
-    });
-    intrp.onEvent(e => {
-        console.debug("MACHINE: event raised", e);
-    });
+    useEffect(() => {
+        intrp.onTransition(e => {
+            console.debug("MACHINE: transision -> %s", e.value.toString(), e);
+        });
+        intrp.onSend(e => {
+            console.debug("MACHINE: send raised", e);
+        });
+        intrp.onEvent(e => {
+            console.debug("MACHINE: event raised", e);
+        });
+    }, []);
+
+    // initiate permanent ws connection to the server
+    useEffect(() => {
+        if (!player) {
+            // player session is not initialized yet from local storage;
+            // NOTE: see SSR bug that prevents initializing atoms with non-primitive
+            return;
+        }
+
+        const con = new SocketGameConnector(
+            setBoard,
+            roleAssigner,
+            playerAuthSetter,
+            send,
+            player
+        );
+
+        send({
+            type: "UI_CONNECT",
+            connector: con
+        });
+    }, [!!player]); // FIXME: should be [] after Recoil patches their code
 
     // TODO: check against submitting incorrect move (occupied cells)
     const cellClicked = (row: number, column: number) => {
@@ -83,23 +107,10 @@ export const Game: React.FC = () => {
 
     const startNewGame = () => {
         setBoard(initialBoard);
-        if (!player) {
-            throw new Error("Player Session object is not initiated properly");
-        }
-
-        // initiate new connection to game server
-        const con = new SocketGameConnector(
-            setBoard,
-            roleAssigner,
-            playerAuthSetter,
-            send,
-            player
-        );
 
         // switch state to a new game start
         send({
-            type: "UI_NEW_GAME",
-            connection: con
+            type: "UI_NEW_GAME"
         });
     };
 
@@ -114,26 +125,20 @@ export const Game: React.FC = () => {
 
     let stateRendered: JSX.Element = <></>;
     switch (true) {
-        // case !playerId:
-        //     stateRendered = (
-        //         <PopBanner>Sorry, need to login to play.</PopBanner>
-        //     );
-        //     break;
-
         case state.matches("initial"):
+            stateRendered = (
+                <PopBanner>
+                    <StateMessage state={state} />
+                </PopBanner>
+            );
+            break;
+
+        case state.matches("lobby"):
             stateRendered = (
                 <PopBanner title="Do you want to play a game? o^_^o">
                     <button onClick={startNewGame} className="btn btn-blue">
                         Yes
                     </button>
-                </PopBanner>
-            );
-            break;
-
-        case state.matches("awaiting_connection"):
-            stateRendered = (
-                <PopBanner>
-                    <StateMessage state={state} />
                 </PopBanner>
             );
             break;

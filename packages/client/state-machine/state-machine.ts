@@ -1,10 +1,13 @@
+/**
+ * Implementation of the state machine schema for client app
+ */
+
+import { Machine, assign } from "xstate";
 import {
     ClientSchema,
     ClientContext,
     ClientEvent
 } from "./state-machine-schema";
-
-import { Machine, assign } from "xstate";
 
 /**
  * Implementation of machine governing game client operations
@@ -16,29 +19,19 @@ export const clientMachine = Machine<ClientContext, ClientSchema, ClientEvent>(
         states: {
             initial: {
                 on: {
-                    UI_NEW_GAME: {
-                        target: "awaiting_connection",
-                        actions: "store_connection"
+                    UI_CONNECT: {
+                        target: "lobby",
+                        actions: "store_connector"
                     }
                 }
             },
-            awaiting_connection: {
+            lobby: {
                 on: {
-                    S_CONNECTED: "role_picking",
-
-                    // this is ugly. duplication and out of place logicking
-                    S_OUR_TURN: "game.our_turn",
-                    S_THEIR_TURN: "game.their_turn"
-
-                    // S_RECONNECTED: [
-                    //     {
-                    //         cond: "reconnected_our_turn",
-                    //         target: "game.our_turn"
-                    //     },
-                    //     {
-                    //         target: "game.their_turn"
-                    //     }
-                    // ]
+                    S_RECONNECTED: "game.reconnecting",
+                    UI_NEW_GAME: {
+                        actions: "emit_start_game"
+                    },
+                    S_CHOOSE_ROLE: "role_picking"
                 }
             },
             role_picking: {
@@ -64,6 +57,12 @@ export const clientMachine = Machine<ClientContext, ClientSchema, ClientEvent>(
             },
             game: {
                 states: {
+                    reconnecting: {
+                        on: {
+                            S_OUR_TURN: "our_turn",
+                            S_THEIR_TURN: "their_turn"
+                        }
+                    },
                     our_turn: {
                         initial: "thinking",
                         states: {
@@ -115,30 +114,35 @@ export const clientMachine = Machine<ClientContext, ClientSchema, ClientEvent>(
                     defeat: {}
                 },
                 on: {
-                    UI_NEW_GAME: {
-                        target: "awaiting_connection",
-                        actions: "store_connection"
+                    UI_BACK_TO_LOBBY: {
+                        target: "lobby"
                     }
                 }
             }
         },
         on: {
             UI_RESET: {
-                target: "initial",
+                target: "lobby",
                 actions: "emit_dropgame"
             }
         }
     },
     {
         guards: {
-            // reconnected_our_turn: (_, e) =>
-            //     e.type === "S_RECONNECTED" && e.isMyTurn,
             started_with_our_turn: (_, e) =>
                 e.type === "S_GAME_START" && e.role === "first",
             draw: (_, e) => e.type === "S_GAME_END" && e.outcome === "meh",
             victory: (_, e) => e.type === "S_GAME_END" && e.outcome === "win"
         },
         actions: {
+            store_connector: assign({
+                gameConnector: (ctx, e: ClientEvent) =>
+                    e.type === "UI_CONNECT" ? e.connector : ctx.gameConnector
+            }),
+            emit_start_game: (ctx, e) => {
+                e.type === "UI_NEW_GAME" &&
+                    ctx.gameConnector?.actions.emit_start_game(e.roomId);
+            },
             emit_iwannabetracer: (ctx, e) =>
                 e.type === "UI_ROLE_PICKED" &&
                 ctx.gameConnector?.actions.emit_iwannabetracer(e.role),
@@ -149,10 +153,6 @@ export const clientMachine = Machine<ClientContext, ClientSchema, ClientEvent>(
                 ctx.gameConnector?.actions.emit_dropgame();
                 ctx.gameConnector = null;
             },
-            store_connection: assign({
-                gameConnector: (ctx, e: ClientEvent) =>
-                    e.type === "UI_NEW_GAME" ? e.connection : ctx.gameConnector
-            }),
             emit_imdone: ctx => {
                 ctx.gameConnector?.actions.emit_imdone();
                 ctx.gameConnector = null;
