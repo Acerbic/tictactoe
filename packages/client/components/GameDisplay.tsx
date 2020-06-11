@@ -6,12 +6,12 @@ import React from "react";
 
 import { GameBoard } from "./GameBoard";
 import StateMessage from "./StateMessage";
-import NewGameButton from "./NewGameButton";
 import { PopBanner } from "./PopBanner";
 import { AnnouncerText } from "./AnnouncerText";
 import { QuitButton } from "./QuitButton";
 
 import { GameControlProps } from "./Game";
+import { Button } from "./Button";
 
 export const GameDisplay: React.FC<GameControlProps> = props => {
     const { state } = props;
@@ -66,7 +66,7 @@ export const GameDisplay: React.FC<GameControlProps> = props => {
                     <button
                         type="button"
                         className="btn btn-red mt-4"
-                        onClick={props.dropGameConnection}
+                        onClick={props.dropRoom}
                     >
                         Quit
                     </button>
@@ -74,7 +74,7 @@ export const GameDisplay: React.FC<GameControlProps> = props => {
             );
             break;
 
-        default:
+        case state.matches("game") || state.matches("end"):
             stateRendered = (
                 <>
                     <div
@@ -96,16 +96,25 @@ export const GameDisplay: React.FC<GameControlProps> = props => {
                         <QuitButton onConfirm={props.quitGame}></QuitButton>
                     )}
                     {state.matches("end") && (
-                        <NewGameButton
-                            onClick={props.startNewGame}
+                        <Button
+                            onClick={props.backToLobby}
                             style={{
-                                position: "absolute",
-                                top: "6rem",
-                                right: "1em"
+                                display: "block",
+                                margin: "auto"
                             }}
-                        />
+                        >
+                            Go Back to Lobby
+                        </Button>
                     )}
                 </>
+            );
+            break;
+
+        default:
+            stateRendered = (
+                <PopBanner mode="alert">
+                    If you are seeing this, something is buggy.
+                </PopBanner>
             );
     }
 

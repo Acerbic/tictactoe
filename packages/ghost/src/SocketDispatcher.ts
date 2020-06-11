@@ -171,7 +171,7 @@ export class SocketDispatcher {
                 }
             } else {
                 // waiting for the player to initiate a new game or join one from the lobby
-                socket.once("start_game", (data?) => {
+                socket.on("start_game", (data?) => {
                     // TODO:  player is trying to join a specific game
                     // player is creating a new game room
 

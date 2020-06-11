@@ -5,13 +5,8 @@
  * in its field.
  */
 
-import {
-    statelog,
-    hostlog,
-    errorlog,
-    debuglog,
-    GhostOutSocket
-} from "../utils";
+import { statelog, hostlog, errorlog, debuglog } from "../utils";
+import { GhostOutSocket } from "../utils";
 
 import { Machine, Actor } from "xstate";
 import { Interpreter } from "xstate/lib/interpreter";
@@ -116,13 +111,13 @@ export class GameRoomInterpreter extends Interpreter<
         });
 
         /**
-         * After successful connection player_id will not change, therefor
+         * After successful connection player_id will not change, therefore
          * `player_id` could be used to uniquely track both the player and
          * the socket in the system.
          */
 
         // listen for further socket messages
-        socket.once("iwannabetracer", (role: "first" | "second") => {
+        socket.on("iwannabetracer", (role: "first" | "second") => {
             this.send({
                 type: "SOC_IWANNABETRACER",
                 player_id: playerId,
@@ -130,12 +125,16 @@ export class GameRoomInterpreter extends Interpreter<
             });
         });
 
+        socket.on("drop_room", () => {
+            this.send({ type: "SOC_PLAYER_DROP_ROOM", player_id: playerId });
+        });
+
         // lil casting to use ack function
         (socket as Socket).on("move", (move: any, ack: Function) => {
             this.send({ type: "SOC_MOVE", player_id: playerId, move, ack });
         });
 
-        socket.once("imdone", () =>
+        socket.on("im_done", () =>
             this.send({ type: "SOC_PLAYER_QUIT", player_id: playerId })
         );
 

@@ -17,8 +17,8 @@ export interface GameConnector {
         emit_iwannabetracer: (role: RoleChoice) => void;
         emit_move: (row: number, column: number) => void;
 
-        emit_dropgame: () => void;
-        emit_imdone: () => void;
+        emit_drop_room: () => void;
+        emit_im_done: () => void;
     };
 }
 

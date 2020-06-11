@@ -32,6 +32,9 @@ export interface API {
         // join existing room or start a new one
         start_game: { roomId: RoomId } | void;
 
+        // abandon created while waiting for other players
+        drop_room: void;
+
         // in response to "choose_role"
         iwannabetracer: Role;
 
@@ -39,7 +42,7 @@ export interface API {
         move: any /* Uses ack function to return move validity */;
 
         // signal to abort the game (conceed)
-        imdone: void;
+        im_done: void;
 
         // the following are not implemented yet:
         // request out-of-order update on game in progress

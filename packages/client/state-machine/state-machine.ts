@@ -36,7 +36,6 @@ export const clientMachine = Machine<ClientContext, ClientSchema, ClientEvent>(
             },
             role_picking: {
                 on: {
-                    // ROOM_DROPPED: "initial",
                     UI_ROLE_PICKED: {
                         target: "waiting4opponent",
                         actions: "emit_iwannabetracer"
@@ -45,7 +44,6 @@ export const clientMachine = Machine<ClientContext, ClientSchema, ClientEvent>(
             },
             waiting4opponent: {
                 on: {
-                    // ROOM_DROPPED: "initial",
                     S_GAME_START: [
                         {
                             cond: "started_with_our_turn",
@@ -103,7 +101,7 @@ export const clientMachine = Machine<ClientContext, ClientSchema, ClientEvent>(
                         },
                         { target: "end.defeat" }
                     ],
-                    UI_QUIT_GAME: { target: "initial", actions: "emit_imdone" }
+                    UI_QUIT_GAME: { target: "lobby", actions: "emit_im_done" }
                 }
             },
 
@@ -123,7 +121,7 @@ export const clientMachine = Machine<ClientContext, ClientSchema, ClientEvent>(
         on: {
             UI_RESET: {
                 target: "lobby",
-                actions: "emit_dropgame"
+                actions: "emit_drop_room"
             }
         }
     },
@@ -149,13 +147,11 @@ export const clientMachine = Machine<ClientContext, ClientSchema, ClientEvent>(
             emit_move: (ctx, e) =>
                 e.type === "UI_MOVE_CHOSEN" &&
                 ctx.gameConnector?.actions.emit_move(e.row, e.column),
-            emit_dropgame: ctx => {
-                ctx.gameConnector?.actions.emit_dropgame();
-                ctx.gameConnector = null;
+            emit_drop_room: ctx => {
+                ctx.gameConnector?.actions.emit_drop_room();
             },
-            emit_imdone: ctx => {
-                ctx.gameConnector?.actions.emit_imdone();
-                ctx.gameConnector = null;
+            emit_im_done: ctx => {
+                ctx.gameConnector?.actions.emit_im_done();
             }
         }
     },

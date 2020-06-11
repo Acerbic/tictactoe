@@ -35,7 +35,8 @@ export interface GameControlProps {
     chooseRole: (role: "first" | "second") => void;
     quitGame: () => void;
     cellClicked: (row: number, column: number) => void;
-    dropGameConnection: () => void;
+    dropRoom: () => void;
+    backToLobby: () => void;
 }
 
 interface P {
@@ -131,7 +132,7 @@ export const Game: React.FC<P> = ({ gameDisplay }) => {
         });
     };
 
-    const dropGameConnection = () => {
+    const dropRoom = () => {
         // not resetting the board just yet - it will happen upon new game start
         send({ type: "UI_RESET" });
     };
@@ -139,15 +140,19 @@ export const Game: React.FC<P> = ({ gameDisplay }) => {
     const quitGame = () => {
         send({ type: "UI_QUIT_GAME" });
     };
+    const backToLobby = () => {
+        send({ type: "UI_BACK_TO_LOBBY" });
+    };
 
     const props: GameControlProps = {
         state,
         board,
         startNewGame,
         chooseRole,
-        dropGameConnection,
+        dropRoom,
         cellClicked,
-        quitGame
+        quitGame,
+        backToLobby
     };
 
     const GameDisplay = gameDisplay;

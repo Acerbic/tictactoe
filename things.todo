@@ -12,7 +12,4 @@
 ☐ puppetier testing of client @created(05-06-2020 15:18)
 ☐ e2e testing @created(05-06-2020 15:19)
 ☐ client global state should be in one place if possible
-☐ make client-ghost reconnection flow more clean (discreeet from bare `update`)
-☐ rework end-of-match websocket disconnection into putting ws back into lobby bin
-☐ create ghost "lobby bin" for websockets connected, but not in a game room
 ☐ check in ghost on ws connection that same playerId is not trying to connect from 2 sockets

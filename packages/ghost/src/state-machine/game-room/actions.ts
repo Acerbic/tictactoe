@@ -224,7 +224,8 @@ export const add_ready_player: AF<GameRoom_PlayerReady> = (
 };
 
 /**
- * Delete from players list and free player-setup machine
+ * Delete from players list and free player-setup machine. The room is then
+ * occupied by the remaining player or is empty in the waiting list.
  */
 export const clear_player_setup = assign<
     GameRoomContext,

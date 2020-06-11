@@ -56,12 +56,11 @@ export class SocketGameConnector implements GameConnector {
                 }
             });
         },
-        emit_dropgame: () => {
-            this.socket.close();
+        emit_drop_room: () => {
+            this.socket.emit("drop_room");
         },
-        emit_imdone: () => {
-            this.socket.emit("imdone");
-            this.socket.close();
+        emit_im_done: () => {
+            this.socket.emit("im_done");
         }
     };
 
@@ -130,11 +129,11 @@ export class SocketGameConnector implements GameConnector {
 
         // game setup negotiation
         // this one will be received if we are joining a new game
-        socket.once("choose_role", this.s_choose_role);
+        socket.on("choose_role", this.s_choose_role);
 
         // this will be sent as a conclusion of game setup, indicating the
         // actual game start
-        socket.once("game_started", this.s_game_started);
+        socket.on("game_started", this.s_game_started);
 
         // downflow of the game situation from the source of truth, also this
         // will be received (instead of "choose_role") if we are reconnecting to

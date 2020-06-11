@@ -85,6 +85,11 @@ export type GameRoom_PlayerDisconnected = {
     socket: GhostOutSocket;
 };
 
+export type GameRoom_PlayerDropped = {
+    type: "SOC_PLAYER_DROP_ROOM";
+    player_id: PlayerId;
+};
+
 export type GameRoom_PlayerQuit = {
     type: "SOC_PLAYER_QUIT";
     player_id: PlayerId;
@@ -112,6 +117,7 @@ export type GameRoom_PlayerMove = {
 export type GameRoomEvent =
     | GameRoom_PlayerConnected
     | GameRoom_PlayerDisconnected
+    | GameRoom_PlayerDropped
     | GameRoom_PlayerQuit
     | GameRoom_PlayerPickRole
     | GameRoom_PlayerReady

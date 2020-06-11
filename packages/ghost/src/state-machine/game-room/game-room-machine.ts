@@ -38,6 +38,7 @@ export const state_machine: MachineConfig<
         players_setup: {
             on: {
                 SOC_CONNECT: { actions: "initiate_player_setup" },
+                SOC_PLAYER_DROP_ROOM: { actions: ["clear_player_setup"] },
                 SOC_DISCONNECT: {
                     actions: ["clear_player_setup"]
                 },
