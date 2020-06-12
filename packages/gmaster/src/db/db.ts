@@ -43,6 +43,10 @@ interface DbConnector {
     DropGame(id: GameId): Promise<any>;
 
     HasGame(id: GameId): Promise<boolean>;
+
+    // Maintenance
+    Stats(): Promise<any>;
+    Upkeep(): Promise<any>;
 }
 
 export { Game, DbConnector };

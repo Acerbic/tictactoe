@@ -11,7 +11,9 @@ import CreateGame from "./routes/CreateGame";
 import CheckGame from "./routes/CheckGame";
 import DropGame from "./routes/DropGame";
 import MakeMove from "./routes/MakeMove";
+import Maintenance from "./routes/Maintenance";
 import { APIResponseFailure } from "@trulyacerbic/ttt-apis/gmaster-api";
+import { makeFailureResponse } from "./routes/utils";
 
 const generateApp = () => {
     const app = express();
@@ -35,6 +37,9 @@ const generateApp = () => {
     app.use(DropGame);
     app.use(MakeMove);
 
+    // Util
+    app.use(Maintenance);
+
     // Catch-all error handler
     app.use(<ErrorRequestHandler>((
         err,
@@ -42,10 +47,7 @@ const generateApp = () => {
         res: Response<APIResponseFailure>,
         next
     ) => {
-        const errorCode = err?.code || 0;
-        const errorMessage =
-            err?.message || err?.toString?.() || "Unknown error";
-        res.send({ success: false, errorCode, errorMessage });
+        res.send(makeFailureResponse(err));
     }));
 
     return app;

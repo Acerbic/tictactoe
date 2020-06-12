@@ -128,7 +128,7 @@ export class HasuraConnector implements DbConnector {
 
     /**
      * Delete game.
-     * Request to delete a game with non-existant id does
+     * Request to delete a game with non-existent id does
      * nothing (noop) and only detectable by returning `null`
      * instead of the id of deleted game session.
      */
@@ -151,9 +151,9 @@ export class HasuraConnector implements DbConnector {
     }
 
     /**
-     * Check if game is exising in the DB. ATTN: beware of racing conditions --
+     * Check if game is existing in the DB. ATTN: beware of racing conditions --
      * even if this call returns true, it might be stale short after in case of
-     * concurent requests
+     * concurrent requests
      *
      * @throws Error if id is malformed or other error happened
      * @returns false if a gamesession with such id is not existing, true
@@ -174,5 +174,44 @@ export class HasuraConnector implements DbConnector {
             headers: this.options.headers,
             variables: { id }
         }).then(r => (r.data?.gamesession_by_pk?.id && true) || false);
+    }
+
+    async Stats(): Promise<any> {
+        const q = `
+            query {
+                gamesession_aggregate {
+                    aggregate{
+                        count
+                    }
+                }
+            }
+        `;
+
+        return query({
+            endpoint: this.options.endpoint,
+            query: q,
+            headers: this.options.headers
+        }).then(r => r.data);
+    }
+
+    async Upkeep(): Promise<any> {
+        const q = `
+            mutation($ts: timestamptz) {
+                delete_gamesession(where: {updated_at: {_lt: $ts}}) {
+                    affected_rows
+                }
+            }
+        `;
+
+        const now = Number(new Date());
+        const yesterday = now - 24 * 60 * 60 * 1000;
+        return query({
+            endpoint: this.options.endpoint,
+            query: q,
+            headers: this.options.headers,
+            variables: {
+                ts: new Date(yesterday).toUTCString()
+            }
+        }).then(r => r.data);
     }
 }
