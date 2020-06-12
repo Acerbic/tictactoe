@@ -13,3 +13,7 @@
 ☐ e2e testing @created(05-06-2020 15:19)
 ☐ client global state should be in one place if possible
 ☐ check in ghost on ws connection that same playerId is not trying to connect from 2 sockets
+☐ replace graphcurl in gmaster with ApolloClient
+☐ add a cronjob for DB maintenance to the gmastere container
+☐ sort out debug messages for ghost xstate by categories better
+☐ ghost all-catch unexpected/unhandled xstate errors (unhandled?)

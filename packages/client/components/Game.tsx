@@ -46,7 +46,7 @@ interface P {
 export const Game: React.FC<P> = ({ gameDisplay }) => {
     const player = useRecoilValue(playerAuthState);
 
-    // generate a function that when called would set roleAssingedState
+    // generate a function that when called would set roleAssignedState
     // (to be called from outside of React hooks infrastructure)
     const roleAssigner = useRecoilCallback<[Role], void>(
         ({ set }, role) => {
@@ -74,7 +74,7 @@ export const Game: React.FC<P> = ({ gameDisplay }) => {
     const [state, send, intrp] = useMachine(clientMachine);
     useEffect(() => {
         intrp.onTransition(e => {
-            console.debug("MACHINE: transision -> %s", e.value.toString(), e);
+            console.debug("MACHINE: transition -> %s", e.value.toString(), e);
         });
         intrp.onSend(e => {
             console.debug("MACHINE: send raised", e);
@@ -92,18 +92,15 @@ export const Game: React.FC<P> = ({ gameDisplay }) => {
             return;
         }
 
-        const con = new SocketGameConnector(
+        // the connector will use "send" to self-store into the
+        // machine's context.
+        new SocketGameConnector(
             setBoard,
             roleAssigner,
             playerAuthSetter,
             send,
             player
         );
-
-        send({
-            type: "UI_CONNECT",
-            connector: con
-        });
     }, [!!player]); // FIXME: should be [] after Recoil patches their code
 
     // TODO: check against submitting incorrect move (occupied cells)

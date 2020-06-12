@@ -71,10 +71,10 @@ export interface ClientSchema extends StateSchema<ClientContext> {
 /************************************************************/
 /* Events originating from React - User interactions mostly */
 
-export interface UI_Connect extends EventObject {
-    type: "UI_CONNECT";
-    connector: GameConnector;
-}
+// export interface UI_Connect extends EventObject {
+//     type: "UI_CONNECT";
+//     connector: GameConnector;
+// }
 export interface UI_RolePickedEvent extends EventObject {
     type: "UI_ROLE_PICKED";
     role: "first" | "second";
@@ -120,10 +120,12 @@ Events produced from messages received over websocket (signals from the server)
 
 export interface S_ConnectedEvent extends EventObject {
     type: "S_CONNECTED";
+    connector: GameConnector;
 }
 
 export interface S_ReconnectedEvent extends EventObject {
     type: "S_RECONNECTED";
+    connector: GameConnector;
 }
 
 export interface S_ChooseRole extends EventObject {
@@ -167,7 +169,7 @@ export interface S_TheirTurn extends EventObject {
  * (due to user interactions)
  */
 export type UI_Event =
-    | UI_Connect
+    // | UI_Connect
     | UI_NewGameEvent
     | UI_RolePickedEvent
     | UI_ResetEvent

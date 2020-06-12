@@ -62,8 +62,13 @@ export class GameRoomInterpreter extends Interpreter<
         // invokation of `send` for this.state.done flag
         this.superSend = this.send;
         this.send = (...args) => {
-            if (!this.state.done) {
-                return this.superSend(...args);
+            try {
+                if (!this.state.done) {
+                    return this.superSend(...args);
+                }
+            } catch (exc) {
+                // catch-all for unhandled machine errors
+                errorlog("GameRoomeInterpreter catch-all:", exc);
             }
             return this.state;
         };

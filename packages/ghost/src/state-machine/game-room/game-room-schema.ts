@@ -121,7 +121,9 @@ export type GameRoomEvent =
     | GameRoom_PlayerQuit
     | GameRoom_PlayerPickRole
     | GameRoom_PlayerReady
-    | GameRoom_PlayerMove;
+    | GameRoom_PlayerMove
+    | { type: "error.platform.top_reconnect" }
+    | { type: "error.platform.emit_update_both" };
 
 /**
  * Narrow some `AnyEventObject` to one of the `GameRoomEvent` variants

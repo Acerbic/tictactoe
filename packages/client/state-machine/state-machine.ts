@@ -19,15 +19,18 @@ export const clientMachine = Machine<ClientContext, ClientSchema, ClientEvent>(
         states: {
             initial: {
                 on: {
-                    UI_CONNECT: {
+                    S_CONNECTED: {
                         target: "lobby",
+                        actions: "store_connector"
+                    },
+                    S_RECONNECTED: {
+                        target: "game.reconnecting",
                         actions: "store_connector"
                     }
                 }
             },
             lobby: {
                 on: {
-                    S_RECONNECTED: "game.reconnecting",
                     UI_NEW_GAME: {
                         actions: "emit_start_game"
                     },
@@ -135,7 +138,9 @@ export const clientMachine = Machine<ClientContext, ClientSchema, ClientEvent>(
         actions: {
             store_connector: assign({
                 gameConnector: (ctx, e: ClientEvent) =>
-                    e.type === "UI_CONNECT" ? e.connector : ctx.gameConnector
+                    e.type === "S_CONNECTED" || e.type === "S_RECONNECTED"
+                        ? e.connector
+                        : ctx.gameConnector
             }),
             emit_start_game: (ctx, e) => {
                 e.type === "UI_NEW_GAME" &&

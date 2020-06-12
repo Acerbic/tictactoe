@@ -10,6 +10,7 @@ export const debuglog = debug("ttt:ghost:debug");
 
 import { Socket } from "socket.io";
 import { API } from "@trulyacerbic/ttt-apis/ghost-api";
+import { GameRoomContext } from "./state-machine/game-room/game-room-schema";
 
 // server-side socket narrowed to emit API messages
 export interface GhostOutSocket extends Omit<Socket, "once" | "on"> {
@@ -27,4 +28,24 @@ export interface GhostOutSocket extends Omit<Socket, "once" | "on"> {
         e: T,
         fn: (...data: P extends void ? [] : [P]) => any
     ): GhostOutSocket;
+}
+
+type PromiseOnFulfill<T> = Promise<T>["then"] extends (
+    onfulfilled: infer A
+) => any
+    ? A
+    : never;
+type PromiseOnReject<T> = Promise<T>["then"] extends (
+    onfulfilled: any,
+    onrejected: infer A
+) => any
+    ? A
+    : never;
+
+export function chain_promise<F = any, R = any>(
+    ctx: GameRoomContext,
+    onfulfilled: PromiseOnFulfill<F>,
+    onrejected?: PromiseOnReject<R>
+) {
+    ctx.emits_sync = ctx.emits_sync.then(onfulfilled, onrejected);
 }

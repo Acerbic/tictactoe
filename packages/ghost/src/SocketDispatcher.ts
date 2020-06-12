@@ -3,8 +3,8 @@
  *
  * Exports a function that attaches a listener to a SocketIO server. That listener
  * is waiting for "connection" events (new ws connection opened), analyses connection
- * query data and either creates a new GameRoomInterpereter or selects an existing
- * GameRoomInterperter, to which it forwards the new opened socket.
+ * query data and either creates a new GameRoomInterpreter or selects an existing
+ * GameRoomInterpreter, to which it forwards the new opened socket.
  */
 
 import { statelog, hostlog, errorlog, debuglog, GhostOutSocket } from "./utils";
@@ -32,7 +32,7 @@ export class SocketDispatcher {
     private activeGameRooms = new Map<PlayerId, GameRoomInterpreter>();
 
     /**
-     * Injected dependencies to be provided to xstate Interperter
+     * Injected dependencies to be provided to xstate Interpreter
      */
     private deps = {
         gmaster: new GmasterConnector()
@@ -58,10 +58,7 @@ export class SocketDispatcher {
         return this.activeGameRooms.has(playerId);
     }
 
-    private getRoomForSocketEvent(
-        socketId: Socket["id"],
-        playerId: string
-    ): GameRoomInterpreter {
+    private getRoomForPlayer(playerId: string): GameRoomInterpreter {
         hostlog("getting room for player %s", playerId);
         debuglog(
             "awaiting: ",
@@ -147,12 +144,9 @@ export class SocketDispatcher {
             });
 
             if (isInGame) {
-                // player is alreary in a match that is ongoing
+                // player is already in a match that is ongoing
                 try {
-                    const room = this.getRoomForSocketEvent(
-                        socket.id,
-                        playerId
-                    );
+                    const room = this.getRoomForPlayer(playerId);
 
                     hostlog(
                         "Player (%s) %s is rejoining room %s",
@@ -176,10 +170,7 @@ export class SocketDispatcher {
                     // player is creating a new game room
 
                     try {
-                        const room = this.getRoomForSocketEvent(
-                            socket.id,
-                            playerId
-                        );
+                        const room = this.getRoomForPlayer(playerId);
 
                         hostlog(
                             "Room chosen for player (%s) %s --  %s",

@@ -41,7 +41,7 @@ export interface API {
         // in-between receiving "game_started" and "gameover"
         move: any /* Uses ack function to return move validity */;
 
-        // signal to abort the game (conceed)
+        // signal to abort the game (concede)
         im_done: void;
 
         // the following are not implemented yet:
@@ -68,7 +68,7 @@ export interface API {
             role: Role;
             opponentName: string;
         };
-        // includes update on whos turn it is now for switching turns
+        // includes update on who's turn it is now for switching turns
         update: GameState;
 
         // after the game concluded for any reason - be it victory, draw or rage quit
@@ -84,6 +84,6 @@ export interface API {
         };
 
         // the following are not implemented yet
-        ragequit: any;
+        rage_quit: any;
     };
 }

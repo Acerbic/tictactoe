@@ -74,6 +74,16 @@ export const GameDisplay: React.FC<GameControlProps> = props => {
             );
             break;
 
+        case state.matches("game.reconnecting"):
+            stateRendered = (
+                <PopBanner>
+                    <AnnouncerText>
+                        <StateMessage state={state} />
+                    </AnnouncerText>
+                </PopBanner>
+            );
+            break;
+
         case state.matches("game") || state.matches("end"):
             stateRendered = (
                 <>

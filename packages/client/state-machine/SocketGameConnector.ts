@@ -160,9 +160,10 @@ export class SocketGameConnector implements GameConnector {
         this.playerId = authData.playerId;
         this.setAuthTokenReceived(token);
 
-        if (isInGame) {
-            this.send({ type: "S_RECONNECTED" });
-        }
+        this.send({
+            type: isInGame ? "S_RECONNECTED" : "S_CONNECTED",
+            connector: this
+        });
     };
 
     private s_choose_role = () => {

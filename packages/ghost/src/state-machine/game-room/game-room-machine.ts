@@ -4,6 +4,8 @@
 
 import { statelog, hostlog, errorlog, debuglog } from "../../utils";
 
+import { top_reconnect, emit_update_both } from "./promise-actors";
+
 import {
     MachineConfig,
     MachineOptions,
@@ -128,13 +130,15 @@ export const state_machine: MachineConfig<
     on: {
         // might be overtaken by deeper (more specific) states transitions
         SOC_CONNECT: { actions: "top_reconnect" },
+        "error.platform.top_reconnect": "end",
         SOC_DISCONNECT: {
             actions: "top_disconnect"
         },
         SOC_PLAYER_QUIT: {
             target: "end",
             actions: ["emit_gameover", "call_dropgame"]
-        }
+        },
+        "error.platform.emit_update_both": "end"
     }
 };
 
@@ -198,7 +202,10 @@ export const machine_options: Partial<MachineOptions<
         ...((MachineActions as unknown) as ActionFunctionMap<
             GameRoomContext,
             GameRoomEvent
-        >)
+        >),
+
+        top_reconnect,
+        emit_update_both
     },
 
     guards: {
