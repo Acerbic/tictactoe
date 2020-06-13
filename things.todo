@@ -7,7 +7,7 @@
 ☐ Update DOCS diagrams
 ☐ client: handle ghost going d/c
 ☐ auto clean old games from DB even if they aren't finished
-☐ make custom container around Hasura enging that incorporates migrations and meta
+✔ make custom container around Hasura enging that incorporates migrations and meta @done(13-06-2020 23:36)
 ☐ custom icons for player occupied cells @created(05-06-2020 15:18)
 ☐ puppetier testing of client @created(05-06-2020 15:18)
 ☐ e2e testing @created(05-06-2020 15:19)

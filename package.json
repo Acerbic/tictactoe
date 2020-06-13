@@ -2,9 +2,9 @@
   "scripts": {
     "clean": "lerna run clean && lerna clean -y && rimraf node_modules",
     "deploy:dev:local": "bash ./deployment/deploy_dev_local.sh",
-    "down:dev:local": "sudo docker-compose --file deployment/docker-compose-hasura-only.yml down",
+    "down:dev:local": "sudo docker-compose --project-name ttt --file deployment/docker-compose-hasura-only.yml down",
     "deploy:dev": "bash ./deployment/deploy_dev.sh",
-    "down:dev": "sudo docker-compose --file deployment/docker-compose-dev.yml down",
+    "down:dev": "sudo docker-compose --project-name ttt --file deployment/docker-compose-dev.yml down",
     "deploy": "deploy:prod",
     "deploy:prod": "echo ~Not Implemented~",
     "down:prod": "echo ~Not Implemented~",

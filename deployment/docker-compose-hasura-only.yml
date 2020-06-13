@@ -8,10 +8,10 @@ services:
         environment:
             POSTGRES_PASSWORD: postgrespassword
     graphql-engine:
-        image: hasura/graphql-engine:v1.2.1.cli-migrations-v2
-        volumes:
-            - ../packages/gamesdb/hasura/migrations:/hasura-migrations
-            - ../packages/gamesdb/hasura/metadata:/hasura-metadata
+        build:
+            dockerfile: deployment/hasura-migrations.Dockerfile
+            context: ..
+        image: ttt/hasura:latest
         ports:
             - "8080:8080"
         depends_on:

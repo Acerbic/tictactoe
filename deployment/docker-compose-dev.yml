@@ -45,6 +45,7 @@ services:
         environment:
             HASURA_URL: http://graphql-engine:8080/v1/graphql
             GMASTER_URL: http://gmaster:3000
+            JWT_SECRET:
         restart: always
         # command: node --inspect=0.0.0.0 index.js
         ports:
