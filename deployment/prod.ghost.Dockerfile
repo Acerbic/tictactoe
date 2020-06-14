@@ -1,31 +1,32 @@
-FROM node:lts-alpine as lerna
-RUN apk add yarn && npm i lerna -g
+FROM node:lts-alpine as source
+RUN apk add yarn
 WORKDIR /app
 
-# Common dependencies among projects
+# parameters to run this Dockerfile
+ARG GHOST_PORT=3060
+
+# Source and dependency projects
 COPY ["package.json", "yarn.lock", "./"]
-RUN yarn --pure-lockfile
-
-# install node_modules & crosslink
-COPY ["packages/gamesdb/package.json", "./packages/gamesdb/"]
-COPY ["packages/ghost/package.json", "./packages/ghost/"]
-COPY lerna.json .
-RUN lerna bootstrap -- --pure-lockfile
-
-# copy the rest
-COPY packages/gamesdb ./packages/gamesdb
+COPY packages/apis ./packages/apis
 COPY packages/ghost ./packages/ghost
 
-# compile TypeScript
-RUN lerna run build --scope="ghost"
+# install packages and compile
+RUN yarn --pure-lockfile
+RUN yarn workspace @trulyacerbic/ttt-apis build
+RUN yarn workspace ghost build
 
-# ---- remove dev files ---- #
-RUN lerna clean -y && lerna bootstrap -- --production --pure-lockfile
+# Remove devDependencies
+RUN yarn --production --pure-lockfile
 
 FROM node:lts-alpine
 WORKDIR /app
 
-COPY --from=lerna ["/app", "./"]
+COPY --from=source ["/app/packages/ghost/dist", "packages/ghost/dist"]
+COPY --from=source ["/app/packages/ghost/node_modules", "packages/ghost/node_modules"]
+COPY --from=source ["/app/packages/ghost/package.json", "packages/ghost"]
+COPY --from=source ["/app/node_modules", "./node_modules"]
 
+# Container running conditions and command
+ENV GHOST_PORT=$GHOST_PORT
 CMD cd ./packages/ghost && npm run start
-EXPOSE 3060
+EXPOSE $GHOST_PORT

@@ -1,5 +1,5 @@
 ☐ Docker HEALTHCHECK?
-☐ write production deployment script and readme
+✔ write production deployment script and readme @done(15-06-2020 00:39)
 ☐ drop game if both clients d/c?
 ☐ see if css-modules can be injected as normal classes via JSX transform
 ☐ do I need certs for HTTPS-endpoints deployment?
@@ -17,3 +17,4 @@
 ☐ add a cronjob for DB maintenance to the gmastere container
 ☐ sort out debug messages for ghost xstate by categories better
 ☐ ghost all-catch unexpected/unhandled xstate errors (unhandled?)
+☐ upda readme and add production deployment section

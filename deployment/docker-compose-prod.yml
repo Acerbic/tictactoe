@@ -4,7 +4,7 @@ services:
         image: postgres:12
         restart: always
         volumes:
-            - db_data_dev:/var/lib/postgresql/data
+            - db_data:/var/lib/postgresql/data
         environment:
             POSTGRES_PASSWORD: postgrespassword
     graphql-engine:
@@ -26,44 +26,27 @@ services:
 
     gmaster:
         build:
-            dockerfile: deployment/gmaster.Dockerfile
+            dockerfile: deployment/prod.gmaster.Dockerfile
             context: ..
             args:
                 GMASTER_PORT: 3000
-        image: ttt/gmaster:latest
+        image: ttt/gmaster-prod:latest
         environment:
             HASURA_URL: http://graphql-engine:8080/v1/graphql
         restart: always
 
     ghost:
         build:
-            dockerfile: deployment/ghost.Dockerfile
+            dockerfile: deployment/prod.ghost.Dockerfile
             context: ..
             args:
                 GHOST_PORT: 3060
-        image: ttt/ghost:latest
+        image: ttt/ghost-prod:latest
         environment:
             GMASTER_URL: http://gmaster:3000
             JWT_SECRET:
         restart: always
         ports:
             - "3060:3060"
-            - "9229:9229"
-
-    client:
-        build:
-            dockerfile: deployment/client.Dockerfile
-            context: ..
-            args:
-                CLIENT_PORT: 3030
-        image: ttt/client:latest
-        environment:
-            # so, in principle ghost server can be anywhere independent of
-            # client server, thus we need to point to it explicitly for runtime
-            GHOST_URL: http://localhost:3060
-        restart: always
-        ports:
-            - "3030:3030"
-
 volumes:
-    db_data_dev:
+    db_data:

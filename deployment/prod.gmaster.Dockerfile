@@ -1,31 +1,33 @@
-FROM node:lts-alpine as lerna
-RUN apk add yarn && npm i lerna -g
+FROM node:lts-alpine as source
+RUN apk add yarn
 WORKDIR /app
 
-# Common dependencies among projects
+# parameters to run this Dockerfile
+ARG GMASTER_PORT=3000
+
+# Source and dependency projects
 COPY ["package.json", "yarn.lock", "./"]
-RUN yarn --pure-lockfile
-
-# install node_modules & crosslink
-COPY ["packages/gamesdb/package.json" "./packages/gamesdb/"]
-COPY ["packages/gmaster/package.json" "./packages/gmaster/"]
-COPY lerna.json .
-RUN lerna bootstrap -- --pure-lockfile
-
-# copy the rest
-COPY packages/gamesdb ./packages/gamesdb
+COPY packages/apis ./packages/apis
 COPY packages/gmaster ./packages/gmaster
 
-# compile TypeScript
-RUN lerna run build --scope="gmaster"
+# install packages and compile
+RUN yarn --pure-lockfile
+RUN yarn workspace @trulyacerbic/ttt-apis build
+RUN yarn workspace gmaster build
 
-# ---- remove dev files ---- #
-RUN lerna clean -y && lerna bootstrap -- --production --pure-lockfile
+# Remove devDependencies
+RUN yarn --production --pure-lockfile
 
 FROM node:lts-alpine
 WORKDIR /app
 
-COPY --from=lerna ["/app", "./"]
+COPY --from=source ["/app/packages/gmaster/dist", "packages/gmaster/dist"]
+COPY --from=source ["/app/packages/gmaster/bin", "packages/gmaster/bin"]
+COPY --from=source ["/app/packages/gmaster/node_modules", "packages/gmaster/node_modules"]
+COPY --from=source ["/app/packages/gmaster/package.json", "packages/gmaster"]
+COPY --from=source ["/app/node_modules", "./node_modules"]
 
+# Container running conditions and command
+ENV GMASTER_PORT=$GMASTER_PORT
 CMD cd ./packages/gmaster && npm run start
-EXPOSE 3000
+EXPOSE $GMASTER_PORT
