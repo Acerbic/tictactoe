@@ -18,6 +18,8 @@ jest.mock("../src/connectors/gmaster_connector");
 import * as gm_api from "@trulyacerbic/ttt-apis/gmaster-api";
 import { API as gh_api, JWTSession } from "@trulyacerbic/ttt-apis/ghost-api";
 
+import { debuglog } from "../src/utils";
+
 /**
  * Destructuring + casting
  *
@@ -75,13 +77,16 @@ describe("After game started", () => {
         // `string` in some cases
         httpServerAddr = httpServer.address() as AddressInfo;
         expect(typeof httpServerAddr).toBe("object");
+        debuglog("Server addr is ", httpServerAddr);
         socServer = ioServer(httpServer, {
             pingTimeout: EXTEND_SOCKET_TIMEOUTS ? 1000000 : 5000
         });
         new SocketDispatcher().attach(socServer);
 
         socs = new ClientSockets(
-            `http://[${httpServerAddr.address}]:${httpServerAddr.port}`
+            process.env.FORCE_TESTS_IPV4
+                ? `http://0.0.0.0:${httpServerAddr.port}`
+                : `http://[${httpServerAddr.address}]:${httpServerAddr.port}`
         );
 
         // mock implementations to prepare for a game

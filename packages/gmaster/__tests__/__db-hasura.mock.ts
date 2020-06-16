@@ -46,4 +46,7 @@ export class DbConnectorMock implements DbConnector {
             throw "Some error happened while updating a game";
         }
     });
+
+    Stats = jest.fn<Promise<any>, []>(() => Promise.resolve({ data: {} }));
+    Upkeep = jest.fn<Promise<any>, []>(() => Promise.resolve({ data: {} }));
 }

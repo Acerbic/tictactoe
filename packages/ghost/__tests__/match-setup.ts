@@ -32,6 +32,7 @@ import { app } from "../src/app";
 import { SocketDispatcher } from "../src/SocketDispatcher";
 import { socListen, socListenAfter } from "./__utils";
 import ClientSockets from "./__ClientSockets";
+import { debuglog } from "../src/utils";
 
 describe("WS communication", () => {
     let httpServer: http.Server;
@@ -65,13 +66,17 @@ describe("WS communication", () => {
         // `string` in some cases
         httpServerAddr = httpServer.address() as AddressInfo;
         expect(typeof httpServerAddr).toBe("object");
+        debuglog("Server addr is ", httpServerAddr);
+
         socServer = ioServer(httpServer, {
             pingTimeout: EXTEND_SOCKET_TIMEOUTS ? 1000000 : 5000
         });
         new SocketDispatcher().attach(socServer);
 
         socs = new ClientSockets(
-            `http://[${httpServerAddr.address}]:${httpServerAddr.port}`
+            process.env.FORCE_TESTS_IPV4
+                ? `http://0.0.0.0:${httpServerAddr.port}`
+                : `http://[${httpServerAddr.address}]:${httpServerAddr.port}`
         );
 
         let createdGameState;
@@ -123,6 +128,11 @@ describe("WS communication", () => {
         mocked_gmc_post.mockReset();
         mocked_gmc_get.mockReset();
 
+        done();
+    });
+
+    test("basic", done => {
+        expect(3 + 3).toBe(6);
         done();
     });
 

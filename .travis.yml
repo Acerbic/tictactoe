@@ -1,2 +1,12 @@
 language: node_js
-node: lts/*
+node: 14
+env: FORCE_TESTS_IPV4=true
+git:
+    depth: 3
+before_script:
+    - yarn workspace @trulyacerbic/ttt-apis build
+jobs:
+    - name: Testing gmaster
+      script: yarn workspace gmaster test
+    - name: Testing ghost
+      script: yarn workspace ghost test
