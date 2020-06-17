@@ -19,3 +19,4 @@
 ☐ ghost all-catch unexpected/unhandled xstate errors (unhandled?)
 ☐ update readme and add production deployment section
 ☐ move 'gamesdb' package from workspaces to save `yarn install` time?
+☐ yarn --frozen-lockfile vs --pure-lockfile and rebuilding docker layers???

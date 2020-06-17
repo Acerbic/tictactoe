@@ -8,11 +8,11 @@ before_script:
 jobs:
     - stage: test
       name: Testing gmaster
-      script: yarn workspace gmaster test
+      script: yarn workspace gmaster test --runInBand
 
     - stage: test
       name: Testing ghost
-      script: yarn workspace ghost test
+      script: yarn workspace ghost test --runInBand
 
     - stage: deploy
       if: branch = master
@@ -22,4 +22,4 @@ jobs:
           - docker
       before_script: skip
       script:
-          - bash ./deployment/travis_build_push.sh
+          - 'if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then bash ./deployment/travis_build_push.sh; fi'
