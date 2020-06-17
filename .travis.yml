@@ -5,10 +5,6 @@ git:
 branches:
     #whitelist
     only: master
-
-services:
-    - docker
-
 cache: yarn
 before_script:
     - yarn workspace @trulyacerbic/ttt-apis build
@@ -20,7 +16,9 @@ jobs:
       name: Testing ghost
       script: yarn workspace ghost test
     - stage: test
-      script: echo "Secret: $DOCKER_REGISTRY_ADDR"
+      script: 'echo "Secret: $DOCKER_REGISTRY_ADDR"'
     - stage: deploy
+      services:
+          - docker
       script:
           - docker -v
