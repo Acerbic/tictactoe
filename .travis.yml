@@ -22,4 +22,4 @@ jobs:
           - docker
       before_script: skip
       script:
-          - 'if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then bash ./deployment/travis_build_push.sh; fi'
+          - 'if [ "$TRAVIS_PULL_REQUEST" = "false" ]; then bash ./deployment/travis_build_push.sh; fi'
