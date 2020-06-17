@@ -22,6 +22,7 @@ jobs:
       install: skip
       services:
           - docker
+      before_script: skip
       script:
           - docker -v
           - 'echo "Secret: $DOCKER_REGISTRY_ADDR"'
