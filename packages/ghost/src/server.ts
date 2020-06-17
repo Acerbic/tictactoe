@@ -1,6 +1,7 @@
 import { statelog, hostlog, errorlog, debuglog } from "./utils";
 
 import { createServer } from "http";
+import cors from "cors";
 import socketio from "socket.io";
 
 import { app } from "./app";
@@ -9,6 +10,11 @@ import { SocketDispatcher } from "./SocketDispatcher";
 /**
  * Make http server from Express app
  */
+app.use(
+    cors({
+        origin: "*"
+    })
+);
 const http = createServer(app);
 
 /**
