@@ -9,7 +9,8 @@
     "down:prod": "bash ./deployment/down_prod.sh",
     "start:client": "cross-env-shell GHOST_URL=http://localhost:3060 \"cd packages/client && yarn dev\"",
     "start:gmaster": "cross-env-shell HASURA_URL=http://localhost:8080/v1/graphql \"cd packages/gmaster && yarn start\"",
-    "start:ghost": "cross-env-shell GMASTER_URL=http://localhost:3000 JWT_SECRET=1234567 \"cd packages/ghost && yarn dev\""
+    "start:ghost": "cross-env-shell GMASTER_URL=http://localhost:3000 JWT_SECRET=1234567 \"cd packages/ghost && yarn dev\"",
+    "build:client": "GHOST_URL=http://ttt-ghost.trulyacerbic.stream:3060 yarn workspace client build"
   },
   "private": true,
   "workspaces": [
