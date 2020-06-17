@@ -17,4 +17,5 @@
 ☐ add a cronjob for DB maintenance to the gmastere container
 ☐ sort out debug messages for ghost xstate by categories better
 ☐ ghost all-catch unexpected/unhandled xstate errors (unhandled?)
-☐ upda readme and add production deployment section
+☐ update readme and add production deployment section
+☐ move 'gamesdb' package from workspaces to save `yarn install` time?

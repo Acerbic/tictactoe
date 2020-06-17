@@ -1,12 +1,22 @@
 language: node_js
 node: 14
+# tests create bind to express apps on IPv4 addr
 env: FORCE_TESTS_IPV4=true
 git:
     depth: 3
+branches:
+    #whitelist
+    only: master
+cache: yarn
 before_script:
     - yarn workspace @trulyacerbic/ttt-apis build
 jobs:
-    - name: Testing gmaster
+    - stage: testing
+      name: Testing gmaster
       script: yarn workspace gmaster test
-    - name: Testing ghost
+    - stage: testing
+      name: Testing ghost
       script: yarn workspace ghost test
+    - stage: deploy
+      script:
+          - echo "Deploy?"
