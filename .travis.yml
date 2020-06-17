@@ -1,7 +1,5 @@
 language: node_js
 node: 14
-# tests create bind to express apps on IPv4 addr
-env: FORCE_TESTS_IPV4=true
 git:
     depth: 3
 branches:
@@ -11,12 +9,16 @@ cache: yarn
 before_script:
     - yarn workspace @trulyacerbic/ttt-apis build
 jobs:
-    - stage: testing
+    - stage: test
       name: Testing gmaster
       script: yarn workspace gmaster test
-    - stage: testing
+    - stage: test
       name: Testing ghost
       script: yarn workspace ghost test
+    - stage: test
+      script: echo "Secret: $DOCKER_REGISTRY_ADDR"
     - stage: deploy
+      services:
+          - docker
       script:
-          - echo "Deploy?"
+          - docker -v

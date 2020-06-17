@@ -74,7 +74,8 @@ describe("WS communication", () => {
         new SocketDispatcher().attach(socServer);
 
         socs = new ClientSockets(
-            process.env.FORCE_TESTS_IPV4
+            // Travis CI ?
+            process.env.TRAVIS
                 ? `http://0.0.0.0:${httpServerAddr.port}`
                 : `http://[${httpServerAddr.address}]:${httpServerAddr.port}`
         );
