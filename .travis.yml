@@ -12,13 +12,25 @@ jobs:
     - stage: test
       name: Testing gmaster
       script: yarn workspace gmaster test
+
     - stage: test
       name: Testing ghost
       script: yarn workspace ghost test
-    - stage: test
-      script: 'echo "Secret: $DOCKER_REGISTRY_ADDR"'
+
     - stage: deploy
+      cache: false
+      install: skip
       services:
           - docker
       script:
           - docker -v
+          - 'echo "Secret: $DOCKER_REGISTRY_ADDR"'
+          - bash ./deployment/test-travis-env.sh
+          - docker login --username travisci --password $DOCKER_REGISTRY_PASS $DOCKER_REGISTRY_ADDR
+          - JWT_SECRET=$JWT_SECRET docker-compose --file deployment/docker-compose-prod.yml build
+          - docker tag ttt/hasura $DOCKER_REGISTRY_ADDR/ttt/hasura
+          - docker tag ttt/ghost-prod $DOCKER_REGISTRY_ADDR/ttt/ghost
+          - docker tag ttt/gmaster-prod $DOCKER_REGISTRY_ADDR/ttt/gmaster
+          - docker push $DOCKER_REGISTRY_ADDR/ttt/hasura
+          - docker push $DOCKER_REGISTRY_ADDR/ttt/ghost
+          - docker push $DOCKER_REGISTRY_ADDR/ttt/gmaster
