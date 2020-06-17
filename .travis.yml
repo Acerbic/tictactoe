@@ -2,9 +2,6 @@ language: node_js
 node: 14
 git:
     depth: 3
-branches:
-    #whitelist
-    only: master
 cache: yarn
 before_script:
     - yarn workspace @trulyacerbic/ttt-apis build
@@ -18,20 +15,11 @@ jobs:
       script: yarn workspace ghost test
 
     - stage: deploy
+      if: branch = master
       cache: false
       install: skip
       services:
           - docker
       before_script: skip
       script:
-          - docker -v
-          - 'echo "Secret: $DOCKER_REGISTRY_ADDR"'
-          - bash ./deployment/test-travis-env.sh
-          - docker login --username travisci --password $DOCKER_REGISTRY_PASS $DOCKER_REGISTRY_ADDR
-          - JWT_SECRET=$JWT_SECRET docker-compose --file deployment/docker-compose-prod.yml build
-          - docker tag ttt/hasura $DOCKER_REGISTRY_ADDR/ttt/hasura
-          - docker tag ttt/ghost-prod $DOCKER_REGISTRY_ADDR/ttt/ghost
-          - docker tag ttt/gmaster-prod $DOCKER_REGISTRY_ADDR/ttt/gmaster
-          - docker push $DOCKER_REGISTRY_ADDR/ttt/hasura
-          - docker push $DOCKER_REGISTRY_ADDR/ttt/ghost
-          - docker push $DOCKER_REGISTRY_ADDR/ttt/gmaster
+          - bash ./deployment/travis_build_push.sh
