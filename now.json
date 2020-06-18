@@ -1,4 +1,5 @@
 {
     "version": 2,
+    "name": "tictactoe-client",
     "builds": [{ "src": "packages/client/package.json", "use": "@now/next" }]
 }

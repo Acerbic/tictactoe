@@ -1,7 +1,7 @@
 tabWidth: 4
 printWidth: 80
 overrides:
-  - files: [".prettierrc.yaml", "*.Dockerfile", "package.json"]
+  - files: ["*.yaml", "*.yml", "*.Dockerfile", "package.json"]
     options:
       tabWidth: 2
 arrowParens: avoid

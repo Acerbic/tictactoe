@@ -1,26 +1,32 @@
 language: node_js
 node: 14
 git:
-    depth: 3
+  depth: 3
 cache: yarn
 before_script:
-    - yarn workspace @trulyacerbic/ttt-apis build
+  - yarn workspace @trulyacerbic/ttt-apis build
 jobs:
-    - stage: test
-      name: Testing gmaster
-      script: yarn workspace gmaster test --runInBand
+  - stage: test
+    name: Testing gmaster
+    script: yarn workspace gmaster test --runInBand
 
-    - stage: test
-      name: Testing ghost
-      script: yarn workspace ghost test --runInBand
+  - stage: test
+    name: Testing ghost
+    script: yarn workspace ghost test --runInBand
 
-    - stage: deploy
-      if: branch = master
-      cache: false
-      install: skip
-      services:
-          - docker
-      before_script: skip
-      script:
-          - 'if [ "$TRAVIS_PULL_REQUEST" = "false" ]; then bash ./deployment/travis_build_push.sh; fi'
-          - echo "Publishing client code to Zeit Now"
+  - &deploy
+    stage: deploy
+    if: branch = master
+    cache: false
+    install: skip
+    services:
+      - docker
+    before_script: skip
+    script: if [ "$TRAVIS_PULL_REQUEST" = "false" ]; then bash ./deployment/travis_build_push.sh; fi
+
+  - <<: *deploy
+    services:
+    if:
+    before_script: npm i -g now
+    script:
+      - bash ./deployment/travis_build_push.sh
