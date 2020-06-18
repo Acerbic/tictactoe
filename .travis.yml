@@ -23,3 +23,4 @@ jobs:
       before_script: skip
       script:
           - 'if [ "$TRAVIS_PULL_REQUEST" = "false" ]; then bash ./deployment/travis_build_push.sh; fi'
+          - echo "Publishing client code to Zeit Now"

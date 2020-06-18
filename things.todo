@@ -20,3 +20,6 @@
 ☐ update readme and add production deployment section
 ☐ move 'gamesdb' package from workspaces to save `yarn install` time?
 ☐ yarn --frozen-lockfile vs --pure-lockfile and rebuilding docker layers???
+☐ rolling update of ghost server so when a new version is up, the games in progress don't break
+☐ make ghost listen on specified HOSTNAME instead of blank all
+☐ Travis container build doesn't break the build!
