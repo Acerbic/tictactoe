@@ -29,4 +29,4 @@ jobs:
     if:
     before_script: npm i -g now
     script:
-      - bash ./deployment/travis_build_push.sh
+      - bash ./deployment/travis_deploy_client.sh
