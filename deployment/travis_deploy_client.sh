@@ -4,7 +4,8 @@
 # triggers build and deploy on Zeit Now (uses .nowignore and now.json to
 # configure what is to upload and what is to build)
 
-if [ "$TRAVIS_PULL_REQUEST" = "false" ] AND [ "$TRAVIS_BRANCH" = "master" ]; then 
+if [ "$TRAVIS_PULL_REQUEST" = "false" ] && [ "$TRAVIS_BRANCH" = "master" ] ;
+then 
 
     # Unfortunately, we have to use the stupid "Project Linking" feature, hence the
     # '--confirm' arg. Need 'name' key in `now.json` file, but since it was declared
