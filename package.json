@@ -11,7 +11,8 @@
     "start:gmaster": "cross-env-shell HASURA_URL=http://localhost:8080/v1/graphql \"cd packages/gmaster && yarn start\"",
     "start:ghost": "cross-env-shell GMASTER_URL=http://localhost:3000 JWT_SECRET=1234567 \"cd packages/ghost && yarn dev\"",
     "build:ttt-apis": "yarn workspace @trulyacerbic/ttt-apis build",
-    "build:client": "GHOST_URL=http://ttt-ghost.trulyacerbic.stream:3060 yarn workspace client build"
+    "build:client": "yarn workspace client build",
+    "now-build": "yarn build:ttt-apis && yarn build:client"
   },
   "private": true,
   "workspaces": [

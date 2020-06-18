@@ -1,0 +1,6 @@
+/*
+!package.json
+!packages
+packages/*
+!packages/apis
+!packages/client

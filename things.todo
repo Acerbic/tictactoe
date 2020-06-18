@@ -23,3 +23,5 @@
 ☐ rolling update of ghost server so when a new version is up, the games in progress don't break
 ☐ make ghost listen on specified HOSTNAME instead of blank all
 ☐ Travis container build doesn't break the build!
+☐ socket io via httpS and wsS!
+☐ Travis -> Zeit Now shell authentication
