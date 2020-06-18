@@ -16,6 +16,7 @@ jobs:
 
   - &deploy
     stage: deploy
+    name: Deploying Docker containers
     if: branch = master
     cache: false
     install: skip
@@ -25,6 +26,7 @@ jobs:
     script: if [ "$TRAVIS_PULL_REQUEST" = "false" ]; then bash ./deployment/travis_build_push.sh; fi
 
   - <<: *deploy
+    name: Deploying Next.js Client code
     services:
     if:
     before_script: npm i -g now

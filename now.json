@@ -1,5 +1,15 @@
 {
     "version": 2,
     "name": "tictactoe-client",
-    "builds": [{ "src": "packages/client/package.json", "use": "@now/next" }]
+    "builds": [
+        {
+            "src": "packages/client/next.config.js",
+            "use": "@now/next",
+            "config": {
+                "debug": true,
+                "buildCommand": "yarn workspace @trulyacerbic/ttt-apis build && yarn build"
+            }
+        }
+    ],
+    "rewrites": [{ "source": "/(.*)", "destination": "packages/client/$1" }]
 }
