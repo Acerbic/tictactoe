@@ -1,52 +1,52 @@
 version: "3"
 services:
-    postgres:
-        image: postgres:12
-        restart: always
-        volumes:
-            - db_data:/var/lib/postgresql/data
-        environment:
-            POSTGRES_PASSWORD: postgrespassword
-    graphql-engine:
-        build:
-            dockerfile: deployment/hasura-migrations.Dockerfile
-            context: ..
-        image: ttt/hasura:latest
-        ports:
-            - "8080:8080"
-        depends_on:
-            - "postgres"
-        restart: always
-        environment:
-            HASURA_GRAPHQL_DATABASE_URL: postgres://postgres:postgrespassword@postgres:5432/postgres
-            HASURA_GRAPHQL_ENABLE_CONSOLE: "true" # set to "false" to disable console
-            HASURA_GRAPHQL_ENABLED_LOG_TYPES: startup, http-log, webhook-log, websocket-log, query-log
-            ## uncomment next line to set an admin secret
-            # HASURA_GRAPHQL_ADMIN_SECRET: myadminsecretkey
+  postgres:
+    image: postgres:12
+    restart: always
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_PASSWORD: postgrespassword
+  graphql-engine:
+    build:
+      dockerfile: ../../deployment/hasura-migrations.Dockerfile
+      context: ../packages/gamesdb
+    image: ttt/hasura:latest
+    ports:
+      - "8080:8080"
+    depends_on:
+      - "postgres"
+    restart: always
+    environment:
+      HASURA_GRAPHQL_DATABASE_URL: postgres://postgres:postgrespassword@postgres:5432/postgres
+      HASURA_GRAPHQL_ENABLE_CONSOLE: "true" # set to "false" to disable console
+      HASURA_GRAPHQL_ENABLED_LOG_TYPES: startup, http-log, webhook-log, websocket-log, query-log
+      ## uncomment next line to set an admin secret
+      # HASURA_GRAPHQL_ADMIN_SECRET: myadminsecretkey
 
-    gmaster:
-        build:
-            dockerfile: deployment/prod.gmaster.Dockerfile
-            context: ..
-            args:
-                GMASTER_PORT: 3000
-        image: ttt/gmaster-prod:latest
-        environment:
-            HASURA_URL: http://graphql-engine:8080/v1/graphql
-        restart: always
+  gmaster:
+    build:
+      dockerfile: deployment/prod.gmaster.Dockerfile
+      context: ..
+      args:
+        GMASTER_PORT: 3000
+    image: ttt/gmaster-prod:latest
+    environment:
+      HASURA_URL: http://graphql-engine:8080/v1/graphql
+    restart: always
 
-    ghost:
-        build:
-            dockerfile: deployment/prod.ghost.Dockerfile
-            context: ..
-            args:
-                GHOST_PORT: 3060
-        image: ttt/ghost-prod:latest
-        environment:
-            GMASTER_URL: http://gmaster:3000
-            JWT_SECRET:
-        restart: always
-        ports:
-            - "3060:3060"
+  ghost:
+    build:
+      dockerfile: deployment/prod.ghost.Dockerfile
+      context: ..
+      args:
+        GHOST_PORT: 3060
+    image: ttt/ghost-prod:latest
+    environment:
+      GMASTER_URL: http://gmaster:3000
+      JWT_SECRET:
+    restart: always
+    ports:
+      - "3060:3060"
 volumes:
-    db_data:
+  db_data:

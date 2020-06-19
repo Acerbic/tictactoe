@@ -6,7 +6,6 @@
             "src": "packages/client/next.config.js",
             "use": "@now/next",
             "config": {
-                "debug": true,
                 "buildCommand": "yarn workspace @trulyacerbic/ttt-apis build && yarn build"
             }
         }
