@@ -10,11 +10,11 @@ import { SocketDispatcher } from "./SocketDispatcher";
 /**
  * Make http server from Express app
  */
-app.use(
-    cors({
-        origin: "*"
-    })
-);
+// app.use(
+//     cors({
+//         origin: "*"
+//     })
+// );
 const http = createServer(app);
 
 /**

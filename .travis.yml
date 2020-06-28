@@ -14,8 +14,7 @@ jobs:
     name: Testing ghost
     script: yarn workspace ghost test --runInBand
 
-  - &deploy
-    stage: deploy
+  - stage: deploy
     name: Deploying Docker containers
     if: branch = master
     cache: false
@@ -23,12 +22,11 @@ jobs:
     services:
       - docker
     before_script: skip
-    script: if [ "$TRAVIS_PULL_REQUEST" = "false" ]; then bash ./deployment/travis_build_push.sh; fi
+    script: if [ "$TRAVIS_PULL_REQUEST" = "false" ]; then bash ./deployment/travis_deploy_docker.sh; fi
 
-  - <<: *deploy
+  - stage: deploy
     name: Deploying Next.js Client code
-    services:
-    if:
+    install: skip
     before_script: npm i -g now
     script:
       - bash ./deployment/travis_deploy_client.sh
