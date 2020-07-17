@@ -1,0 +1,65 @@
+# backend servers using custom docker registry and traefik configuration
+
+version: "3"
+
+services:
+  postgres:
+    image: postgres:12
+    restart: always
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_PASSWORD: postgrespassword
+  graphql-engine:
+    image: $DOCKER_REGISTRY/ttt/hasura
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.ttt-hasura.rule=Host(`ttt-hasura.$HOST_BASE_DOMAIN`)"
+      - "traefik.http.routers.ttt-hasura.entrypoints=websecure"
+      - "traefik.http.routers.ttt-hasura.tls=true"
+      - "traefik.http.routers.ttt-hasura.tls.certresolver=le-resolver"
+      - "traefik.http.services.ttt-hasura.loadbalancer.server.port=8080"
+    depends_on:
+      - "postgres"
+    restart: always
+    environment:
+      HASURA_GRAPHQL_DATABASE_URL: postgres://postgres:postgrespassword@postgres:5432/postgres
+      HASURA_GRAPHQL_ENABLE_CONSOLE: "true" # set to "false" to disable console
+      HASURA_GRAPHQL_ENABLED_LOG_TYPES: startup, http-log, webhook-log, websocket-log, query-log
+      ## uncomment next line to set an admin secret
+      # HASURA_GRAPHQL_ADMIN_SECRET: myadminsecretkey
+    networks:
+      - default
+      - traefik_proxy
+
+  gmaster:
+    image: $DOCKER_REGISTRY/ttt/gmaster
+    environment:
+      HASURA_URL: http://graphql-engine:8080/v1/graphql
+    restart: always
+
+  ghost:
+    image: $DOCKER_REGISTRY/ttt/ghost
+    environment:
+      GMASTER_URL: http://gmaster:3000
+      JWT_SECRET:
+    restart: always
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.ttt-ghost.rule=Host(`ttt-ghost.$HOST_BASE_DOMAIN`)"
+      - "traefik.http.routers.ttt-ghost.entrypoints=websecure"
+      - "traefik.http.routers.ttt-ghost.tls=true"
+      - "traefik.http.routers.ttt-ghost.tls.certresolver=le-resolver"
+      - "traefik.http.services.ttt-ghost.loadbalancer.server.port=3060"
+    networks:
+      - default
+      - traefik_proxy
+
+volumes:
+  db_data:
+
+networks:
+  default:
+  traefik_proxy:
+    external:
+      name: traefik_proxy
