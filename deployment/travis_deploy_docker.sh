@@ -1,9 +1,10 @@
-#!/usr/bin/bash
+#!/bin/bash
+set -ev
 
 ### Build/push script for Travis CI (Docker containters)
 
 # build new containers
-docker-compose --file deployment/docker-compose-prod.yml build || exit 1
+docker-compose --file deployment/docker-compose-prod.yml build
 docker tag ttt/hasura $DOCKER_REGISTRY_ADDR/ttt/hasura
 docker tag ttt/ghost-prod $DOCKER_REGISTRY_ADDR/ttt/ghost
 docker tag ttt/gmaster-prod $DOCKER_REGISTRY_ADDR/ttt/gmaster
