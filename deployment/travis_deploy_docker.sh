@@ -1,16 +1,15 @@
 #!/bin/bash
 set -ev
 
-### Build/push script for Travis CI (Docker containters)
-
-# build new containers
-docker-compose --file deployment/docker-compose-prod.yml build
-docker tag ttt/hasura $DOCKER_REGISTRY_ADDR/ttt/hasura
-docker tag ttt/ghost-prod $DOCKER_REGISTRY_ADDR/ttt/ghost
-docker tag ttt/gmaster-prod $DOCKER_REGISTRY_ADDR/ttt/gmaster
+### Deploy script for Travis CI (pushes Docker containters, updates app)
 
 # push containers to the remote private Docker repo
 echo "$DOCKER_REGISTRY_PASS" | docker login -u "travisci" --password-stdin $DOCKER_REGISTRY_ADDR
 docker push $DOCKER_REGISTRY_ADDR/ttt/hasura
 docker push $DOCKER_REGISTRY_ADDR/ttt/ghost
 docker push $DOCKER_REGISTRY_ADDR/ttt/gmaster
+
+# update container startup files on remote
+ssh $DOCKER_DEPLOY_USERHOST "cd $DOCKER_DEPLOY_PATH; rm *"
+rsync -r deployment/traefik $DOCKER_DEPLOY_USERHOST:$DOCKER_DEPLOY_PATH
+ssh $DOCKER_DEPLOY_USERHOST "cd $DOCKER_DEPLOY_PATH; chmod o+x run_update.sh; ./run_update.sh"

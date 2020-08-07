@@ -1,5 +1,7 @@
 #!/usr/bin/bash
 
+set -ev
+
 # NOTE: JWT_SECRET must be defined outside!
 # build and start the docker containers
 sudo JWT_SECRET=$JWT_SECRET docker-compose \
