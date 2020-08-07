@@ -26,7 +26,7 @@ jobs:
     before_script: skip
     script: if [ "$TRAVIS_PULL_REQUEST" = "false" ]; then bash ./deployment/travis_build_docker.sh; fi
     before_deploy:
-      - echo "$DOCKER_DEPLOY_RSA_KEY" > /tmp/deploy_rsa
+      - echo "$DOCKER_DEPLOY_RSA_KEY_BASE64" | base64 -d > /tmp/deploy_rsa
       - eval "$(ssh-agent -s)"
       - chmod 600 /tmp/deploy_rsa
       - ssh-add /tmp/deploy_rsa
