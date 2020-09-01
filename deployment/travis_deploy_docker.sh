@@ -10,8 +10,12 @@ docker push $DOCKER_REGISTRY_ADDR/ttt/ghost
 docker push $DOCKER_REGISTRY_ADDR/ttt/gmaster
 
 # update container startup files on remote
-echo "----- $DOCKER_DEPLOY_PATH ------"
 ssh -o StrictHostKeyChecking=no $DOCKER_DEPLOY_USERHOST "cd $DOCKER_DEPLOY_PATH; rm *"
 rsync -r deployment/traefik/ $DOCKER_DEPLOY_USERHOST:$DOCKER_DEPLOY_PATH
-echo "~~~~  HOST_BASE_DOMAIN=${HOST_BASE_DOMAIN} ~~~~"
-ssh $DOCKER_DEPLOY_USERHOST "cd $DOCKER_DEPLOY_PATH; chmod o+x run_update.sh; HOST_BASE_DOMAIN=${HOST_BASE_DOMAIN} ./run_update.sh"
+
+echo "JWT_SECRET=$JWT_SECRET\n" > deployment/traefik/.env
+echo "DOCKER_REGISTRY=$DOCKER_REGISTRY_ADDR\n" >> deployment/traefik/.env
+echo "HOST_BASE_DOMAIN=$TRAEFIK_DOMAIN_BASE\n" >> deployment/traefik/.env
+
+rsync deployment/traefik/.env $DOCKER_DEPLOY_USERHOST:$DOCKER_DEPLOY_PATH/.env
+ssh $DOCKER_DEPLOY_USERHOST "cd $DOCKER_DEPLOY_PATH; chmod o+x run_update.sh; ./run_update.sh"
