@@ -18,12 +18,10 @@ jobs:
     name: Deploying Docker containers
     if: branch = master
     cache: false
-    install: skip
+    install:
+      - echo "$DOCKER_DEPLOY_KNOWN_HOST" >> $HOME/.ssh/known_hosts
     services:
       - docker
-    addons:
-      ssh_known_hosts:
-        - "$DOCKER_DEPLOY_HOST"
     before_script: skip
     script: if [ "$TRAVIS_PULL_REQUEST" = "false" ]; then bash ./deployment/travis_build_docker.sh; fi
     before_deploy:
