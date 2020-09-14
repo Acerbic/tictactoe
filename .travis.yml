@@ -19,7 +19,6 @@ jobs:
     if: branch = master
     cache: false
     install:
-      - echo "$DOCKER_DEPLOY_KNOWN_HOST_BASE64" | base64 -d
       - echo "$DOCKER_DEPLOY_KNOWN_HOST_BASE64" | base64 -d >> $HOME/.ssh/known_hosts
     services:
       - docker
