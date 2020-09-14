@@ -5,34 +5,44 @@ my hand on a number of exciting technologies.
 
 ## Tech stack
 
--   NodeJS
--   yarn
--   Node Express
--   NextJS (React)
--   Xstate
--   Hasura (GraphQL)
--   Socket.io
--   TypeScript
--   Lerna
--   Docker
+-   [Node.js][node] (platform)
+-   [Yarn] (package management for node)
+-   [Express] (web server)
+-   [Next.js][next] (React-based web application framework)
+-   [Xstate] (state logic library)
+-   [Hasura] (GraphQL-enhanced database storage)
+-   [Socket.io][socketio] (websocket communications library)
+-   [TypeScript][ts] (type safe language to use in place of Javascript)
+-   [Lerna] (monorepo management tool which augments Yarn's built-in
+    features)
+-   [Docker] (lightweight containerization for running your code)
 
 ## Install prerequisites
 
-Docker, Docker Compose,
+-   Docker
+-   Docker Compose
 
 ```bash
 npm i -g yarn lerna
 ```
 
-## Organization of packages
+## Organization of the project files
 
 The project is split into a number of (semi-)independent packages (packages/\*).
 Lerna is used to tie the packages together and make them cross-link to each
 other with usage of Yarn Workspaces feature.
 
 This allows packages to stay uncoupled and don't reference each other by
-"file://" dependencies - in the future, packages could be used "as is" even
-without lerna, if they are published to the npm repo.
+"file://" dependencies - in theory, packages could be used "as is" even without
+lerna, if they are published to the npm repo.
+
+Directories and files structure:
+
+-   `deployment/*` holds scripts and configurations related to
+    compiling/building and deploying project's packages
+-   `docs/*` (outdated) documentation on project APIs and architecture
+-   `packages/*/*` the source files
+-   `lerna.json` configuration for Lerna.
 
 ## Running dev in Docker
 
@@ -82,3 +92,14 @@ You can shut down Hasura containers with
 ```bash
 yarn down:dev:local
 ```
+
+[node]: https://nodejs.org/
+[lerna]: https://lerna.js.org/
+[yarn]: https://yarnpkg.com/
+[express]: https://expressjs.com/
+[next]: https://nextjs.org/
+[xstate]: https://xstate.js.org/
+[hasura]: https://hasura.io/
+[socketio]: https://socket.io/
+[ts]: https://www.typescriptlang.org/
+[docker]: https://www.docker.com/

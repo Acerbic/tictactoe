@@ -1,4 +1,6 @@
-# backend servers using custom docker registry and traefik configuration
+# Backend servers using custom docker registry and traefik configuration. This
+# docker-compose file is for running pre-built images of Tictactoe with Traefik,
+# not for building them.
 
 version: "3"
 

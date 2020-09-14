@@ -13,8 +13,8 @@ then
     # deprecated and no alternative provided, this deploy flow can break at any time
     # in the future.
     echo "Now: deploying to production"
-    now -b GHOST_URL=$GHOST_URL --token $ZEIT_NOW_TOKEN --confirm --prod
+    now --token $ZEIT_NOW_TOKEN --confirm --prod
 else
     echo "Now: deploying to staging"
-    now -b GHOST_URL=$GHOST_URL --token $ZEIT_NOW_TOKEN --confirm
+    now --token $ZEIT_NOW_TOKEN --confirm
 fi
