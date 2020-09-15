@@ -29,3 +29,6 @@
 ✔ bring host-local files (docker-compose.yml) into the repo. scp them from repo to host with Travis @done(17-07-2020 23:42)
 ☐ make travis ci script log into VPS via ssh as dedicated user, not root.
 ☐ connect traefik -> docker via SSH instead of socket for security (https://docs.traefik.io/providers/docker/#endpoint)
+☐ investigate docker in rootless mode (?)
+☐ add cronjob to prune outdated docker images
+☐ limit sudo priviledges of travisci user on the docker host
