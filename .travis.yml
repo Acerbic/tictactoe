@@ -30,10 +30,7 @@ jobs:
       - echo "$DOCKER_DEPLOY_RSA_KEY_BASE64" | base64 -d > /tmp/deploy_rsa
       - eval "$(ssh-agent -s)"
       - chmod 600 /tmp/deploy_rsa
-      - cat /tmp/deploy_rsa
-      - ssh-add -l
-      - echo "\n" | ssh-add /tmp/deploy_rsa
-      - ssh-add -l
+      - ssh-add /tmp/deploy_rsa
     deploy:
       provider: script
       skip_cleanup: true
