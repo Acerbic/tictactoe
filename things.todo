@@ -31,4 +31,4 @@
 ☐ connect traefik -> docker via SSH instead of socket for security (https://docs.traefik.io/providers/docker/#endpoint)
 ☐ investigate docker in rootless mode (?)
 ☐ add cronjob to prune outdated docker images
-☐ limit sudo priviledges of travisci user on the docker host
+✔ limit sudo priviledges of travisci user on the docker host @done(17-09-2020 02:20)

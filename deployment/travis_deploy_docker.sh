@@ -20,4 +20,4 @@ docker push $DOCKER_REGISTRY_ADDR/ttt/gmaster
 # rsync deployment/traefik/.env $DOCKER_DEPLOY_USER@$DOCKER_DEPLOY_HOST:$DOCKER_DEPLOY_PATH/.env
 
 # Run update script to replace running containers with new pushed images
-ssh $DOCKER_DEPLOY_USER@$DOCKER_DEPLOY_HOST "cd $DOCKER_DEPLOY_PATH; ./run_update.sh"
+ssh $DOCKER_DEPLOY_USER@$DOCKER_DEPLOY_HOST "cd $DOCKER_DEPLOY_PATH; sudo /bin/bash $DOCKER_DEPLOY_PATH/run_update.sh"
