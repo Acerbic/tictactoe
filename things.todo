@@ -27,6 +27,6 @@
 ✘ investigate docker in rootless mode (?) @cancelled(18-09-2020 06:05)
 ☐ add cronjob to prune outdated docker images
 ✔ organize deployment files -> travis, dev @done(18-09-2020 07:22)
-☐ implement traefik rule for containers with custom labels and default rule
+✔ implement traefik rule for containers with custom labels and default rule @done(18-09-2020 10:05)
 ☐ ?? use default port detection (https://docs.traefik.io/providers/docker/#port-detection) instead of declaring a port
 ☐ investigate docker images being rebuilt even without code change on Travis
