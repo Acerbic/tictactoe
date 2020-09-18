@@ -17,7 +17,9 @@ jobs:
   - stage: deploy
     name: Deploying Docker containers
     if: branch = master
-    cache: false
+    cache:
+      directories:
+        - $HOME/docker
     install: skip
     services:
       - docker
@@ -34,7 +36,7 @@ jobs:
     deploy:
       provider: script
       skip_cleanup: true
-      script: bash ./deployment/travisci/travis_deploy_docker.sh
+      script: if [ "$TRAVIS_PULL_REQUEST" = "false" ]; then bash ./deployment/travisci/travis_deploy_docker.sh; fi
 
   - stage: deploy
     name: Deploying Next.js Client code

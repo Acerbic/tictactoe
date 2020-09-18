@@ -11,12 +11,12 @@ COPY packages/apis ./packages/apis
 COPY packages/ghost ./packages/ghost
 
 # install packages and compile
-RUN yarn --pure-lockfile
+RUN yarn --frozen-lockfile --non-interactive
 RUN yarn workspace @trulyacerbic/ttt-apis build
 RUN yarn workspace ghost build
 
 # Remove devDependencies
-RUN yarn --production --pure-lockfile
+RUN yarn --production --frozen-lockfile --non-interactive
 
 FROM node:lts-alpine
 WORKDIR /app

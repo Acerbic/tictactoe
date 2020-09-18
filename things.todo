@@ -19,7 +19,7 @@
 ☐ ghost all-catch unexpected/unhandled xstate errors (unhandled?)
 ☐ update readme and add production deployment section
 ☐ move 'gamesdb' package from workspaces to save `yarn install` time?
-☐ yarn --frozen-lockfile vs --pure-lockfile and rebuilding docker layers???
+✔ yarn --frozen-lockfile vs --pure-lockfile and rebuilding docker layers??? @done(18-09-2020 12:13)
 ☐ rolling update of ghost server so when a new version is up, the games in progress don't break
 ✘ make ghost listen on specified HOSTNAME instead of blank all @cancelled(28-06-2020 23:43)
 ☐ Travis container build script failure doesn't break the build!
@@ -29,4 +29,4 @@
 ✔ organize deployment files -> travis, dev @done(18-09-2020 07:22)
 ✔ implement traefik rule for containers with custom labels and default rule @done(18-09-2020 10:05)
 ☐ ?? use default port detection (https://docs.traefik.io/providers/docker/#port-detection) instead of declaring a port
-☐ investigate docker images being rebuilt even without code change on Travis
+✔ investigate docker images being rebuilt even without code change on Travis @done(19-09-2020 01:01)
