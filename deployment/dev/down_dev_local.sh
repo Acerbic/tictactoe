@@ -2,5 +2,5 @@
 
 sudo docker-compose \
     --project-name ttt-dev-local \
-    --file deployment/docker-compose-hasura-only.yml  \
+    --file deployment/dev/docker-compose-hasura-only.yml  \
     down

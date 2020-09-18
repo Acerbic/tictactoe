@@ -9,8 +9,8 @@ services:
       POSTGRES_PASSWORD: postgrespassword
   graphql-engine:
     build:
-      dockerfile: ../../deployment/hasura-migrations.Dockerfile
-      context: ../packages/gamesdb
+      dockerfile: ../../deployment/dev/hasura-migrations.Dockerfile
+      context: ../../packages/gamesdb
     image: ttt/hasura:latest
     ports:
       - "8080:8080"

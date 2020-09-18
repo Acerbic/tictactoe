@@ -1,4 +1,5 @@
 version: "3"
+
 services:
   postgres:
     image: postgres:12
@@ -7,10 +8,11 @@ services:
       - db_data:/var/lib/postgresql/data
     environment:
       POSTGRES_PASSWORD: postgrespassword
+
   graphql-engine:
     build:
-      dockerfile: ../../deployment/hasura-migrations.Dockerfile
-      context: ../packages/gamesdb
+      context: ../../packages/gamesdb
+      dockerfile: ../../deployment/prod/hasura-migrations.Dockerfile
     image: ttt/hasura:latest
     ports:
       - "8080:8080"
@@ -21,13 +23,13 @@ services:
       HASURA_GRAPHQL_DATABASE_URL: postgres://postgres:postgrespassword@postgres:5432/postgres
       HASURA_GRAPHQL_ENABLE_CONSOLE: "true" # set to "false" to disable console
       HASURA_GRAPHQL_ENABLED_LOG_TYPES: startup, http-log, webhook-log, websocket-log, query-log
-      ## uncomment next line to set an admin secret
+      # if this is undefined by the host environment, the password protection will not be enabled
       HASURA_GRAPHQL_ADMIN_SECRET:
 
   gmaster:
     build:
-      dockerfile: deployment/prod.gmaster.Dockerfile
-      context: ..
+      context: ../..
+      dockerfile: deployment/prod/gmaster.Dockerfile
       args:
         GMASTER_PORT: 3000
     image: ttt/gmaster-prod:latest
@@ -37,8 +39,8 @@ services:
 
   ghost:
     build:
-      dockerfile: deployment/prod.ghost.Dockerfile
-      context: ..
+      context: ../..
+      dockerfile: deployment/prod/ghost.Dockerfile
       args:
         GHOST_PORT: 3060
     image: ttt/ghost-prod:latest
@@ -48,5 +50,6 @@ services:
     restart: always
     ports:
       - "3060:3060"
+
 volumes:
   db_data:

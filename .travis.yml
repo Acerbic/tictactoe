@@ -22,7 +22,7 @@ jobs:
     services:
       - docker
     before_script: skip
-    script: if [ "$TRAVIS_PULL_REQUEST" = "false" ]; then bash ./deployment/travis_build_docker.sh; fi
+    script: if [ "$TRAVIS_PULL_REQUEST" = "false" ]; then bash ./deployment/travisci/travis_build_docker.sh; fi
     before_deploy:
       # populate known_hosts with target host fingerprint
       - echo "$DOCKER_DEPLOY_KNOWN_HOST_BASE64" | base64 -d >> $HOME/.ssh/known_hosts
@@ -34,11 +34,11 @@ jobs:
     deploy:
       provider: script
       skip_cleanup: true
-      script: bash ./deployment/travis_deploy_docker.sh
+      script: bash ./deployment/travisci/travis_deploy_docker.sh
 
   - stage: deploy
     name: Deploying Next.js Client code
     install: skip
     before_script: npm i -g now
     script:
-      - bash ./deployment/travis_deploy_client.sh
+      - bash ./deployment/travisci/travis_deploy_client.sh

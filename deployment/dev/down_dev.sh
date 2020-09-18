@@ -2,5 +2,5 @@
 
 sudo docker-compose \
     --project-name ttt-dev \
-    --file deployment/docker-compose-dev.yml \
+    --file deployment/dev/docker-compose-dev.yml \
     down

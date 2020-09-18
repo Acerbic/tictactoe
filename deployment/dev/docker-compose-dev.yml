@@ -1,5 +1,9 @@
+# Build dev versions of containers
+
 version: "3"
+
 services:
+  # actual DB backend
   postgres:
     image: postgres:12
     restart: always
@@ -7,10 +11,14 @@ services:
       - db_data_dev:/var/lib/postgresql/data
     environment:
       POSTGRES_PASSWORD: postgrespassword
+
+  # DB <-> graphql wrapper Hasura
   graphql-engine:
     build:
-      dockerfile: ../../deployment/hasura-migrations.Dockerfile
-      context: ../packages/gamesdb
+      # context from this file's path
+      context: ../../packages/gamesdb
+      # dockerfile from context's path
+      dockerfile: ../../deployment/dev/hasura-migrations.Dockerfile
     image: ttt/hasura:latest
     ports:
       - "8080:8080"
@@ -26,8 +34,8 @@ services:
 
   gmaster:
     build:
-      dockerfile: deployment/gmaster.Dockerfile
-      context: ..
+      context: ../..
+      dockerfile: deployment/dev/gmaster.Dockerfile
       args:
         GMASTER_PORT: 3000
     image: ttt/gmaster:latest
@@ -37,8 +45,8 @@ services:
 
   ghost:
     build:
-      dockerfile: deployment/ghost.Dockerfile
-      context: ..
+      context: ../..
+      dockerfile: deployment/dev/ghost.Dockerfile
       args:
         GHOST_PORT: 3060
     image: ttt/ghost:latest
@@ -48,12 +56,13 @@ services:
     restart: always
     ports:
       - "3060:3060"
+      # nodejs debug
       - "9229:9229"
 
   client:
     build:
-      dockerfile: deployment/client.Dockerfile
-      context: ..
+      context: ../..
+      dockerfile: deployment/dev/client.Dockerfile
       args:
         CLIENT_PORT: 3030
     image: ttt/client:latest

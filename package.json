@@ -1,12 +1,12 @@
 {
   "scripts": {
     "clean": "lerna run clean && lerna clean -y && rimraf node_modules",
-    "deploy:dev:local": "bash ./deployment/deploy_dev_local.sh",
-    "down:dev:local": "bash ./deployment/down_dev_local.sh",
-    "deploy:dev": "bash ./deployment/deploy_dev.sh",
-    "down:dev": "bash ./deployment/down_dev.sh",
-    "deploy:prod": "bash ./deployment/deploy_prod.sh",
-    "down:prod": "bash ./deployment/down_prod.sh",
+    "deploy:dev:local": "bash ./deployment/dev/deploy_dev_local.sh",
+    "down:dev:local": "bash ./deployment/dev/down_dev_local.sh",
+    "deploy:dev": "bash ./deployment/dev/deploy_dev.sh",
+    "down:dev": "bash ./deployment/dev/down_dev.sh",
+    "deploy:prod": "bash ./deployment/prod/deploy_prod.sh",
+    "down:prod": "bash ./deployment/prod/down_prod.sh",
     "start:client": "cross-env-shell GHOST_URL=http://localhost:3060 \"cd packages/client && yarn dev\"",
     "start:gmaster": "cross-env-shell HASURA_URL=http://localhost:8080/v1/graphql \"cd packages/gmaster && yarn start\"",
     "start:ghost": "cross-env-shell GMASTER_URL=http://localhost:3000 JWT_SECRET=1234567 \"cd packages/ghost && yarn dev\"",
