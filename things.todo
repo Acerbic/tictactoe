@@ -26,3 +26,7 @@
 ☐ connect traefik -> docker via SSH instead of socket for security (https://docs.traefik.io/providers/docker/#endpoint)
 ☐ investigate docker in rootless mode (?)
 ☐ add cronjob to prune outdated docker images
+☐ organize deployment files -> travis, dev
+☐ implement naming containers with custom labels and default rule
+☐ ?? use default port detection (https://docs.traefik.io/providers/docker/#port-detection) instead of declaring a port
+☐ investigate docker images being rebuilt even without code change on Travis
