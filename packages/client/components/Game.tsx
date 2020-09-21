@@ -28,7 +28,7 @@ const initialBoard: GameBoardDataType = [
 /**
  * Props to the "Render Prop" composition pattern.
  */
-export interface GameControlProps {
+export interface GameDisplayProps {
     state: State<ClientContext, ClientEvent, ClientSchema>;
     board: GameBoardDataType;
     startNewGame: () => void;
@@ -40,10 +40,10 @@ export interface GameControlProps {
 }
 
 interface P {
-    gameDisplay: React.FC<GameControlProps>;
+    gameDisplay: React.FC<GameDisplayProps>;
 }
 
-export const Game: React.FC<P> = ({ gameDisplay }) => {
+export const Game: React.FC<P> = ({ gameDisplay: GameDisplay }) => {
     const player = useRecoilValue(playerAuthState);
 
     // generate a function that when called would set roleAssignedState
@@ -94,12 +94,6 @@ export const Game: React.FC<P> = ({ gameDisplay }) => {
 
     // initiate permanent ws connection to the server
     useEffect(() => {
-        if (!player) {
-            // player session is not initialized yet from local storage;
-            // NOTE: see SSR bug that prevents initializing atoms with non-primitive
-            return;
-        }
-
         // the connector will use "send" to self-store into the
         // machine's context.
         new SocketGameConnector(
@@ -109,7 +103,7 @@ export const Game: React.FC<P> = ({ gameDisplay }) => {
             send,
             player
         );
-    }, [!!player]); // FIXME: should be [] after Recoil patches their code
+    }, []);
 
     // TODO: check against submitting incorrect move (occupied cells)
     const cellClicked = (row: number, column: number) => {
@@ -149,7 +143,7 @@ export const Game: React.FC<P> = ({ gameDisplay }) => {
         send({ type: "UI_BACK_TO_LOBBY" });
     };
 
-    const props: GameControlProps = {
+    const props: GameDisplayProps = {
         state,
         board,
         startNewGame,
@@ -159,8 +153,6 @@ export const Game: React.FC<P> = ({ gameDisplay }) => {
         quitGame,
         backToLobby
     };
-
-    const GameDisplay = gameDisplay;
 
     return <GameDisplay {...props}></GameDisplay>;
 };

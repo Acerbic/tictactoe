@@ -10,10 +10,10 @@ import { PopBanner } from "./PopBanner";
 import { AnnouncerText } from "./AnnouncerText";
 import { QuitButton } from "./QuitButton";
 
-import { GameControlProps } from "./Game";
+import { GameDisplayProps } from "./Game";
 import { Button } from "./Button";
 
-export const GameDisplay: React.FC<GameControlProps> = props => {
+export const GameDisplay: React.FC<GameDisplayProps> = props => {
     const { state } = props;
 
     let stateRendered: JSX.Element = <></>;

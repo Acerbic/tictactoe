@@ -34,13 +34,13 @@ export function atomLocalStorage<T>(
     opts: LSAtomOptions<T>
 ): [RecoilState<T>, (setter: SetterOrUpdater<T>, defaultValue: T) => void] {
     const key = `ls-recoiled-${opts.storageKey}`;
-    let a: RecoilState<T>;
     let rs: RecoilState<T>;
+
     if (recoilStates.has(key)) {
         rs = recoilStates.get(key)!;
     } else {
         // backstorage to facilitate Recoil observable pattern
-        a = atom<T>({
+        let a: RecoilState<T> = atom<T>({
             key: `atom-${key}`,
             // reading value from localStorage here would issue a SSR hydration warning
             // (inconsistency with server rendering)

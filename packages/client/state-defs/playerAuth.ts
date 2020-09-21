@@ -14,15 +14,11 @@ export type PlayerAuthState = {
     token: string | null;
 };
 
-const [
-    playerAuthState,
-    playerAuthStateInitializer
-] = atomLocalStorage<PlayerAuthState | null>({
+const [playerAuthState, playerAuthStateInitializer] = atomLocalStorage<
+    PlayerAuthState
+>({
     storageKey: "ttt-player",
-    // FIXME: see if recoil > 0.0.8 can use object defaults without throwing an
-    // error "window is not defined"
-    //default: { name: "Anonymous", token: null }
-    default: null
+    default: { name: "Anonymous", token: null }
 });
 
 export { playerAuthState, playerAuthStateInitializer };
