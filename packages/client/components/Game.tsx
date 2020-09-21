@@ -49,7 +49,7 @@ export const Game: React.FC<P> = ({ gameDisplay }) => {
     // generate a function that when called would set roleAssignedState
     // (to be called from outside of React hooks infrastructure)
     const roleAssigner = useRecoilCallback<[Role], void>(
-        ({ set }, role) => {
+        ({ set }) => role => {
             set(roleAssignedState, role);
         },
         [roleAssignedState]
@@ -58,13 +58,21 @@ export const Game: React.FC<P> = ({ gameDisplay }) => {
     // generate a function that when called would set playerAuthState
     // (to be called from outside of React hooks infrastructure)
     const playerAuthSetter = useRecoilCallback<[string], void>(
-        ({ set }, token) => {
-            const payload: JWTSession = decode(token);
-
-            set(playerAuthState, {
-                name: payload.playerName,
-                token
-            });
+        ({ set }) => token => {
+            try {
+                const payload: JWTSession = decode(token);
+                set(playerAuthState, {
+                    name: payload.playerName,
+                    token
+                });
+            } catch (error) {
+                // TODO?
+                console.debug(error, token);
+                set(playerAuthState, {
+                    name: "Anonymous",
+                    token: null
+                });
+            }
         },
         [playerAuthState]
     );

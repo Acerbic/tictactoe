@@ -9,12 +9,11 @@ import {
     RecoilState,
     useRecoilState,
     useSetRecoilState,
-    NodeKey,
     SetterOrUpdater
 } from "recoil";
 import * as ls from "local-storage";
 
-const recoilStates: Map<NodeKey, RecoilState<any>> = new Map();
+const recoilStates: Map<string, RecoilState<any>> = new Map();
 
 export interface LSAtomOptions<T> {
     storageKey: string;

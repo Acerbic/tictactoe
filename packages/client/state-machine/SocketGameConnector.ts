@@ -156,9 +156,14 @@ export class SocketGameConnector implements GameConnector {
         isInGame
     }: API["out"]["connection_ack"]) => {
         console.debug("SOCKET: got s_connection_ack");
-        const authData = decode(token) as JWTSession;
-        this.playerId = authData.playerId;
-        this.setAuthTokenReceived(token);
+        try {
+            const authData = decode(token) as JWTSession;
+            this.playerId = authData.playerId;
+            this.setAuthTokenReceived(token);
+        } catch (e) {
+            // TODO?
+            console.debug(e, token);
+        }
 
         this.send({
             type: isInGame ? "S_RECONNECTED" : "S_CONNECTED",
