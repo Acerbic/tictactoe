@@ -49,12 +49,10 @@ export const playername_machine: MachineConfig<
     initial: "initial",
     states: {
         initial: {
-            on: {
-                "": [
-                    { cond: "isRequiringInputUsername", target: "formopen" },
-                    { target: "formclosed" }
-                ]
-            }
+            always: [
+                { cond: "isRequiringInputUsername", target: "formopen" },
+                { target: "formclosed" }
+            ]
         },
         formopen: {
             on: {

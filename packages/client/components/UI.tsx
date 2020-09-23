@@ -44,7 +44,7 @@ export const UI: React.FC = () => {
         <>
             <UserBar
                 onPlayerNameClick={onPlayerNameClick}
-                playerName={player.name || "Anonymous"}
+                playerName={player.name}
             ></UserBar>
             {machine.value}
             {/* Upon mounting, the form reads initial value for the input
