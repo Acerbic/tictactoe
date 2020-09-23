@@ -7,17 +7,12 @@ import { useRecoilValue, useRecoilCallback } from "recoil";
 import { useMachine } from "@xstate/react";
 import decode from "jwt-decode";
 
-import { clientMachine } from "../state-machine/state-machine";
-import { SocketGameConnector } from "../state-machine/SocketGameConnector";
-import { playerAuthState, roleAssignedState } from "../state-defs";
+import { GameDisplay, P as GameDisplayProps } from "./GameDisplay";
+import { clientMachine } from "../../state-machine/state-machine";
+import { SocketGameConnector } from "../../state-machine/SocketGameConnector";
+import { playerAuthState, roleAssignedState } from "../../state-defs";
 import { JWTSession, Role } from "@trulyacerbic/ttt-apis/ghost-api";
 import { GameBoard as GameBoardDataType } from "@trulyacerbic/ttt-apis/gmaster-api";
-import { State } from "xstate";
-import {
-    ClientContext,
-    ClientEvent,
-    ClientSchema
-} from "../state-machine/state-machine-schema";
 
 const initialBoard: GameBoardDataType = [
     [null, null, null],
@@ -25,25 +20,7 @@ const initialBoard: GameBoardDataType = [
     [null, null, null]
 ];
 
-/**
- * Props to the "Render Prop" composition pattern.
- */
-export interface GameDisplayProps {
-    state: State<ClientContext, ClientEvent, ClientSchema>;
-    board: GameBoardDataType;
-    startNewGame: () => void;
-    chooseRole: (role: "first" | "second") => void;
-    quitGame: () => void;
-    cellClicked: (row: number, column: number) => void;
-    dropRoom: () => void;
-    backToLobby: () => void;
-}
-
-interface P {
-    gameDisplay: React.FC<GameDisplayProps>;
-}
-
-export const Game: React.FC<P> = ({ gameDisplay: GameDisplay }) => {
+export const Game: React.FC = () => {
     const player = useRecoilValue(playerAuthState);
 
     // generate a function that when called would set roleAssignedState
@@ -79,7 +56,10 @@ export const Game: React.FC<P> = ({ gameDisplay: GameDisplay }) => {
 
     const [board, setBoard] = useState(initialBoard);
 
+    // initialize state machine
     const [state, send, intrp] = useMachine(clientMachine);
+
+    // attach debug observer to state machine
     useEffect(() => {
         intrp.onTransition(e => {
             console.debug("MACHINE: transition -> %s", e.value.toString(), e);
@@ -94,8 +74,9 @@ export const Game: React.FC<P> = ({ gameDisplay: GameDisplay }) => {
 
     // initiate permanent ws connection to the server
     useEffect(() => {
-        // the connector will use "send" to self-store into the
-        // machine's context.
+        // the connector will use "send" to self-store into the machine's
+        // context and to send websocket events into machine. The machine, in
+        // return will use its context value to order actions to the connector
         new SocketGameConnector(
             setBoard,
             roleAssigner,

@@ -3,17 +3,33 @@
  */
 
 import React from "react";
+import { State } from "xstate";
+import {
+    ClientContext,
+    ClientEvent,
+    ClientSchema
+} from "../../state-machine/state-machine-schema";
+import { GameBoard as GameBoardDataType } from "@trulyacerbic/ttt-apis/gmaster-api";
 
 import { GameBoard } from "./GameBoard";
 import StateMessage from "./StateMessage";
 import { PopBanner } from "./PopBanner";
 import { AnnouncerText } from "./AnnouncerText";
 import { QuitButton } from "./QuitButton";
-
-import { GameDisplayProps } from "./Game";
 import { Button } from "./Button";
 
-export const GameDisplay: React.FC<GameDisplayProps> = props => {
+export interface P {
+    state: State<ClientContext, ClientEvent, ClientSchema>;
+    board: GameBoardDataType;
+    startNewGame: () => void;
+    chooseRole: (role: "first" | "second") => void;
+    quitGame: () => void;
+    cellClicked: (row: number, column: number) => void;
+    dropRoom: () => void;
+    backToLobby: () => void;
+}
+
+export const GameDisplay: React.FC<P> = props => {
     const { state } = props;
 
     let stateRendered: JSX.Element = <></>;

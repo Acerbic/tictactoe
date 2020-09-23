@@ -2,7 +2,6 @@
 ✔ write production deployment script and readme @done(15-06-2020 00:39)
 ☐ drop game if both clients d/c?
 ☐ see if css-modules can be injected as normal classes via JSX transform
-☐ do I need certs for HTTPS-endpoints deployment?
 ✔ login system with persistant account and deterministic playerId. @done(10-06-2020 18:31)
 ☐ Update DOCS diagrams
 ☐ client: handle ghost going d/c
@@ -20,7 +19,7 @@
 ☐ update readme and add production deployment section
 ☐ move 'gamesdb' package from workspaces to save `yarn install` time?
 ✔ yarn --frozen-lockfile vs --pure-lockfile and rebuilding docker layers??? @done(18-09-2020 12:13)
-☐ rolling update of ghost server so when a new version is up, the games in progress don't break
+✘ rolling update of ghost server so when a new version is up, the games in progress don't break @cancelled(20-09-2020 03:31)
 ✘ make ghost listen on specified HOSTNAME instead of blank all @cancelled(28-06-2020 23:43)
 ☐ Travis container build script failure doesn't break the build!
 ✘ connect traefik -> docker via SSH instead of socket for security (https://docs.traefik.io/providers/docker/#endpoint) @cancelled(18-09-2020 06:05)
@@ -29,4 +28,5 @@
 ✔ organize deployment files -> travis, dev @done(18-09-2020 07:22)
 ✔ implement traefik rule for containers with custom labels and default rule @done(18-09-2020 10:05)
 ☐ ?? use default port detection (https://docs.traefik.io/providers/docker/#port-detection) instead of declaring a port
-✔ investigate docker images being rebuilt even without code change on Travis @done(19-09-2020 01:01)
+☐ enter player's name in client, communicate it to the ghost
+☐ setup dev environment with mapping sources into containers

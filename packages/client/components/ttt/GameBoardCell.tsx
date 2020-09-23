@@ -5,7 +5,7 @@ import {
     playerIdState,
     roleAssignedState,
     opponentRoleAssignedState
-} from "../state-defs";
+} from "../../state-defs";
 
 import styles from "./GameBoardCell.module.css";
 

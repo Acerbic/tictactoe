@@ -8,7 +8,7 @@ import {
     ClientContext,
     ClientEvent,
     ClientSchema
-} from "../state-machine/state-machine-schema";
+} from "../../state-machine/state-machine-schema";
 
 interface P {
     state: State<ClientContext, ClientEvent, ClientSchema>;

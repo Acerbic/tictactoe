@@ -47,7 +47,7 @@ export const PopBanner: React.FC<React.PropsWithChildren<P>> = props => {
         >
             <div
                 className={`
-                    border-t-4 border-b-4 px-4 py-3 text-center py-1 flex flex-col ${contentVariant}
+                    border-t-4 border-b-4 px-4 py-3 text-center flex flex-col ${contentVariant}
                 `}
                 style={{
                     opacity: 0.85,

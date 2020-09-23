@@ -2,7 +2,7 @@ import React from "react";
 
 import { GameBoard as GameBoardDataType } from "@trulyacerbic/ttt-apis/gmaster-api";
 
-import Card3D from "./react-spring/Card3D";
+import Card3D from "../react-spring/Card3D";
 import GameBoardCell from "./GameBoardCell";
 
 export interface GameBoardProps {

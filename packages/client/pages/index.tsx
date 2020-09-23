@@ -2,10 +2,10 @@ import React from "react";
 
 import { withUserLoginControl } from "../components/withUserLoginControl";
 import { UserBar } from "../components/UserBar";
-import { Game } from "../components/Game";
-import { GameDisplay } from "../components/GameDisplay";
 import { useRecoilValue } from "recoil";
 import { bgIndexState } from "../state-defs";
+
+import { Game } from "../components/ttt/Game";
 
 const bgURLs = [
     "",
@@ -29,11 +29,15 @@ export const IndexPage: React.FC = () => {
                 backgroundImage: `url('${bgURLs[bgIndex]}')`
             }}
         >
+            {/* Above-game user-related UI */}
             {/* positioning for the userbar (top-left) */}
             <div className="fixed right-0 top-0" style={{ zIndex: 200 }}>
                 {withUserLoginControl(UserBar)}
             </div>
-            <Game gameDisplay={GameDisplay}></Game>
+            {/* Game-specific display (lets pretend we have several different games) */}
+            <div className="h-full">
+                <Game />
+            </div>
         </div>
     );
 };
