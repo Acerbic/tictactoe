@@ -1,0 +1,37 @@
+.root {
+    @apply bg-gray-900 bg-opacity-75 h-full;
+    @apply flex flex-col justify-center align-middle;
+}
+
+.root > div {
+    @apply rounded border-white border-2 bg-opacity-75 bg-gray-900 p-8 m-6;
+}
+
+.root h1 {
+    @apply text-center font-mono text-yellow-300 font-extrabold text-4xl mb-6;
+}
+
+.root input[type="text"] {
+    @apply block w-full text-center text-4xl bg-gray-800 text-gray-500 border-b-2 mb-8;
+    outline: none;
+}
+
+.root input[type="text"]:hover,
+.root input[type="text"]:focus {
+    @apply bg-gray-900 text-gray-300;
+}
+
+.root :global .buttons {
+    @apply flex justify-end;
+}
+
+.root input[type="button"],
+.root input[type="submit"] {
+    @apply bg-gray-800 text-gray-400 border-indigo-900 bg-transparent;
+    @apply block rounded text-center text-2xl ml-4 p-2 border-2 font-semibold;
+}
+
+.root input[type="button"]:hover,
+.root input[type="submit"]:hover {
+    @apply bg-gray-600 border-pink-300 text-gray-200;
+}

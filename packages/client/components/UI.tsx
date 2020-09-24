@@ -46,12 +46,11 @@ export const UI: React.FC = () => {
                 onPlayerNameClick={onPlayerNameClick}
                 playerName={player.name}
             ></UserBar>
-            {machine.value}
             {/* Upon mounting, the form reads initial value for the input
                 field. When form closes, it unmounts. */}
             {machine.matches("formclosed") || (
                 <div
-                    className="fixed left-0 top-0 h-full w-full border-gray-600 border-8"
+                    className="fixed left-0 top-0 h-full w-full"
                     style={{ zIndex: 10 }}
                 >
                     <UsernameInputForm

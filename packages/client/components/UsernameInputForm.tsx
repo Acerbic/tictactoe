@@ -2,10 +2,12 @@
  * A screen for player to input the name
  */
 
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { useRecoilValue } from "recoil";
 
 import { playerAuthState } from "../state-defs/playerAuth";
+
+import styles from "./UsernameInputForm.module.css";
 
 interface P {
     onSaveClick: (newName: string) => void;
@@ -20,19 +22,36 @@ export const UsernameInputForm: React.FC<P> = props => {
     // value
     const [newName, setNewName] = useState<string>(name || "Anonymous");
 
+    const backdropClick = (e: React.MouseEvent<HTMLElement, MouseEvent>) => {
+        if (e.target === e.currentTarget) {
+            e.stopPropagation();
+            e.preventDefault();
+            props.onCancelClick();
+        }
+    };
+
     return (
-        <div>
-            <input
-                type="text"
-                onChange={e => setNewName(e.target.value)}
-                value={newName}
-            ></input>
-            <input type="button" onClick={props.onCancelClick} value="Cancel" />
-            <input
-                type="submit"
-                onClick={() => props.onSaveClick(newName)}
-                value="Save"
-            />
+        <div className={styles.root} onClick={backdropClick}>
+            <div>
+                <h1>Your name is....</h1>
+                <input
+                    type="text"
+                    onChange={e => setNewName(e.target.value)}
+                    value={newName}
+                ></input>
+                <div className="buttons">
+                    <input
+                        type="button"
+                        onClick={props.onCancelClick}
+                        value="Cancel"
+                    />
+                    <input
+                        type="submit"
+                        onClick={() => props.onSaveClick(newName)}
+                        value="Save"
+                    />
+                </div>
+            </div>
         </div>
     );
 };
