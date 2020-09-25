@@ -21,6 +21,7 @@ export interface PlayernameSchema extends StateSchema<PlayernameContext> {
     states: {
         initial: {};
         formopen: {};
+        formclosing: {};
         formclosed: {};
     };
 }
@@ -38,7 +39,11 @@ export interface CancelEdit extends EventObject {
     type: "CANCEL_EDIT";
 }
 
-export type AggregateEvent = EditName | SaveNewName | CancelEdit;
+export interface ForceClose extends EventObject {
+    type: "FORCE_CLOSE";
+}
+
+export type AggregateEvent = EditName | SaveNewName | CancelEdit | ForceClose;
 
 export const playername_machine: MachineConfig<
     PlayernameContext,
@@ -56,8 +61,20 @@ export const playername_machine: MachineConfig<
         },
         formopen: {
             on: {
-                SAVE_NEW_NAME: { target: "formclosed", actions: "saveNewName" },
-                CANCEL_EDIT: { target: "formclosed" }
+                SAVE_NEW_NAME: {
+                    target: "formclosing",
+                    actions: "saveNewName"
+                },
+                CANCEL_EDIT: { target: "formclosing" }
+            }
+        },
+        formclosing: {
+            after: {
+                1000: "formclosed"
+            },
+            on: {
+                FORCE_CLOSE: { target: "formclosed" },
+                EDIT_NAME: { target: "formopen" }
             }
         },
         formclosed: {

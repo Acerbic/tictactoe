@@ -8,6 +8,7 @@ import React, { useEffect, useState } from "react";
 import { useRecoilState } from "recoil";
 import { Machine } from "xstate";
 import { useMachine } from "@xstate/react";
+import { useSpring, animated } from "react-spring";
 
 import { playerAuthState } from "../state-defs";
 import { UserBar } from "./UserBar";
@@ -36,9 +37,26 @@ export const UI: React.FC = () => {
         }
     });
 
+    const [resetAnimation, setResetAnimantion] = useState(false);
     const onPlayerNameClick = () => {
         send("EDIT_NAME");
+        setResetAnimantion(true);
     };
+
+    const isFormClosing = machine.matches("formclosing");
+    const isFormVisible = machine.matches("formopen") || isFormClosing;
+    const { transform, opacity } = useSpring({
+        transform: isFormClosing
+            ? "translate(50%, -50%) scale(0.35)"
+            : "translate(0%, 0%) scale(1)",
+        opacity: isFormClosing ? 0 : 1,
+        from: {
+            transform: "translate(0%, 0%) scale(1)",
+            opacity: 1
+        },
+        reset: resetAnimation,
+        onStart: () => setResetAnimantion(false)
+    });
 
     return (
         <>
@@ -46,20 +64,25 @@ export const UI: React.FC = () => {
                 onPlayerNameClick={onPlayerNameClick}
                 playerName={player.name}
             ></UserBar>
-            {/* Upon mounting, the form reads initial value for the input
-                field. When form closes, it unmounts. */}
-            {machine.matches("formclosed") || (
-                <div
+            {isFormVisible && (
+                <animated.div
                     className="fixed left-0 top-0 h-full w-full"
-                    style={{ zIndex: 10 }}
+                    style={{
+                        transform,
+                        opacity,
+                        zIndex: 10,
+                        pointerEvents: isFormClosing ? "none" : "unset"
+                    }}
                 >
                     <UsernameInputForm
+                        initialValue={player.name}
+                        isFormClosing={isFormClosing}
                         onCancelClick={() => send("CANCEL_EDIT")}
                         onSaveClick={newName =>
                             send({ type: "SAVE_NEW_NAME", newName })
                         }
                     />
-                </div>
+                </animated.div>
             )}
         </>
     );

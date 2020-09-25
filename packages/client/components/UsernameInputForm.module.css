@@ -3,10 +3,21 @@
     @apply flex flex-col justify-center align-middle;
 }
 
-.root > div {
-    @apply rounded border-white border-2 bg-opacity-75 bg-gray-900 p-8 m-6;
+.root :global .content {
+    @apply rounded border-white border-2 bg-opacity-75 bg-gray-900 p-10 m-6;
 }
 
+.closing {
+    @apply bg-transparent;
+}
+
+@screen sm {
+    .root :global .content {
+        @apply box-border;
+        @apply mx-auto;
+        width: calc(640px - 3rem); /* sm - 2*(m6) */
+    }
+}
 .root h1 {
     @apply text-center font-mono text-yellow-300 font-extrabold text-4xl mb-6;
 }
