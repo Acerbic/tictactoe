@@ -13,9 +13,10 @@
 
 @screen sm {
     .root :global .content {
-        @apply box-border;
         @apply mx-auto;
-        width: calc(640px - 3rem); /* sm - 2*(m6) */
+        width: calc(
+            theme("screens.sm") - 2 * theme("spacing.6")
+        ); /* sm - 2*(m6) */
     }
 }
 .root h1 {
