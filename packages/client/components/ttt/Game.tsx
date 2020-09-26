@@ -38,17 +38,18 @@ export const Game: React.FC = () => {
         ({ set }) => token => {
             try {
                 const payload: JWTSession = decode(token);
-                set(playerAuthState, {
-                    name: payload.playerName,
+                set(playerAuthState, oldValue => ({
+                    // name: payload.playerName,
+                    ...oldValue,
                     token
-                });
+                }));
             } catch (error) {
                 // TODO?
                 console.debug(error, token);
-                set(playerAuthState, {
-                    name: "Anonymous",
+                set(playerAuthState, oldValue => ({
+                    ...oldValue,
                     token: null
-                });
+                }));
             }
         },
         [playerAuthState]

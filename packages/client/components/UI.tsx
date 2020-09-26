@@ -5,7 +5,7 @@
  */
 
 import React, { useEffect, useState } from "react";
-import { useRecoilState } from "recoil";
+import { useRecoilState, useRecoilCallback } from "recoil";
 import { Machine } from "xstate";
 import { useMachine } from "@xstate/react";
 import { useSpring, animated } from "react-spring";
@@ -20,10 +20,23 @@ import {
 
 export const UI: React.FC = () => {
     const [player, setPlayer] = useRecoilState(playerAuthState);
+
+    // callback to read THE LATEST value of Recoil state atom, even when not in
+    // Reactive environment (in the xstate machine guard). Alternatively, it is
+    // possible to give the xstate machine access to the latest values by
+    // directly informing it of updates - via events or by updating context.
+    const readPlayerName = useRecoilCallback<[], string>(
+        ({ snapshot }) => () =>
+            (snapshot.getLoadable(playerAuthState).contents as any).name,
+        []
+    );
+
     const [machine, send] = useMachine(Machine(playername_machine), {
         guards: {
-            isRequiringInputUsername: () =>
-                !player.name || player.name === "Anonymous"
+            isRequiringInputUsername: () => {
+                const playerName = readPlayerName();
+                return !playerName || playerName === "Anonymous";
+            }
         },
         actions: {
             saveNewName: (_, event: AggregateEvent) => {
