@@ -10,15 +10,13 @@ import {
 // Tailwind CSS + custom components
 import "../components/tailwind/index.css";
 
+/**
+ * Component to initialize Recoil-dependent state
+ */
 const RecoilDependent: React.FC = ({ children }) => {
     // initiating stored playerAuth session from Local Storage
     const [value, setValue] = useRecoilState(playerAuthState);
-    useEffect(() => {
-        playerAuthStateInitializer(setValue, {
-            name: "Anonymous",
-            token: null
-        });
-    }, []);
+    useEffect(() => playerAuthStateInitializer(setValue), []);
     return <>{children}</>;
 };
 

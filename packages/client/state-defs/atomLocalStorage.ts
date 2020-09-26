@@ -2,15 +2,7 @@
  * LocalStorage + Recoil.js
  */
 
-import { useEffect } from "react";
-import {
-    atom,
-    selector,
-    RecoilState,
-    useRecoilState,
-    useSetRecoilState,
-    SetterOrUpdater
-} from "recoil";
+import { atom, selector, RecoilState, SetterOrUpdater } from "recoil";
 import * as ls from "local-storage";
 
 const recoilStates: Map<string, RecoilState<any>> = new Map();
@@ -19,9 +11,6 @@ export interface LSAtomOptions<T> {
     storageKey: string;
     default: T;
 }
-
-// TODO: Experiment and see if useRecoilCallback or preserving {set} could be
-// used to simplify initializer() function
 
 /**
  * Produces recoil atom-like based on browser's localStorage space value.
@@ -32,8 +21,8 @@ export interface LSAtomOptions<T> {
  */
 export function atomLocalStorage<T>(
     opts: LSAtomOptions<T>
-): [RecoilState<T>, (setter: SetterOrUpdater<T>, defaultValue: T) => void] {
-    const key = `ls-recoiled-${opts.storageKey}`;
+): [RecoilState<T>, (setter: SetterOrUpdater<T>) => void] {
+    const key = `atom-ls-recoiled-${opts.storageKey}`;
     let rs: RecoilState<T>;
 
     if (recoilStates.has(key)) {
@@ -41,7 +30,7 @@ export function atomLocalStorage<T>(
     } else {
         // backstorage to facilitate Recoil observable pattern
         let a: RecoilState<T> = atom<T>({
-            key: `atom-${key}`,
+            key,
             // reading value from localStorage here would issue a SSR hydration warning
             // (inconsistency with server rendering)
             default: opts.default
@@ -49,7 +38,7 @@ export function atomLocalStorage<T>(
 
         // selector to augment setting atom with setting to local storage
         rs = selector<T>({
-            key,
+            key: `selector-ls-recoiled-${opts.storageKey}`,
             get: ({ get }) => get(a),
             set: ({ get, set }, newValue) => {
                 if (get(a) !== newValue) {
@@ -63,8 +52,11 @@ export function atomLocalStorage<T>(
         recoilStates.set(key, rs);
     }
 
-    const initializer = (setValue: SetterOrUpdater<T>, defaultValue: T) => {
-        setValue(ls.get<T>(opts.storageKey) || opts.default || defaultValue);
+    // initialized loads stored value from local storage and subscribes to
+    // changes must be called with an appropriate setter (from a React component
+    // code hook useRecoilState)
+    const initializer = (setValue: SetterOrUpdater<T>) => {
+        setValue(ls.get<T>(opts.storageKey) || opts.default);
 
         // subscribe to updates from other tabs
         ls.on(opts.storageKey, (v: any) => {
@@ -73,23 +65,4 @@ export function atomLocalStorage<T>(
     };
 
     return [rs, initializer];
-}
-
-/**
- * React hook wrapper around generated atom.
- */
-export function useLSRecoilState<T>(
-    storageKey: string,
-    defaultValue: T
-): [T, SetterOrUpdater<T>] {
-    const [lsState, init] = atomLocalStorage<T | null>({
-        storageKey,
-        default: null
-    });
-
-    const setV = useSetRecoilState(lsState);
-    useEffect(() => {
-        init(setV, defaultValue);
-    }, []);
-    return useRecoilState<T>(lsState as RecoilState<T>);
 }

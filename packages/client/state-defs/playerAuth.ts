@@ -6,7 +6,7 @@
  * game server and it is required for an active match to proceed.
  */
 
-import { atomLocalStorage } from "./useLSRecoilState";
+import { atomLocalStorage } from "./atomLocalStorage";
 
 export type PlayerAuthState = {
     name: string;
