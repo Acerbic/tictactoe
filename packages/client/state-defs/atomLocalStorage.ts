@@ -33,7 +33,7 @@ export function atomLocalStorage<T>(
             key,
             // reading value from localStorage here would issue a SSR hydration warning
             // (inconsistency with server rendering)
-            default: opts.default
+            default: ls.get<T>(opts.storageKey) || opts.default
         });
 
         // selector to augment setting atom with setting to local storage
@@ -56,8 +56,6 @@ export function atomLocalStorage<T>(
     // changes must be called with an appropriate setter (from a React component
     // code hook useRecoilState)
     const initializer = (setValue: SetterOrUpdater<T>) => {
-        setValue(ls.get<T>(opts.storageKey) || opts.default);
-
         // subscribe to updates from other tabs
         ls.on(opts.storageKey, (v: any) => {
             setValue(v);

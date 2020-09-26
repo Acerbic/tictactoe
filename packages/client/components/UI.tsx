@@ -5,7 +5,7 @@
  */
 
 import React, { useEffect, useState } from "react";
-import { useRecoilState, useRecoilCallback } from "recoil";
+import { useRecoilState } from "recoil";
 import { Machine } from "xstate";
 import { useMachine } from "@xstate/react";
 import { useSpring, animated } from "react-spring";
@@ -19,23 +19,17 @@ import {
 } from "../state-machine/playername-machine-schema";
 
 export const UI: React.FC = () => {
-    const [player, setPlayer] = useRecoilState(playerAuthState);
+    // awkwardly disabling server-side rendering, bc playerAuthState
+    // is loaded from local storage and will not match during hydration.
+    const [mounted, setMounted] = useState(false);
+    useEffect(() => setMounted(true), []);
 
-    // callback to read THE LATEST value of Recoil state atom, even when not in
-    // Reactive environment (in the xstate machine guard). Alternatively, it is
-    // possible to give the xstate machine access to the latest values by
-    // directly informing it of updates - via events or by updating context.
-    const readPlayerName = useRecoilCallback<[], string>(
-        ({ snapshot }) => () =>
-            (snapshot.getLoadable(playerAuthState).contents as any).name,
-        []
-    );
+    const [player, setPlayer] = useRecoilState(playerAuthState);
 
     const [machine, send] = useMachine(Machine(playername_machine), {
         guards: {
             isRequiringInputUsername: () => {
-                const playerName = readPlayerName();
-                return !playerName || playerName === "Anonymous";
+                return !player.name || player.name === "Anonymous";
             }
         },
         actions: {
@@ -72,32 +66,35 @@ export const UI: React.FC = () => {
     });
 
     return (
-        <>
-            <UserBar
-                onPlayerNameClick={onPlayerNameClick}
-                playerName={player.name}
-            ></UserBar>
-            {isFormVisible && (
-                <animated.div
-                    className="fixed left-0 top-0 h-full w-full"
-                    style={{
-                        transform,
-                        opacity,
-                        zIndex: 10,
-                        pointerEvents: isFormClosing ? "none" : "unset"
-                    }}
-                >
-                    <UsernameInputForm
-                        initialValue={player.name}
-                        isFormClosing={isFormClosing}
-                        onCancelClick={() => send("CANCEL_EDIT")}
-                        onSaveClick={newName =>
-                            send({ type: "SAVE_NEW_NAME", newName })
-                        }
-                    />
-                </animated.div>
-            )}
-        </>
+        (mounted && (
+            <>
+                <UserBar
+                    onPlayerNameClick={onPlayerNameClick}
+                    playerName={player.name}
+                ></UserBar>
+
+                {isFormVisible && (
+                    <animated.div
+                        className="fixed left-0 top-0 h-full w-full"
+                        style={{
+                            transform,
+                            opacity,
+                            zIndex: 10,
+                            pointerEvents: isFormClosing ? "none" : "unset"
+                        }}
+                    >
+                        <UsernameInputForm
+                            initialValue={player.name}
+                            isFormClosing={isFormClosing}
+                            onCancelClick={() => send("CANCEL_EDIT")}
+                            onSaveClick={newName =>
+                                send({ type: "SAVE_NEW_NAME", newName })
+                            }
+                        />
+                    </animated.div>
+                )}
+            </>
+        )) || <></>
     );
 };
 

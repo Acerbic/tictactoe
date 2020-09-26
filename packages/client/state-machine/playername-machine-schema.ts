@@ -54,15 +54,10 @@ export const playername_machine: MachineConfig<
     initial: "initial",
     states: {
         initial: {
-            /* Using `after:0` instead of `always` because we need to wait for
-            local storage state to be properly read on component mount to
-            evaluate the condition guard */
-            after: {
-                0: [
-                    { cond: "isRequiringInputUsername", target: "formopen" },
-                    { target: "formclosed" }
-                ]
-            }
+            always: [
+                { cond: "isRequiringInputUsername", target: "formopen" },
+                { target: "formclosed" }
+            ]
         },
         formopen: {
             on: {
