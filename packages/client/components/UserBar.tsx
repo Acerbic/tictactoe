@@ -37,7 +37,7 @@ export const UserBar: React.FC<P> = props => {
                     </span>
                     {/* Username (edit on click) */}
                     <span
-                        className="font-mono text-2xl text-gray-700 leading-8 align-middle ml-3"
+                        className="username"
                         onClick={props.onPlayerNameClick}
                     >
                         {props.playerName}

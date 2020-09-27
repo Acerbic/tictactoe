@@ -1,5 +1,6 @@
 .userbar {
-    @apply h-16 flex;
+    display: flex;
+    height: 3.5rem;
 }
 
 .userbar :global .earshadow {
@@ -27,4 +28,14 @@
     border-bottom-width: 0.25rem;
     border-left-width: 0.05rem;
     border-bottom-left-radius: 1rem;
+}
+
+.userbar :global .username {
+    @apply font-mono text-2xl text-gray-700;
+    @apply leading-8 align-middle ml-3;
+    cursor: pointer;
+}
+
+.userbar :global .username:hover {
+    @apply underline text-indigo-900;
 }
