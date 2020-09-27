@@ -8,7 +8,6 @@ import React, { useEffect, useState } from "react";
 import { useRecoilState } from "recoil";
 import { Machine } from "xstate";
 import { useMachine } from "@xstate/react";
-import { useSpring, animated } from "react-spring";
 
 import { playerAuthState } from "../state-defs";
 import { UserBar } from "./UserBar";
@@ -17,6 +16,7 @@ import {
     playername_machine,
     AggregateEvent
 } from "../state-machine/playername-machine-schema";
+import { FadeMinimize } from "./react-spring/FadeMinimize";
 
 export const UI: React.FC = () => {
     // awkwardly disabling server-side rendering, bc playerAuthState
@@ -44,26 +44,14 @@ export const UI: React.FC = () => {
         }
     });
 
-    const [resetAnimation, setResetAnimantion] = useState(false);
     const onPlayerNameClick = () => {
         send("EDIT_NAME");
-        setResetAnimantion(true);
     };
 
     const isFormClosing = machine.matches("formclosing");
-    const isFormVisible = machine.matches("formopen") || isFormClosing;
-    const { transform, opacity } = useSpring({
-        transform: isFormClosing
-            ? "translate(50%, -50%) scale(0.35)"
-            : "translate(0%, 0%) scale(1)",
-        opacity: isFormClosing ? 0 : 1,
-        from: {
-            transform: "translate(0%, 0%) scale(1)",
-            opacity: 1
-        },
-        reset: resetAnimation,
-        onStart: () => setResetAnimantion(false)
-    });
+    const isFormVisible =
+        machine.matches("formopen") || machine.matches("formclosing");
+    const isFormHoldOpen = machine.matches("formopen");
 
     return (
         (mounted && (
@@ -73,26 +61,16 @@ export const UI: React.FC = () => {
                     playerName={player.name}
                 ></UserBar>
 
-                {isFormVisible && (
-                    <animated.div
-                        className="fixed left-0 top-0 h-full w-full"
-                        style={{
-                            transform,
-                            opacity,
-                            zIndex: 10,
-                            pointerEvents: isFormClosing ? "none" : "unset"
-                        }}
-                    >
-                        <UsernameInputForm
-                            initialValue={player.name}
-                            isFormClosing={isFormClosing}
-                            onCancelClick={() => send("CANCEL_EDIT")}
-                            onSaveClick={newName =>
-                                send({ type: "SAVE_NEW_NAME", newName })
-                            }
-                        />
-                    </animated.div>
-                )}
+                <FadeMinimize hold={isFormHoldOpen} hidden={!isFormVisible}>
+                    <UsernameInputForm
+                        initialValue={player.name}
+                        isFormClosing={isFormClosing}
+                        onCancelClick={() => send("CANCEL_EDIT")}
+                        onSaveClick={newName =>
+                            send({ type: "SAVE_NEW_NAME", newName })
+                        }
+                    />
+                </FadeMinimize>
             </>
         )) || <></>
     );
