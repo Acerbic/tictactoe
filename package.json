@@ -7,6 +7,7 @@
     "down:dev": "bash ./deployment/dev/down_dev.sh",
     "deploy:prod": "bash ./deployment/prod/deploy_prod.sh",
     "down:prod": "bash ./deployment/prod/down_prod.sh",
+    "dev": "concurrently -k \"yarn start:gmaster\" \"yarn start:ghost\" \"yarn start:client\"",
     "start:client": "cross-env-shell GHOST_URL=http://localhost:3060 \"cd packages/client && yarn dev\"",
     "start:gmaster": "cross-env-shell HASURA_URL=http://localhost:8080/v1/graphql \"cd packages/gmaster && yarn dev\"",
     "start:ghost": "cross-env-shell GMASTER_URL=http://localhost:3000 JWT_SECRET=1234567 \"cd packages/ghost && yarn dev\"",
@@ -18,8 +19,9 @@
     "packages/*"
   ],
   "devDependencies": {
+    "concurrently": "^5.3.0",
+    "cross-env": "^7.0.2",
     "prettier": "2.0.5",
-    "rimraf": "^3.0.2",
-    "cross-env": "^7.0.2"
+    "rimraf": "^3.0.2"
   }
 }

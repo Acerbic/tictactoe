@@ -84,6 +84,13 @@ yarn start:ghost
 yarn start:client
 ```
 
+or, alternative to starting 3 processes individually, start all of them in
+parallel with
+
+```bash
+yarn dev
+```
+
 After all processes start, you can connect on http://localhost:3030 to the game
 client, and on http://localhost:8080 to the Hasura's Console.
 
