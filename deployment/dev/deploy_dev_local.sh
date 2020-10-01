@@ -1,8 +1,7 @@
 #!/usr/bin/bash
 
-# PWD is the monorepo's root
+# PWD should be the monorepo's root
 
-pwd
 yarn --pure-lockfile && \
 yarn workspace @trulyacerbic/ttt-apis build && \
 yarn workspace gmaster build && \
