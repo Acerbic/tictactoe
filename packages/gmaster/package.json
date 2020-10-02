@@ -8,7 +8,7 @@
   "scripts": {
     "start": "node ./bin/www.js",
     "build": "tsc",
-    "dev": "NODE_ENV=development DEBUG=gmaster* concurrently -k \"nodemon --watch bin --watch dist ./bin/www.js\" \"tsc --watch\"",
+    "dev": "NODE_ENV=development DEBUG=gmaster* concurrently -k \"nodemon --watch bin --watch dist ./bin/www.js\" \"tsc --watch --preserveWatchOutput\"",
     "clean": "rimraf dist",
     "test": "MOCK_DB=1 HASURA_URL=http://localhost:8080/v1/graphql jest",
     "test:db": "HASURA_URL=http://localhost:8080/v1/graphql jest",

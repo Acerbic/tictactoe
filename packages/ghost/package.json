@@ -8,7 +8,7 @@
   "scripts": {
     "build": "tsc",
     "start": "node ./dist/server.js",
-    "dev": "NODE_ENV=development DEBUG=*,-nodemon*,-engine*,-express*,-binding,-socket.io* concurrently -k \"nodemon --watch dist --exec \\\"node --inspect=0.0.0.0\\\" ./dist/server.js\" \"tsc --watch\"",
+    "dev": "NODE_ENV=development DEBUG=*,-nodemon*,-engine*,-express*,-binding,-socket.io* concurrently -k \"nodemon --watch dist --exec \\\"node --inspect=0.0.0.0\\\" ./dist/server.js\" \"tsc --watch --preserveWatchOutput\"",
     "clean": "rimraf dist",
     "test": "JWT_SECRET=1234567 jest"
   },

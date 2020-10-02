@@ -14,7 +14,7 @@ ARG GMASTER_PORT=3000
 # Container running conditions and command
 ENV GMASTER_PORT=$GMASTER_PORT
 EXPOSE $GMASTER_PORT
-CMD cd ./packages/gmaster && yarn start
+CMD cd ./packages/gmaster && yarn dev
 
 # install deps for this package & crosslink
 COPY ["packages/gmaster/package.json", "./packages/gmaster/"]

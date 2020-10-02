@@ -42,6 +42,9 @@ services:
     environment:
       HASURA_URL: http://graphql-engine:8080/v1/graphql
     restart: always
+    volumes:
+      - ../../packages/gmaster/src:/app/packages/gmaster/src
+      - ../../packages/gmaster/bin:/app/packages/gmaster/bin
 
   ghost:
     build:
@@ -54,6 +57,8 @@ services:
       GMASTER_URL: http://gmaster:3000
       JWT_SECRET:
     restart: always
+    volumes:
+      - ../../packages/ghost/src:/app/packages/ghost/src
     ports:
       - "3060:3060"
       # nodejs debug
@@ -71,6 +76,11 @@ services:
       # client server, thus we need to point to it explicitly for runtime
       GHOST_URL: http://localhost:3060
     restart: always
+    volumes:
+      - ../../packages/client/pages:/app/packages/client/pages
+      - ../../packages/client/components:/app/packages/client/components
+      - ../../packages/client/state-defs:/app/packages/client/state-defs
+      - ../../packages/client/state-machine:/app/packages/client/state-machine
     ports:
       - "3030:3030"
 
