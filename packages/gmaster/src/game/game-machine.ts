@@ -39,13 +39,11 @@ export const GameMachine = xstate.Machine<GameContext, GameSchema, GameEvent>(
                     },
 
                     thinking: {
-                        on: {
-                            "": [
-                                { target: "over", cond: "isGameOver" },
-                                { target: "draw", cond: "isGameDraw" },
-                                { target: "wait" }
-                            ]
-                        }
+                        always: [
+                            { target: "over", cond: "isGameOver" },
+                            { target: "draw", cond: "isGameDraw" },
+                            { target: "wait" }
+                        ]
                     },
                     draw: { type: "final" },
                     over: { type: "final" }

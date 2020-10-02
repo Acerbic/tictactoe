@@ -13,7 +13,7 @@
 ☐ client global state should be in one place if possible
 ☐ check in ghost on ws connection that same playerId is not trying to connect from 2 sockets
 ☐ replace graphcurl in gmaster with ApolloClient
-☐ add a cronjob for DB maintenance to the gmastere container
+☐ add a cronjob for DB maintenance to the gmaster container
 ☐ sort out debug messages for ghost xstate by categories better
 ☐ ghost all-catch unexpected/unhandled xstate errors (unhandled?)
 ☐ update readme and add production deployment section
