@@ -44,7 +44,22 @@ Directories and files structure:
 -   `packages/*/*` the source files
 -   `lerna.json` configuration for Lerna.
 
-## Running dev in Docker
+
+
+## Running in dev environment
+
+For dev purposes you can either run components of the project in separate
+processes on the same machine, or as docker containers. Both options provide
+automated rebuild and restart of servers on source files change and ability to
+debug code with node debugger.
+
+Docker is easier to run and is closer to production configuration, but if you
+want to observe packages' debug output, you must use `docker logs`.
+
+Gmaster process/container is using port 9228 for node debugger. Ghost is using
+9229.
+
+### Running dev in Docker
 
 Creates DB, Ghost, Gmaster, Client containers.
 
@@ -52,14 +67,18 @@ Creates DB, Ghost, Gmaster, Client containers.
 yarn deploy:dev
 ```
 
-After, you can connect on http://docker-host-machine:3030 to the game client.
+Source files are mounted into the containers, so you can edit sources normally
+and the process inside the container will recompile and restart.
+
+After, you can connect on http://localhost:3030 to the game client.
+
 You can shut down Docker containers with
 
 ```bash
 yarn down:dev
 ```
 
-## Running dev in localhost
+### Running dev in local processes
 
 This runs everything on localhost (on different ports), except for Hasura DB
 (which requires Docker if running locally).
@@ -99,6 +118,32 @@ You can shut down Hasura containers with
 ```bash
 yarn down:dev:local
 ```
+
+### Debugging with VSCode.
+
+Either you run packages in Docker or local processes, GMaster and GHost publish
+debugging access on ports 9228 and 9229 of localhost, respectively. Copy values
+from `deployment/dev/vscode.launch.json` into your vscode launch configuration
+to use vscode debugging utilities.
+
+The configuration provided allow either to attach to already running processes
+(in Docker or local processes), or launch new (local) process with vscode
+supervision.
+
+- Attaching is faster and you can use the same instance of vscode to attach/detach
+to different processes. The downside is that upon rebuild after source files
+change vscode will not automatically re-attach.
+
+- "Launch" configurations will reattach nicely after process restarts, but if you
+launch gmaster and ghost separately, you'd need two instances of vscode to debug
+them simultaneously.
+
+- Finally, the "ALL - Launch" configuration will run all 3 packages in parallel
+  and under vscode observation (like if you run `yarn dev`). With that, you can
+  use the same vscode instance to trace both ghost and gmaster code and you
+  don't need to manually start any extraneous processes. The negatives are that
+  the startup time is longer and its harder to understand console output.
+
 
 [node]: https://nodejs.org/
 [lerna]: https://lerna.js.org/

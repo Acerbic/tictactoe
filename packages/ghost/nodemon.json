@@ -1,0 +1,5 @@
+{
+    "restartable": false,
+    "watch": ["dist"],
+    "exec": "node --inspect=0.0.0.0:9229 ./dist/server.js"
+}

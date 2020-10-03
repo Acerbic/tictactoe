@@ -45,6 +45,9 @@ services:
     volumes:
       - ../../packages/gmaster/src:/app/packages/gmaster/src
       - ../../packages/gmaster/bin:/app/packages/gmaster/bin
+    ports:
+      # nodejs debug
+      - "9228:9228"
 
   ghost:
     build:
