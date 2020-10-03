@@ -4,7 +4,7 @@
     "builds": [
         {
             "src": "packages/client/next.config.js",
-            "use": "@now/next",
+            "use": "@vercel/next",
             "config": {
                 "buildCommand": "yarn workspace @trulyacerbic/ttt-apis build && yarn build"
             }

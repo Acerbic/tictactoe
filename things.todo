@@ -27,7 +27,8 @@
 ☐ add cronjob to prune outdated docker images
 ✔ organize deployment files -> travis, dev @done(18-09-2020 07:22)
 ✔ implement traefik rule for containers with custom labels and default rule @done(18-09-2020 10:05)
-☐ ?? use default port detection (https://docs.traefik.io/providers/docker/#port-detection) instead of declaring a port
+✘ ?? use default port detection (https://docs.traefik.io/providers/docker/#port-detection) instead of declaring a port @cancelled(03-10-2020 22:07)
 ☐ enter player's name in client, communicate it to the ghost
 ✔ setup dev environment with mapping sources into containers @done(03-10-2020 18:04)
-☐ update deploy scripts `now` -> `vercel` cli, update `.nowignore`, `now.json` (see 'https://vercel.link/name-prop')
+✔ update deploy scripts `now` -> `vercel` cli, update `.nowignore`, `now.json` (see 'https://vercel.link/name-prop') @done(03-10-2020 22:28)
+☐ consider using Monorepo config for deploying to vercel (https://vercel.com/docs/git-integrations#monorepos) and webhooks instead of project linking

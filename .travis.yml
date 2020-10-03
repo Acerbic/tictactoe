@@ -41,6 +41,6 @@ jobs:
   - stage: deploy
     name: Deploying Next.js Client code
     install: skip
-    before_script: npm i -g now
+    before_script: npm i -g vercel
     script:
       - bash ./deployment/travisci/travis_deploy_client.sh
