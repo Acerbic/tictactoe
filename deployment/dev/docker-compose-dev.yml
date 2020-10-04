@@ -43,6 +43,7 @@ services:
       HASURA_URL: http://graphql-engine:8080/v1/graphql
     restart: always
     volumes:
+      - ../../packages/apis:/app/packages/apis
       - ../../packages/gmaster/src:/app/packages/gmaster/src
       - ../../packages/gmaster/bin:/app/packages/gmaster/bin
     ports:
@@ -61,6 +62,7 @@ services:
       JWT_SECRET:
     restart: always
     volumes:
+      - ../../packages/apis:/app/packages/apis
       - ../../packages/ghost/src:/app/packages/ghost/src
     ports:
       - "3060:3060"
@@ -80,6 +82,7 @@ services:
       GHOST_URL: http://localhost:3060
     restart: always
     volumes:
+      - ../../packages/apis:/app/packages/apis
       - ../../packages/client/pages:/app/packages/client/pages
       - ../../packages/client/components:/app/packages/client/components
       - ../../packages/client/state-defs:/app/packages/client/state-defs
