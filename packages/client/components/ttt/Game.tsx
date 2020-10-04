@@ -3,16 +3,22 @@
  */
 
 import React, { useState, useEffect } from "react";
-import { useRecoilValue, useRecoilCallback } from "recoil";
+import { useRecoilValue } from "recoil";
 import { useMachine } from "@xstate/react";
 import decode from "jwt-decode";
 
 import { GameDisplay, P as GameDisplayProps } from "./GameDisplay";
 import { clientMachine } from "../../state-machine/state-machine";
-import { SocketGameConnector } from "../../state-machine/SocketGameConnector";
-import { playerAuthState, roleAssignedState } from "../../state-defs";
-import { JWTSession, Role } from "@trulyacerbic/ttt-apis/ghost-api";
+import {
+    PlayerAuthState,
+    playerAuthState,
+    roleAssignedState
+} from "../../state-defs";
+import { JWTSession } from "@trulyacerbic/ttt-apis/ghost-api";
 import { GameBoard as GameBoardDataType } from "@trulyacerbic/ttt-apis/gmaster-api";
+
+import { useSocketGameConnector } from "../useSocketGameConnector";
+import { useSetRecoilState } from "recoil";
 
 const initialBoard: GameBoardDataType = [
     [null, null, null],
@@ -20,41 +26,23 @@ const initialBoard: GameBoardDataType = [
     [null, null, null]
 ];
 
+const playerWasRenamed = (player: PlayerAuthState): boolean => {
+    if (!player.name || !player.token) {
+        return false;
+    }
+    try {
+        const payload: JWTSession = decode(player.token);
+        return player.name !== payload.playerName;
+    } catch (e) {
+        return false;
+    }
+};
+
 export const Game: React.FC = () => {
     const player = useRecoilValue(playerAuthState);
+    const roleAssigner = useSetRecoilState(roleAssignedState);
 
-    // generate a function that when called would set roleAssignedState
-    // (to be called from outside of React hooks infrastructure)
-    const roleAssigner = useRecoilCallback<[Role], void>(
-        ({ set }) => role => {
-            set(roleAssignedState, role);
-        },
-        [roleAssignedState]
-    );
-
-    // generate a function that when called would set playerAuthState
-    // (to be called from outside of React hooks infrastructure)
-    const playerAuthSetter = useRecoilCallback<[string], void>(
-        ({ set }) => token => {
-            try {
-                const payload: JWTSession = decode(token);
-                set(playerAuthState, oldValue => ({
-                    // name: payload.playerName,
-                    ...oldValue,
-                    token
-                }));
-            } catch (error) {
-                // TODO?
-                console.debug(error, token);
-                set(playerAuthState, oldValue => ({
-                    ...oldValue,
-                    token: null
-                }));
-            }
-        },
-        [playerAuthState]
-    );
-
+    // board is local state to this Game component
     const [board, setBoard] = useState(initialBoard);
 
     // initialize state machine
@@ -74,18 +62,12 @@ export const Game: React.FC = () => {
     }, []);
 
     // initiate permanent ws connection to the server
-    useEffect(() => {
-        // the connector will use "send" to self-store into the machine's
-        // context and to send websocket events into machine. The machine, in
-        // return will use its context value to order actions to the connector
-        new SocketGameConnector(
-            setBoard,
-            roleAssigner,
-            playerAuthSetter,
-            send,
-            player
-        );
-    }, []);
+    const socConnector = useSocketGameConnector(send, setBoard);
+
+    // somewhat roundabout way to react to renaming event
+    if (playerWasRenamed(player)) {
+        socConnector.emit_renamed(player.name!);
+    }
 
     // TODO: check against submitting incorrect move (occupied cells)
     const cellClicked = (row: number, column: number) => {

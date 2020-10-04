@@ -23,24 +23,29 @@ import { PlayerAuthState } from "../state-defs";
 
 const GHOST_URL = process.env.game_host_url!;
 
+export interface SocketGameConnectorSetters {
+    setAuthToken: (token: string) => void;
+    setRoleAssigned: (role: Role) => void;
+    setBoard: Function;
+    setOpponentName: (name: string) => void;
+}
+
 export class SocketGameConnector implements GameConnector {
     private socket: SocketIOClient.Socket;
     private playerId?: string;
 
     constructor(
-        private setBoard: Function,
-        private setRoleAssigned: (role: Role) => void,
-        private setAuthTokenReceived: (token: string) => void,
         private send: ClientEventSender,
-        player: PlayerAuthState
+        player: PlayerAuthState,
+        private setters: SocketGameConnectorSetters
     ) {
         this.socket = this.openSocket(player);
         this.socket.connect();
     }
 
     actions = {
-        emit_start_game: (roomId?: RoomId) => {
-            this.socket.emit("start_game", (roomId && { roomId }) || undefined);
+        emit_start_game: () => {
+            this.socket.emit("start_game");
         },
         emit_iwannabetracer: (role: Role) => {
             this.socket.emit("iwannabetracer", role);
@@ -64,10 +69,14 @@ export class SocketGameConnector implements GameConnector {
         }
     };
 
+    emit_renamed = (newName: string) => {
+        this.socket.emit("renamed", newName);
+    };
+
     private openSocket(player: PlayerAuthState): SocketIOClient.Socket {
         const query: API["connection"] = Object.assign(
             {},
-            { playerName: player.name },
+            { playerName: player.name || undefined },
             player.token ? { token: player.token } : undefined
         );
         const socket = io(GHOST_URL, {
@@ -127,6 +136,8 @@ export class SocketGameConnector implements GameConnector {
     private attachListeners = (socket: SocketIOClient.Socket) => {
         socket.once("connection_ack", this.s_connection_ack);
 
+        socket.once("rename_ack", this.s_rename_ack);
+
         // game setup negotiation
         // this one will be received if we are joining a new game
         socket.on("choose_role", this.s_choose_role);
@@ -159,7 +170,7 @@ export class SocketGameConnector implements GameConnector {
         try {
             const authData = decode(token) as JWTSession;
             this.playerId = authData.playerId;
-            this.setAuthTokenReceived(token);
+            this.setters.setAuthToken(token);
         } catch (e) {
             // TODO?
             console.debug(e, token);
@@ -171,6 +182,11 @@ export class SocketGameConnector implements GameConnector {
         });
     };
 
+    private s_rename_ack = ({ token }: API["out"]["rename_ack"]) => {
+        console.debug("SOCKET: got s_rename_ack");
+        token && this.setters.setAuthToken(token);
+    };
+
     private s_choose_role = () => {
         console.debug("SOCKET: got s_choose_role");
         this.send({
@@ -178,10 +194,14 @@ export class SocketGameConnector implements GameConnector {
         });
     };
 
-    private s_game_started = ({ role }: API["out"]["game_started"]) => {
-        console.debug("SOCKET: got s_game_started");
+    private s_game_started = ({
+        role,
+        opponentName
+    }: API["out"]["game_started"]) => {
+        console.debug("SOCKET: got s_game_started vs ", opponentName);
         console.log("I am " + role);
-        this.setRoleAssigned(role);
+        this.setters.setRoleAssigned(role);
+        this.setters.setOpponentName(opponentName);
         this.send({ type: "S_GAME_START", role });
     };
 
@@ -189,11 +209,11 @@ export class SocketGameConnector implements GameConnector {
         console.debug("SOCKET: got s_update");
 
         // FIXME: since update is moonlighting for reconnect event:
-        this.setRoleAssigned(
+        this.setters.setRoleAssigned(
             data.player1 === this.playerId ? "first" : "second"
         );
 
-        this.setBoard(data.board);
+        this.setters.setBoard(data.board);
         this.send({
             type:
                 // its a bit convoluted way to determine who is "data.turn" player

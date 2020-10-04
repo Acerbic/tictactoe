@@ -27,6 +27,11 @@ export const roleAssignedState = atom<"first" | "second" | null>({
     default: null
 });
 
+export const opponentNameState = atom<string | null>({
+    key: "opponent-name",
+    default: null
+});
+
 export const opponentRoleAssignedState = selector<"first" | "second" | null>({
     key: "opponent-role",
     get: ({ get }) => (get(roleAssignedState) === "first" ? "second" : "first")

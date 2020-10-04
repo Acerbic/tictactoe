@@ -29,8 +29,11 @@ export interface API {
         playerName?: string;
     };
     in: {
+        // player changed his name
+        renamed: string;
+
         // join existing room or start a new one
-        start_game: { roomId: RoomId } | void;
+        start_game: void;
 
         // abandon created while waiting for other players
         drop_room: void;
@@ -58,6 +61,11 @@ export interface API {
             isInGame: boolean;
         };
 
+        // updated token
+        rename_ack: {
+            token?: string;
+        };
+
         // in response to "start_game"
         choose_role: void;
 
@@ -68,6 +76,7 @@ export interface API {
             role: Role;
             opponentName: string;
         };
+
         // includes update on who's turn it is now for switching turns
         update: GameState;
 
@@ -82,8 +91,5 @@ export interface API {
             message: string;
             abandonGame: boolean;
         };
-
-        // the following are not implemented yet
-        rage_quit: any;
     };
 }

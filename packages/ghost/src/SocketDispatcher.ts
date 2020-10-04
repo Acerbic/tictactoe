@@ -127,7 +127,10 @@ export class SocketDispatcher {
         ioServer.on("connection", (socket: GhostOutSocket) => {
             const conn_query: API["connection"] = socket.handshake.query;
 
-            const { playerId, playerName, token } = regenerate(conn_query);
+            // NOTE: playerId should remain const for the duration of connection
+            //       but playerName (and its dependence - token) can be changed
+            //       during the connection
+            let { playerId, playerName, token } = regenerate(conn_query);
             const isInGame = this.isPlayerInGame(playerId);
 
             hostlog(
@@ -141,6 +144,22 @@ export class SocketDispatcher {
             socket.emit("connection_ack", {
                 token,
                 isInGame
+            });
+
+            socket.on("renamed", newName => {
+                hostlog(
+                    "Player %s (%s) was renamed to %s",
+                    playerName,
+                    playerId,
+                    newName
+                );
+                const newConnData = regenerate({
+                    playerName: newName,
+                    token
+                });
+                token = newConnData.token;
+                playerName = newConnData.playerName;
+                socket.emit("rename_ack", { token });
             });
 
             if (isInGame) {
@@ -165,10 +184,8 @@ export class SocketDispatcher {
                 }
             } else {
                 // waiting for the player to initiate a new game or join one from the lobby
-                socket.on("start_game", (data?) => {
-                    // TODO:  player is trying to join a specific game
+                socket.on("start_game", () => {
                     // player is creating a new game room
-
                     try {
                         const room = this.getRoomForPlayer(playerId);
 

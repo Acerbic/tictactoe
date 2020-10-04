@@ -1,34 +1,24 @@
 ☐ Docker HEALTHCHECK?
-✔ write production deployment script and readme @done(15-06-2020 00:39)
-☐ drop game if both clients d/c?
 ☐ see if css-modules can be injected as normal classes via JSX transform
-✔ login system with persistant account and deterministic playerId. @done(10-06-2020 18:31)
 ☐ Update DOCS diagrams
 ☐ client: handle ghost going d/c
 ☐ auto clean old games from DB even if they aren't finished
-✔ make custom container around Hasura enging that incorporates migrations and meta @done(13-06-2020 23:36)
 ☐ custom icons for player occupied cells @created(05-06-2020 15:18)
 ☐ puppetier testing of client @created(05-06-2020 15:18)
 ☐ e2e testing @created(05-06-2020 15:19)
-☐ client global state should be in one place if possible
 ☐ check in ghost on ws connection that same playerId is not trying to connect from 2 sockets
 ☐ replace graphcurl in gmaster with ApolloClient
 ☐ add a cronjob for DB maintenance to the gmaster container
 ☐ sort out debug messages for ghost xstate by categories better
-☐ ghost all-catch unexpected/unhandled xstate errors (unhandled?)
-☐ update readme and add production deployment section
 ☐ move 'gamesdb' package from workspaces to save `yarn install` time?
-✔ yarn --frozen-lockfile vs --pure-lockfile and rebuilding docker layers??? @done(18-09-2020 12:13)
-✘ rolling update of ghost server so when a new version is up, the games in progress don't break @cancelled(20-09-2020 03:31)
-✘ make ghost listen on specified HOSTNAME instead of blank all @cancelled(28-06-2020 23:43)
 ☐ Travis container build script failure doesn't break the build!
-✘ connect traefik -> docker via SSH instead of socket for security (https://docs.traefik.io/providers/docker/#endpoint) @cancelled(18-09-2020 06:05)
-✘ investigate docker in rootless mode (?) @cancelled(18-09-2020 06:05)
 ☐ add cronjob to prune outdated docker images
-✔ organize deployment files -> travis, dev @done(18-09-2020 07:22)
-✔ implement traefik rule for containers with custom labels and default rule @done(18-09-2020 10:05)
-✘ ?? use default port detection (https://docs.traefik.io/providers/docker/#port-detection) instead of declaring a port @cancelled(03-10-2020 22:07)
 ☐ enter player's name in client, communicate it to the ghost
-✔ setup dev environment with mapping sources into containers @done(03-10-2020 18:04)
-✔ update deploy scripts `now` -> `vercel` cli, update `.nowignore`, `now.json` (see 'https://vercel.link/name-prop') @done(03-10-2020 22:28)
 ☐ consider using Monorepo config for deploying to vercel (https://vercel.com/docs/git-integrations#monorepos) and webhooks instead of project linking
+☐ move API's `*.d.ts` into non-root folder?
+
+ghost:
+    ☐ drop game if both clients d/c?
+    ☐ detect hung games (with no players connected for a reconnection grace period)
+    ☐ client global state should be in one place if possible
+    ☐ ghost all-catch unexpected/unhandled xstate errors (unhandled?)
