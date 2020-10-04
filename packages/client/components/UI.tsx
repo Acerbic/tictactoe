@@ -29,7 +29,7 @@ export const UI: React.FC = () => {
     const [machine, send] = useMachine(Machine(playername_machine), {
         guards: {
             isRequiringInputUsername: () => {
-                return !player.name || player.name === "Anonymous";
+                return player.name === null;
             }
         },
         actions: {
@@ -58,12 +58,12 @@ export const UI: React.FC = () => {
             <>
                 <UserBar
                     onPlayerNameClick={onPlayerNameClick}
-                    playerName={player.name}
+                    playerName={player.name || "Anonymous"}
                 ></UserBar>
 
                 <FadeMinimize hold={isFormHoldOpen} hidden={!isFormVisible}>
                     <UsernameInputForm
-                        initialValue={player.name}
+                        initialValue={player.name || "Anonymous"}
                         isFormClosing={isFormClosing}
                         onCancelClick={() => send("CANCEL_EDIT")}
                         onSaveClick={newName =>

@@ -9,7 +9,9 @@
 import { atomLocalStorage } from "./atomLocalStorage";
 
 export type PlayerAuthState = {
-    name: string;
+    // null value means the name was not set even to default "Anonymous"
+    // when name is null, the user will be prompted with an input form
+    name: string | null;
     // jwt
     token: string | null;
 };
@@ -18,7 +20,7 @@ const [playerAuthState, playerAuthStateInitializer] = atomLocalStorage<
     PlayerAuthState
 >({
     storageKey: "ttt-player",
-    default: { name: "Anonymous", token: null }
+    default: { name: null, token: null }
 });
 
 export { playerAuthState, playerAuthStateInitializer };
