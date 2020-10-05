@@ -1,6 +1,12 @@
 import { spawn, assign } from "xstate";
 
-import { statelog, hostlog, errorlog, debuglog } from "../../../utils";
+import {
+    statelog,
+    hostlog,
+    errorlog,
+    debuglog,
+    populate_update_meta
+} from "../../../utils";
 import debug from "debug";
 const actionlog = debug("ttt:ghost:action");
 
@@ -11,7 +17,7 @@ import { GMasterError } from "../../../connectors/gmaster_connector";
 // we need to use `assign` to register the spawned actor with the system
 export const top_reconnect = assign<GameRoomContext, GameRoomEvent>(
     (ctx, event) => {
-        if (event.type !== "SOC_CONNECT") {
+        if (event.type !== "SOC_RECONNECT") {
             return {};
         }
 
@@ -28,7 +34,7 @@ export const top_reconnect = assign<GameRoomContext, GameRoomEvent>(
             .then(response => {
                 // update reconnected player's knowledge
                 const data: API["out"]["update"] = response.state;
-                event.socket.emit("update", data);
+                event.socket.emit("update", populate_update_meta(ctx, data));
             })
             .catch(reason => {
                 errorlog(

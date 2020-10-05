@@ -32,6 +32,7 @@ export interface GameRoomSchema extends StateSchema<GameRoomContext> {
 
 export interface PlayerInfo {
     id: PlayerId;
+    name: string;
     // holds connection status in Socket.connected field.
     socket: GhostOutSocket;
     role_request?: "first" | "second";
@@ -73,8 +74,15 @@ export interface GameRoomContext {
  * websocket-level (re-)connection attempt, but rather "player connects to the
  * game room" higher-level event.
  */
-export type GameRoom_PlayerConnected = {
-    type: "SOC_CONNECT";
+export type GameRoom_PlayerJoinRoom = {
+    type: "SOC_START";
+    player_id: PlayerId;
+    player_name: string;
+    socket: GhostOutSocket;
+};
+
+export type GameRoom_PlayerReconnected = {
+    type: "SOC_RECONNECT";
     player_id: PlayerId;
     socket: GhostOutSocket;
 };
@@ -115,7 +123,8 @@ export type GameRoom_PlayerMove = {
 };
 
 export type GameRoomEvent =
-    | GameRoom_PlayerConnected
+    | GameRoom_PlayerJoinRoom
+    | GameRoom_PlayerReconnected
     | GameRoom_PlayerDisconnected
     | GameRoom_PlayerDropped
     | GameRoom_PlayerQuit

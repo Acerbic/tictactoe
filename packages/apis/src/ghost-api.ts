@@ -2,7 +2,7 @@
  * Documents socket messages and their data shape
  */
 
-import { GameState, PlayerId, GameId } from "./gmaster-api";
+import { GameState as BaseGameState, PlayerId, GameId } from "./gmaster-api";
 
 export type Role = "first" | "second";
 
@@ -10,6 +10,14 @@ export type RoomId = string;
 export interface JWTSession {
     playerId: string;
     playerName: string;
+}
+
+export interface GameState extends BaseGameState {
+    meta: {
+        playerNames: {
+            [id: string]: string;
+        };
+    };
 }
 
 /**

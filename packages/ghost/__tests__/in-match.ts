@@ -93,8 +93,8 @@ describe("After game started", () => {
         // mock implementations to prepare for a game
         const gameState: gm_api.GameState = {
             id: "1111111",
-            player1: "?????",
-            player2: "?????",
+            player1: "???? p1",
+            player2: "???? p2",
             board: [
                 [null, null, null],
                 [null, null, null],
@@ -107,6 +107,8 @@ describe("After game started", () => {
         mocked_gmc_post.mockImplementation((endpoint, payload) => {
             switch (endpoint) {
                 case "CreateGame":
+                    gameState.player1 = (payload as gm_api.CreateGameRequest).player1Id;
+                    gameState.player2 = (payload as gm_api.CreateGameRequest).player2Id;
                     return Promise.resolve(<gm_api.CreateGameResponse>{
                         success: true,
                         gameId: "1111111",

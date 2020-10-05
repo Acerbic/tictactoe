@@ -49,3 +49,16 @@ export function chain_promise<F = any, R = any>(
 ) {
     ctx.emits_sync = ctx.emits_sync.then(onfulfilled, onrejected);
 }
+
+export function populate_update_meta(
+    ctx: GameRoomContext,
+    data: API["out"]["update"]
+): API["out"]["update"] {
+    const meta = Object.assign(data.meta || {}, {
+        playerNames: {
+            [data.player1]: ctx.players.get(data.player1)!.name,
+            [data.player2]: ctx.players.get(data.player2)!.name
+        }
+    });
+    return { ...data, meta };
+}

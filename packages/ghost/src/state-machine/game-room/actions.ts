@@ -19,13 +19,13 @@ import {
 import {
     GameRoomContext,
     GameRoomEvent,
-    GameRoom_PlayerConnected,
     GameRoom_PlayerDisconnected,
     GameRoom_PlayerReady,
     GameRoom_PlayerPickRole,
     PlayerInfo,
     GameRoom_PlayerQuit,
-    isGREvent
+    isGREvent,
+    GameRoom_PlayerJoinRoom
 } from "./game-room-schema";
 import { API } from "@trulyacerbic/ttt-apis/ghost-api";
 
@@ -35,7 +35,7 @@ import {
     CreateGameResponse
 } from "@trulyacerbic/ttt-apis/gmaster-api";
 
-import { chain_promise } from "../../utils";
+import { chain_promise, populate_update_meta } from "../../utils";
 
 // shortcut to ActionFunction signature
 type AF<E extends AnyEventObject = GameRoomEvent> = ActionFunction<
@@ -67,19 +67,30 @@ export const emit_game_started: AF<DoneInvokeEvent<CreateGameResponse>> = (
     actionlog("emit_game_started");
 
     // e.type === "done.invoke.invoke_create_game"
-    ctx.players.forEach(player_context => {
-        debuglog(">> emitting game_started for ", player_context.id);
-        player_context.socket.emit("game_started", {
-            opponentName: "????",
-            gameId: ctx.game_id!,
-            role: ctx.player1 == player_context.id ? "first" : "second"
-        });
+    const players = Array.from(ctx.players.values());
+    const [p1, p2] = players;
+
+    debuglog(">> emitting game_started for ", p1.id);
+    p1.socket.emit("game_started", {
+        opponentName: p2.name,
+        gameId: ctx.game_id!,
+        role: ctx.player1 == p1.id ? "first" : "second"
+    });
+
+    debuglog(">> emitting game_started for ", p2.id);
+    p2.socket.emit("game_started", {
+        opponentName: p1.name,
+        gameId: ctx.game_id!,
+        role: ctx.player1 == p2.id ? "first" : "second"
     });
 
     // technically a duplicate code from `emit_update_both`, but it is easier
     // this way, and forces order of emits (actions order in machine
     // definition can't be relied upon)
-    const data: API["out"]["update"] = e.data.newState;
+    const data: API["out"]["update"] = populate_update_meta(
+        ctx,
+        e.data.newState
+    );
     ctx.players.forEach(player_context => {
         debuglog(">> emitting update for ", player_context.id);
         player_context.socket.emit("update", data);
@@ -151,12 +162,13 @@ export const call_dropgame: AF = ctx => {
 
 export const initiate_player_setup = assign<
     GameRoomContext,
-    GameRoom_PlayerConnected
->((ctx, { player_id, socket }) => {
+    GameRoom_PlayerJoinRoom
+>((ctx, { player_id, player_name, socket }) => {
     actionlog("initiate_player_setup");
 
     const pinfo: PlayerInfo = {
         id: player_id,
+        name: player_name,
         socket,
         setup_actor: spawn(
             player_setup({

@@ -1,6 +1,12 @@
 import { spawn, assign } from "xstate";
 
-import { statelog, hostlog, errorlog, debuglog } from "../../../utils";
+import {
+    statelog,
+    hostlog,
+    errorlog,
+    debuglog,
+    populate_update_meta
+} from "../../../utils";
 import debug from "debug";
 const actionlog = debug("ttt:ghost:action");
 
@@ -16,7 +22,10 @@ export const emit_update_both = assign<GameRoomContext, GameRoomEvent>(ctx => {
         .get("CheckGame", ctx.game_id!)
         .then(response => {
             // update players' game situation knowledge
-            const data: API["out"]["update"] = response.state;
+            const data: API["out"]["update"] = populate_update_meta(
+                ctx,
+                response.state
+            );
 
             chain_promise(ctx, () => {
                 ctx.players.forEach(player_context => {

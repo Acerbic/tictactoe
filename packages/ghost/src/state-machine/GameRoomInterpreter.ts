@@ -88,19 +88,7 @@ export class GameRoomInterpreter extends Interpreter<
         };
     }
 
-    onSocketConnection(
-        socket: GhostOutSocket,
-        playerId: PlayerId,
-        playerName: string
-    ) {
-        // check connection query arguments
-        if (!playerId) {
-            errorlog("Socket tried to connect without player ID. Refusing.");
-            socket.disconnect(true);
-            return;
-        }
-        debuglog(`a user with id = ${playerId} connecting: ${socket.id}`);
-
+    attachSocketListeners(socket: GhostOutSocket, playerId: PlayerId) {
         // attach variety of socket event handlers
         (socket as Socket).on("disconnect", () => {
             debuglog(
@@ -142,12 +130,44 @@ export class GameRoomInterpreter extends Interpreter<
         socket.on("im_done", () =>
             this.send({ type: "SOC_PLAYER_QUIT", player_id: playerId })
         );
+    }
 
-        // raise machine EVENT - SOC_CONNECT
+    /**
+     * When player reconnects to a game in progress
+     */
+    reconnectPlayer(socket: GhostOutSocket, playerId: PlayerId) {
+        debuglog(`Player ${playerId} reconnecting: ${socket.id}`);
+
+        this.attachSocketListeners(socket, playerId);
+
+        // raise machine EVENT - SOC_RECONNECT
+        this.send({
+            type: "SOC_RECONNECT",
+            player_id: playerId,
+            socket
+        });
+    }
+
+    /**
+     * When player joins a new game room
+     */
+    playerJoins(
+        socket: GhostOutSocket,
+        playerId: PlayerId,
+        playerName: string
+    ) {
+        debuglog(
+            `a user ${playerName} with id = ${playerId} joins: ${socket.id}`
+        );
+
+        this.attachSocketListeners(socket, playerId);
+
+        // raise machine EVENT - SOC_START
         debuglog("User %s connected", playerId);
         this.send({
-            type: "SOC_CONNECT",
+            type: "SOC_START",
             player_id: playerId,
+            player_name: playerName,
             socket
         });
     }

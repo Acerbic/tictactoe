@@ -39,7 +39,7 @@ export const state_machine: MachineConfig<
     states: {
         players_setup: {
             on: {
-                SOC_CONNECT: { actions: "initiate_player_setup" },
+                SOC_START: { actions: "initiate_player_setup" },
                 SOC_PLAYER_DROP_ROOM: { actions: ["clear_player_setup"] },
                 SOC_DISCONNECT: {
                     actions: ["clear_player_setup"]
@@ -129,7 +129,7 @@ export const state_machine: MachineConfig<
     },
     on: {
         // might be overtaken by deeper (more specific) states transitions
-        SOC_CONNECT: { actions: "top_reconnect" },
+        SOC_RECONNECT: { actions: "top_reconnect" },
         "error.platform.top_reconnect": "end",
         SOC_DISCONNECT: {
             actions: "top_disconnect"

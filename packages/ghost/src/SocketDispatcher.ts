@@ -162,6 +162,28 @@ export class SocketDispatcher {
                 socket.emit("rename_ack", { token });
             });
 
+            // waiting for the player to initiate a new game or join one from the lobby
+            socket.on("start_game", () => {
+                try {
+                    const room = this.getRoomForPlayer(playerId);
+
+                    hostlog(
+                        "Room chosen for player (%s) %s --  %s",
+                        playerId,
+                        playerName,
+                        room.roomId
+                    );
+                    room.playerJoins(socket, playerId, playerName);
+                } catch (e) {
+                    hostlog(
+                        "Error during connection for player id [%s]",
+                        playerId,
+                        e
+                    );
+                    socket.disconnect(true);
+                }
+            });
+
             if (isInGame) {
                 // player is already in a match that is ongoing
                 try {
@@ -173,7 +195,7 @@ export class SocketDispatcher {
                         playerName,
                         room.roomId
                     );
-                    room.onSocketConnection(socket, playerId, playerName);
+                    room.reconnectPlayer(socket, playerId);
                 } catch (e) {
                     hostlog(
                         "Error during reconnection for player id [%s]",
@@ -182,29 +204,6 @@ export class SocketDispatcher {
                     );
                     socket.disconnect(true);
                 }
-            } else {
-                // waiting for the player to initiate a new game or join one from the lobby
-                socket.on("start_game", () => {
-                    // player is creating a new game room
-                    try {
-                        const room = this.getRoomForPlayer(playerId);
-
-                        hostlog(
-                            "Room chosen for player (%s) %s --  %s",
-                            playerId,
-                            playerName,
-                            room.roomId
-                        );
-                        room.onSocketConnection(socket, playerId, playerName);
-                    } catch (e) {
-                        hostlog(
-                            "Error during connection for player id [%s]",
-                            playerId,
-                            e
-                        );
-                        socket.disconnect(true);
-                    }
-                });
             }
         });
     }

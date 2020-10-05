@@ -12,12 +12,12 @@ export interface GhostInSocket
 
     once<T extends keyof API["out"], P extends API["out"][T]>(
         e: T,
-        fn: (...a: P extends void ? [] : [P]) => any
+        fn: (payload: P) => any
     ): GhostInSocket;
 
     on<T extends keyof API["out"], P extends API["out"][T]>(
         e: T,
-        fn: (...data: P extends void ? [] : [P]) => any
+        fn: (payload: P) => any
     ): GhostInSocket;
 }
 
@@ -32,19 +32,19 @@ export async function socListen<
 >(
     s: GhostInSocket,
     listenMsg: L,
-    predicate?: (...data: P extends void ? [] : [P]) => boolean
-): Promise<API["out"][L]> {
+    predicate?: (data: P) => boolean
+): Promise<P> {
     return new Promise(resolve => {
-        const onceHandler = (...response: P extends void ? [] : [P]) => {
+        const onceHandler = (response: P) => {
             if (typeof predicate === "function") {
-                if (predicate(...response)) {
-                    resolve(...response);
+                if (predicate(response)) {
+                    resolve(response);
                 } else {
                     // repeat
                     s.once(listenMsg, onceHandler);
                 }
             } else {
-                resolve(...response);
+                resolve(response);
             }
         };
 
@@ -59,8 +59,8 @@ export async function socListenAfter<
     after: Function,
     s: GhostInSocket,
     listenMsg: L,
-    predicate?: (...data: P extends void ? [] : [P]) => boolean
-): Promise<API["out"][L]> {
+    predicate?: (data: P) => boolean
+): Promise<P> {
     const promise = socListen(s, listenMsg, predicate);
     after();
     return promise;
