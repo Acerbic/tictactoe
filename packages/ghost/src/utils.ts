@@ -50,6 +50,10 @@ export function chain_promise<F = any, R = any>(
     ctx.emits_sync = ctx.emits_sync.then(onfulfilled, onrejected);
 }
 
+/**
+ * Game state as reported by gmaster is incomplete. This function appends
+ * data that is needed by client but is only known by ghost.
+ */
 export function populate_update_meta(
     ctx: GameRoomContext,
     data: API["out"]["update"]

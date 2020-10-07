@@ -18,7 +18,8 @@ import {
     APIResponseFailure,
     CheckGameResponse,
     ErrorCodes,
-    APIResponseSuccess
+    APIResponseSuccess,
+    CheckGameRequest
 } from "@trulyacerbic/ttt-apis/gmaster-api";
 import fetch from "isomorphic-unfetch";
 
@@ -81,7 +82,7 @@ async function gmasterPost<
  * @param {string} gameId
  */
 async function gmasterGet<
-    TReq extends GameMasterGetRequest = any,
+    TReq extends GameMasterGetRequest = CheckGameRequest,
     TRes extends GameMasterResponse = CheckGameResponse
 >(endpoint: string, gameId: GameId): Promise<TRes> {
     const url = new URL(endpoint + (gameId ? "/" + gameId : ""), gmaster_url);
