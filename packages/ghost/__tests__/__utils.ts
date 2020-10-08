@@ -35,20 +35,18 @@ export async function socListen<
     predicate?: (data: P) => boolean
 ): Promise<P> {
     return new Promise(resolve => {
-        const onceHandler = (response: P) => {
-            if (typeof predicate === "function") {
-                if (predicate(response)) {
-                    resolve(response);
-                } else {
-                    // repeat
-                    s.once(listenMsg, onceHandler);
+        if (typeof predicate === "function") {
+            const handler = (payload: P) => {
+                if (predicate(payload)) {
+                    s.off(listenMsg, handler);
+                    resolve(payload);
                 }
-            } else {
-                resolve(response);
-            }
-        };
+            };
 
-        s.once(listenMsg, onceHandler);
+            s.on(listenMsg, handler);
+        } else {
+            s.once(listenMsg, (payload: P) => resolve(payload));
+        }
     });
 }
 

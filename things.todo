@@ -13,9 +13,12 @@
 ☐ move 'gamesdb' package from workspaces to save `yarn install` time?
 ☐ Travis container build script failure doesn't break the build!
 ☐ add cronjob to prune outdated docker images
-☐ enter player's name in client, communicate it to the ghost
-☐ consider using Monorepo config for deploying to vercel (https://vercel.com/docs/git-integrations#monorepos) and webhooks instead of project linking
 ☐ move API's `*.d.ts` into non-root folder?
+
+client:
+    ☐ use [Enter] to save user name change
+    ☐ consider using Monorepo config for deploying to vercel (https://vercel.com/docs/git-integrations#monorepos) and webhooks instead of project linking
+    ☐ display opponent name during game
 
 ghost:
     ☐ drop game if both clients d/c?

@@ -3,43 +3,40 @@
  */
 
 // allow step debugging
-const EXTEND_SOCKET_TIMEOUTS = process.env.VSCODE_CLI ? true : false;
+const EXTEND_TIMEOUTS = process.env.VSCODE_CLI ? true : false;
 
 import { Socket } from "socket.io-client";
 import http from "http";
 import ioServer from "socket.io";
 import { AddressInfo } from "net";
+import { decode } from "jsonwebtoken";
 
 /**
  * Mockarena!
  */
 import GmasterConnector from "../src/connectors/gmaster_connector";
 jest.mock("../src/connectors/gmaster_connector");
+
 import * as gm_api from "@trulyacerbic/ttt-apis/gmaster-api";
 import { API as gh_api, JWTSession } from "@trulyacerbic/ttt-apis/ghost-api";
-
-import { debuglog } from "../src/utils";
-
-/**
- * Destructuring + casting
- *
- * provides entry points to mock GmasterConnector's post and get fields
- */
-const mocked_gmc = new GmasterConnector() as {
-    post: jest.MockedFunction<GmasterConnector["post"]>;
-    get: jest.MockedFunction<GmasterConnector["get"]>;
-};
 
 import { app } from "../src/app";
 import { SocketDispatcher } from "../src/SocketDispatcher";
 import { GhostInSocket, socListen } from "./__utils";
 import ClientSockets from "./__ClientSockets";
-import { decode } from "jsonwebtoken";
+
+import { debuglog } from "../src/utils";
 
 describe("After game started", () => {
+    let mocked_gmc: {
+        post: jest.MockedFunction<GmasterConnector["post"]>;
+        get: jest.MockedFunction<GmasterConnector["get"]>;
+    };
+
     let httpServer: http.Server;
-    let httpServerAddr: AddressInfo;
     let socServer: ioServer.Server;
+    let socs: ClientSockets;
+
     let client1: GhostInSocket;
     let client2: GhostInSocket;
     let client1_token: string;
@@ -47,39 +44,30 @@ describe("After game started", () => {
     let player1Id: gm_api.PlayerId;
     let player2Id: gm_api.PlayerId;
 
-    let socs: ClientSockets;
-
     /**
      * Setup WS & HTTP servers
      */
     beforeEach(done => {
-        /* remocking implementations that were reset between tests */
-        mocked_gmc.post.mockImplementation(endpoint =>
-            Promise.reject(<gm_api.APIResponseFailure>{
-                success: false,
-                errorCode: 0,
-                errorMessage: "Mocked POST response for " + endpoint
-            })
-        );
-        mocked_gmc.get.mockImplementation(endpoint =>
-            Promise.reject(<gm_api.APIResponseFailure>{
-                success: false,
-                errorCode: 0,
-                errorMessage: "Mocked GET response for " + endpoint
-            })
-        );
-
+        // 1. First, we create a running server and mock gmaster connection
         httpServer = http.createServer(app).listen();
-        // NOTE: potential problem as `httpServer.address()` is said to also return
-        // `string` in some cases
-        httpServerAddr = httpServer.address() as AddressInfo;
+        // NOTE: potential problem as `httpServer.address()` is said to also
+        // return `string` in some cases
+        let httpServerAddr = httpServer.address() as AddressInfo;
         expect(typeof httpServerAddr).toBe("object");
         debuglog("Server addr is ", httpServerAddr);
         socServer = ioServer(httpServer, {
-            pingTimeout: EXTEND_SOCKET_TIMEOUTS ? 1000000 : 5000
+            pingTimeout: EXTEND_TIMEOUTS ? 1000000 : 5000
         });
-        new SocketDispatcher().attach(socServer);
 
+        new SocketDispatcher().attach(socServer);
+        // `new SocketDispatcher()` above creates an instance of (mocked)
+        // GmasterConnector internally, the following line catches it for
+        // inspection and manipulation. A bit hacky with the cast, but better
+        // than alternatives
+        mocked_gmc = (GmasterConnector as any).instance;
+
+        // 2. Then we configure virtual "client" instances to connect to our
+        //    ghost server
         socs = new ClientSockets(
             // Travis CI ?
             process.env.TRAVIS
@@ -87,62 +75,7 @@ describe("After game started", () => {
                 : `http://[${httpServerAddr.address}]:${httpServerAddr.port}`
         );
 
-        // mock implementations to prepare for a game
-        const gameState: gm_api.GameState = {
-            id: "1111111",
-            player1: "???? p1",
-            player2: "???? p2",
-            board: [
-                [null, null, null],
-                [null, null, null],
-                [null, null, null]
-            ],
-            meta: null,
-            game: "wait",
-            turn: "player1"
-        };
-        mocked_gmc.post.mockImplementation((endpoint, payload) => {
-            switch (endpoint) {
-                case "CreateGame":
-                    gameState.player1 = (payload as gm_api.CreateGameRequest).player1Id;
-                    gameState.player2 = (payload as gm_api.CreateGameRequest).player2Id;
-                    return Promise.resolve(<gm_api.CreateGameResponse>{
-                        success: true,
-                        gameId: "1111111",
-                        newState: gameState
-                    });
-                case "MakeMove":
-                    const moveReq = payload as gm_api.MakeMoveRequest;
-
-                    gameState.turn =
-                        gameState.turn === "player1" ? "player2" : "player1";
-
-                    gameState.board[moveReq.move.row][moveReq.move.column] =
-                        moveReq.playerId;
-                    return Promise.resolve(<gm_api.MakeMoveResponse>{
-                        success: true,
-                        newState: gameState
-                    });
-                case "DropGame":
-                    return Promise.resolve(<gm_api.DropGameResponse>{
-                        success: true
-                    });
-
-                default:
-                    return Promise.reject({
-                        success: false,
-                        errorMessage: "Bad Endpoint: " + endpoint,
-                        errorCode: 0
-                    });
-            }
-        });
-        mocked_gmc.get.mockImplementation(() => {
-            return Promise.resolve(<gm_api.CheckGameResponse>{
-                success: true,
-                state: gameState
-            });
-        });
-
+        // 3. Now we simulate players' sessions up to actual game start
         const p1_done = new Promise(async (resolve, reject) => {
             if (!socs) {
                 reject(
@@ -165,6 +98,7 @@ describe("After game started", () => {
             const updatePromise = socListen(client1, "update");
             const data = await socListen(client1, "game_started");
             expect(data.role).toBe("first");
+
             const { turn } = await updatePromise;
             expect(turn).toBe("player1");
             resolve();
@@ -193,8 +127,6 @@ describe("After game started", () => {
         Promise.all([p1_done, p2_done]).then(() => {
             player1Id = (decode(client1_token) as JWTSession).playerId;
             player2Id = (decode(client2_token) as JWTSession).playerId;
-            gameState.player1 = player1Id;
-            gameState.player2 = player2Id;
 
             done();
         });
@@ -203,54 +135,33 @@ describe("After game started", () => {
     /**
      *  Cleanup WS & HTTP servers
      */
-    afterEach(done => {
+    afterEach(() => {
         socs && socs.cleanUp();
         socServer.close();
         httpServer.close();
-        mocked_gmc.post.mockReset();
-        mocked_gmc.get.mockReset();
-
-        done();
     });
 
-    test("can pass turns between players", done => {
+    test("can pass turns between players", async () => {
         expect(player1Id).toBeTruthy();
-        mocked_gmc.get.mockResolvedValueOnce(<gm_api.CheckGameResponse>{
-            success: true,
-            state: {
-                board: [
-                    [player1Id, null, null],
-                    [null, null, null],
-                    [null, null, null]
-                ],
-                game: "wait",
-                turn: "player2",
-                player1: player1Id,
-                player2: player2Id
-            }
+
+        const p1_done = new Promise(async resolve => {
+            client1.emit("move", { row: 0, column: 0 });
+            const data = await socListen(client1, "update");
+            expect(data.game).toBe("wait");
+            expect(data.turn).toBe("player2");
+            expect(data.board[0][0]).toBe(player1Id);
+            resolve();
         });
 
-        const p1_done = new Promise(resolve =>
-            client1
-                .once("update", data => {
-                    expect(data.game).toBe("wait");
-                    expect(data.turn).toBe("player2");
-                    expect(data.board[0][0]).toBe(player1Id);
-                    resolve();
-                })
-                .emit("move", { row: 0, column: 0 })
-        );
+        const p2_done = new Promise(async resolve => {
+            const data = await socListen(client2, "update");
+            expect(data.turn).toBe("player2");
+            expect(data.game).toBe("wait");
+            expect(data.board[0][0]).toBe(player1Id);
+            resolve();
+        });
 
-        const p2_done = new Promise(resolve =>
-            client2.once("update", data => {
-                expect(data.turn).toBe("player2");
-                expect(data.game).toBe("wait");
-                expect(data.board[0][0]).toBe(player1Id);
-                resolve();
-            })
-        );
-
-        Promise.all([p1_done, p2_done]).then(() => done());
+        return Promise.all([p1_done, p2_done]);
     });
 
     test("can reconnect (immediately after start)", done => {
@@ -271,83 +182,76 @@ describe("After game started", () => {
         client1.disconnect();
     });
 
-    test("can win the game as the first player", done => {
+    test("can win the game as the first player", async () => {
         expect(player1Id).toBeTruthy();
         const c1 = client1,
             c2 = client2;
-        (async () => {
-            let u: gh_api["out"]["update"];
-            const is_p1_turn = (d: gh_api["out"]["update"]) =>
-                d.turn === "player1";
-            const is_p2_turn = (d: gh_api["out"]["update"]) =>
-                d.turn === "player2";
+        let u: gh_api["out"]["update"];
+        const is_p1_turn = (d: gh_api["out"]["update"]) => d.turn === "player1";
+        const is_p2_turn = (d: gh_api["out"]["update"]) => d.turn === "player2";
 
-            // emit p1 move and wait for the first "update" coming back
+        // emit p1 move and wait for the first "update" coming back
+        c1.emit("move", { row: 0, column: 0 });
+        u = await socListen(c1, "update");
+        expect(u.turn).toBe("player2");
+
+        // emit p2 move and wait until turn is back in p1's corner
+        c2.emit("move", { row: 1, column: 0 });
+        u = await socListen(c1, "update", is_p1_turn);
+        expect(u.board[0][0]).toBe(player1Id);
+        expect(u.board[1][0]).toBe(player2Id);
+        c1.emit("move", { row: 0, column: 1 });
+
+        await socListen(c2, "update", is_p2_turn);
+        c2.emit("move", { row: 1, column: 1 });
+
+        await socListen(c1, "update", is_p1_turn);
+
+        mocked_gmc.post.mockResolvedValueOnce(<gm_api.MakeMoveResponse>{
+            success: true,
+            newState: {
+                id: "1111111",
+                player1: u.player1,
+                player2: u.player2,
+                board: u.board,
+                meta: null,
+                game: "over",
+                turn: "player2"
+            }
+        });
+        c1.emit("move", { row: 0, column: 2 });
+
+        const go = await socListen(c1, "gameover");
+        expect(go.winner).toBe(player1Id);
+    });
+
+    test("can draw the game", async () => {
+        expect(player1Id).toBeTruthy();
+        const p1_done = new Promise(async resolve => {
+            const c1 = client1;
+            const gameOverPromise = socListen(c1, "gameover");
+
             c1.emit("move", { row: 0, column: 0 });
-            u = await socListen(c1, "update");
-            expect(u.turn).toBe("player2");
+            await socListen(c1, "update", ({ turn }) => turn === "player1");
 
-            // emit p2 move and wait until turn is back in p1's corner
-            c2.emit("move", { row: 1, column: 0 });
-            u = await socListen(c1, "update", is_p1_turn);
-            expect(u.board[0][0]).toBe(player1Id);
-            expect(u.board[1][0]).toBe(player2Id);
             c1.emit("move", { row: 0, column: 1 });
+            await socListen(c1, "update", ({ turn }) => turn === "player1");
 
-            await socListen(c2, "update", is_p2_turn);
-            c2.emit("move", { row: 1, column: 1 });
+            c1.emit("move", { row: 1, column: 2 });
+            await socListen(c1, "update", ({ turn }) => turn === "player1");
 
-            await socListen(c1, "update", is_p1_turn);
+            c1.emit("move", { row: 2, column: 0 });
+            await socListen(c1, "update", ({ turn }) => turn === "player1");
 
             mocked_gmc.post.mockResolvedValueOnce(<gm_api.MakeMoveResponse>{
                 success: true,
-                newState: {
-                    id: "1111111",
-                    player1: u.player1,
-                    player2: u.player2,
-                    board: u.board,
-                    meta: null,
-                    game: "over",
-                    turn: "player2"
-                }
+                newState: { game: "draw", turn: "player2" }
             });
-            c1.emit("move", { row: 0, column: 2 });
+            c1.emit("move", { row: 2, column: 2 });
+            const { winner } = await gameOverPromise;
 
-            const go = await socListen(c1, "gameover");
-            expect(go.winner).toBe(player1Id);
-        })().then(done);
-    });
-
-    test("can draw the game", done => {
-        expect(player1Id).toBeTruthy();
-        const p1_done = new Promise(resolve => {
-            const p1_moves = [
-                { row: 0, column: 0 },
-                { row: 0, column: 1 },
-                { row: 1, column: 2 },
-                { row: 2, column: 0 },
-                { row: 2, column: 2 }
-            ];
-            client1
-                .on("update", data => {
-                    if (data.turn === "player1") {
-                        if (p1_moves.length <= 1) {
-                            mocked_gmc.post.mockResolvedValueOnce(<
-                                gm_api.MakeMoveResponse
-                            >{
-                                success: true,
-                                newState: { game: "draw", turn: "player2" }
-                            });
-                        }
-
-                        client1.emit("move", p1_moves.shift()!);
-                    }
-                })
-                .once("gameover", ({ winner }) => {
-                    expect(winner).toBe(null);
-                    resolve();
-                })
-                .emit("move", p1_moves.shift()!);
+            expect(winner).toBe(null);
+            resolve();
         });
 
         const p2_done = new Promise(async resolve => {
@@ -371,7 +275,7 @@ describe("After game started", () => {
             resolve();
         });
 
-        Promise.all([p1_done, p2_done]).then(() => done());
+        return Promise.all([p1_done, p2_done]);
     });
 
     test("can reconnect in a middle of a match and have board position", done => {
