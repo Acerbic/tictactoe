@@ -6,9 +6,6 @@
 const EXTEND_TIMEOUTS = process.env.VSCODE_CLI ? true : false;
 
 import { Socket } from "socket.io-client";
-import http from "http";
-import ioServer from "socket.io";
-import { AddressInfo } from "net";
 import { decode } from "jsonwebtoken";
 
 /**
@@ -20,12 +17,10 @@ jest.mock("../src/connectors/gmaster_connector");
 import * as gm_api from "@trulyacerbic/ttt-apis/gmaster-api";
 import { API as gh_api, JWTSession } from "@trulyacerbic/ttt-apis/ghost-api";
 
-import { app } from "../src/app";
-import { SocketDispatcher } from "../src/SocketDispatcher";
 import { GhostInSocket, socListen } from "./__utils";
 import ClientSockets from "./__ClientSockets";
 
-import { debuglog } from "../src/utils";
+import { TestServer } from "./__TestServer";
 
 describe("After game started", () => {
     let mocked_gmc: {
@@ -33,8 +28,6 @@ describe("After game started", () => {
         get: jest.MockedFunction<GmasterConnector["get"]>;
     };
 
-    let httpServer: http.Server;
-    let socServer: ioServer.Server;
     let socs: ClientSockets;
 
     let client1: GhostInSocket;
@@ -44,38 +37,18 @@ describe("After game started", () => {
     let player1Id: gm_api.PlayerId;
     let player2Id: gm_api.PlayerId;
 
+    let ts: TestServer | null;
+
     /**
      * Setup WS & HTTP servers
      */
     beforeEach(done => {
-        // 1. First, we create a running server and mock gmaster connection
-        httpServer = http.createServer(app).listen();
-        // NOTE: potential problem as `httpServer.address()` is said to also
-        // return `string` in some cases
-        let httpServerAddr = httpServer.address() as AddressInfo;
-        expect(typeof httpServerAddr).toBe("object");
-        debuglog("Server addr is ", httpServerAddr);
-        socServer = ioServer(httpServer, {
-            pingTimeout: EXTEND_TIMEOUTS ? 1000000 : 5000
-        });
+        //  First, we create a running server and mock gmaster connection
+        ts = new TestServer();
+        socs = ts.socs;
+        mocked_gmc = ts.mocked_gmc;
 
-        new SocketDispatcher().attach(socServer);
-        // `new SocketDispatcher()` above creates an instance of (mocked)
-        // GmasterConnector internally, the following line catches it for
-        // inspection and manipulation. A bit hacky with the cast, but better
-        // than alternatives
-        mocked_gmc = (GmasterConnector as any).instance;
-
-        // 2. Then we configure virtual "client" instances to connect to our
-        //    ghost server
-        socs = new ClientSockets(
-            // Travis CI ?
-            process.env.TRAVIS
-                ? `http://0.0.0.0:${httpServerAddr.port}`
-                : `http://[${httpServerAddr.address}]:${httpServerAddr.port}`
-        );
-
-        // 3. Now we simulate players' sessions up to actual game start
+        // Now we simulate players' sessions up to actual game start
         const p1_done = new Promise(async (resolve, reject) => {
             if (!socs) {
                 reject(
@@ -136,9 +109,8 @@ describe("After game started", () => {
      *  Cleanup WS & HTTP servers
      */
     afterEach(() => {
-        socs && socs.cleanUp();
-        socServer.close();
-        httpServer.close();
+        ts && ts.destroy();
+        ts = null;
     });
 
     test("can pass turns between players", async () => {

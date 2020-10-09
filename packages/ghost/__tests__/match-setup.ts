@@ -10,23 +10,7 @@ import http from "http";
 import ioServer from "socket.io";
 import { AddressInfo } from "net";
 
-// in case we need em
-import GmasterConnector from "../src/connectors/gmaster_connector";
 jest.mock("../src/connectors/gmaster_connector");
-import * as gm_api from "@trulyacerbic/ttt-apis/gmaster-api";
-
-/**
- * Destructuring + casting
- *
- * provides entry points to mock GmasterConnector's post and get fields
- */
-const {
-    post: mocked_gmc_post,
-    get: mocked_gmc_get
-} = new GmasterConnector() as {
-    post: jest.MockedFunction<GmasterConnector["post"]>;
-    get: jest.MockedFunction<GmasterConnector["get"]>;
-};
 
 import { app } from "../src/app";
 import { SocketDispatcher } from "../src/SocketDispatcher";
@@ -44,23 +28,7 @@ describe("WS communication", () => {
     /**
      * Setup WS & HTTP servers
      */
-    beforeEach(done => {
-        /* remocking implementations that were reset between tests */
-        mocked_gmc_post.mockImplementation(endpoint =>
-            Promise.reject(<gm_api.APIResponseFailure>{
-                success: false,
-                errorCode: 0,
-                errorMessage: "Mocked POST response for " + endpoint
-            })
-        );
-        mocked_gmc_get.mockImplementation(endpoint =>
-            Promise.reject(<gm_api.APIResponseFailure>{
-                success: false,
-                errorCode: 0,
-                errorMessage: "Mocked GET response for " + endpoint
-            })
-        );
-
+    beforeEach(() => {
         httpServer = http.createServer(app).listen();
         // NOTE: potential problem as `httpServer.address()` is said to also return
         // `string` in some cases
@@ -79,62 +47,15 @@ describe("WS communication", () => {
                 ? `http://0.0.0.0:${httpServerAddr.port}`
                 : `http://[${httpServerAddr.address}]:${httpServerAddr.port}`
         );
-
-        let createdGameState;
-        mocked_gmc_post.mockImplementationOnce((endpoint, payload) => {
-            if (endpoint === "CreateGame") {
-                createdGameState = {
-                    id: "1111111",
-                    player1: (payload as gm_api.CreateGameRequest).player1Id,
-                    player2: (payload as gm_api.CreateGameRequest).player2Id,
-                    board: [
-                        [null, null, null],
-                        [null, null, null],
-                        [null, null, null]
-                    ],
-                    meta: (payload as gm_api.CreateGameRequest).meta ?? null,
-                    game: "wait",
-                    turn: "player1"
-                };
-                mocked_gmc_get.mockReset().mockResolvedValue(<
-                    gm_api.CheckGameResponse
-                >{
-                    success: true,
-                    state: createdGameState
-                });
-                return Promise.resolve(<gm_api.CreateGameResponse>{
-                    success: true,
-                    gameId: "1111111",
-                    newState: createdGameState
-                });
-            } else {
-                return Promise.reject({
-                    success: false,
-                    errorMessage: "Bad Endpoint",
-                    errorCode: 0
-                });
-            }
-        });
-
-        done();
     });
 
     /**
      *  Cleanup WS & HTTP servers
      */
-    afterEach(done => {
+    afterEach(() => {
         socs.cleanUp();
         socServer.close();
         httpServer.close();
-        mocked_gmc_post.mockReset();
-        mocked_gmc_get.mockReset();
-
-        done();
-    });
-
-    test("basic", done => {
-        expect(3 + 3).toBe(6);
-        done();
     });
 
     test("player should be able to connect via websocket", done => {
@@ -289,90 +210,67 @@ describe("WS communication", () => {
             .connect();
     });
 
-    test("player can quit before the game start and another player take his place", done => {
-        const client1 = socs.openClientSocket("p1");
-        const client2 = socs.openClientSocket("p2");
-        const client3 = socs.openClientSocket("p3");
+    test.only("player can quit before the game start and another player take his place", async () => {
+        const c1 = socs.openClientSocket("p1");
+        const c2 = socs.openClientSocket("p2");
+        const c3 = socs.openClientSocket("p3");
 
-        client1.once("choose_role", () => {
-            client2.once("choose_role", () => {
-                client2.emit("iwannabetracer", "second");
-                client1.disconnect();
+        // connect and setup p1
+        await socListenAfter(() => c1.connect(), c1, "connection_ack");
+        await socListenAfter(() => c1.emit("start_game"), c1, "choose_role");
 
-                client3.once("choose_role", () => {
-                    client3.emit("iwannabetracer", "first");
+        // connect p2
+        await socListenAfter(() => c2.connect(), c2, "connection_ack");
+        await socListenAfter(() => c2.emit("start_game"), c2, "choose_role");
 
-                    const p3_done = new Promise(resolve => {
-                        client3.once("game_started", data => {
-                            expect(data.role).toBe("first");
-                            socListen(
-                                client3,
-                                "update",
-                                d => d.turn === "player1"
-                            ).then(resolve);
-                        });
-                    });
-                    const p2_done = new Promise(resolve => {
-                        client2.once("game_started", data => {
-                            expect(data.role).toBe("second");
-                            resolve();
-                        });
-                    });
+        // disconnect p1
+        await socListenAfter(() => c1.disconnect(), c1, "disconnect");
 
-                    Promise.all([p3_done, p2_done]).then(() => {
-                        const client1_again = socs.openClientSocket("p1");
-                        client1_again.once("choose_role", () => done());
-                        client1_again.once("connection_ack", () => {
-                            client1_again.emit("start_game");
-                        });
+        // connect p3
+        await socListenAfter(() => c3.connect(), c3, "connection_ack");
+        await socListenAfter(() => c3.emit("start_game"), c3, "choose_role");
 
-                        client1_again.connect();
-                    });
-                });
-                client3.once("connection_ack", () => {
-                    client3.emit("start_game");
-                });
-                client3.connect();
-            });
-            client2.once("connection_ack", () => {
-                client2.emit("start_game");
-            });
-            client2.connect();
+        const p3_done = new Promise(async resolve => {
+            const data = await c3.listenAfter(
+                () => c3.emit("iwannabetracer", "first"),
+                "game_started"
+            );
+            expect(data.role).toBe("first");
+            resolve();
+        });
+        const p2_done = new Promise(async resolve => {
+            const { role } = await c2.listenAfter(
+                () => c2.emit("iwannabetracer", "second"),
+                "game_started"
+            );
+            expect(role).toBe("second");
+            resolve();
         });
 
-        client1.once("connection_ack", () => {
-            client1.emit("start_game");
-        });
-        client1.connect();
+        return Promise.all([p3_done, p2_done]);
     });
 
-    test("player can disconnect before match started and on reconnection his setup is reset", done => {
-        const client1 = socs.openClientSocket("p1");
-        const client2 = socs.openClientSocket("p2");
-        const client1_again = socs.openClientSocket("p1");
+    test("player can disconnect before match started and on reconnection his setup is reset", async () => {
+        const c1 = socs.openClientSocket("p1");
+        const c2 = socs.openClientSocket("p2");
+        const c3 = socs.openClientSocket("p1");
 
-        client1.once("choose_role", () => {
-            client1.emit("iwannabetracer", "first");
-            client2.once("choose_role", () => {
-                (client1 as typeof Socket).once("disconnect", () => {
-                    client2.emit("iwannabetracer", "second");
-                    client1_again.once("choose_role", () => done());
-                    client1_again.once("connection_ack", () => {
-                        client1_again.emit("start_game");
-                    });
-                    client1_again.connect();
-                });
-                client1.disconnect();
-            });
-            client2.once("connection_ack", () => {
-                client2.emit("start_game");
-            });
-            client2.connect();
-        });
+        // connect and setup p1
+        await socListenAfter(() => c1.connect(), c1, "connection_ack");
+        await socListenAfter(() => c1.emit("start_game"), c1, "choose_role");
+        c1.emit("iwannabetracer", "first");
 
-        client1.once("connection_ack", () => {
-            client1.emit("start_game");
-        });
-        client1.connect();
+        // connect p2
+        await socListenAfter(() => c2.connect(), c2, "connection_ack");
+        await socListenAfter(() => c2.emit("start_game"), c2, "choose_role");
+
+        // disconnect p1
+        await socListenAfter(() => c1.disconnect(), c1, "disconnect");
+
+        c2.emit("iwannabetracer", "second");
+
+        // reconnect with a new socket
+        await socListenAfter(() => c3.connect(), c3, "connection_ack");
+        await socListenAfter(() => c3.emit("start_game"), c3, "choose_role");
     });
 });

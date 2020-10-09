@@ -1,5 +1,18 @@
 import { API } from "@trulyacerbic/ttt-apis/ghost-api";
 
+type SocketEvents = "connect" | "disconnect";
+// | "ping"
+// | "pong"
+// | "connect_error"
+// | "connect_timeout"
+// | "connecting"
+// | "error"
+// | "reconnect"
+// | "reconnect_attempt"
+// | "reconnect_failed"
+// | "reconnect_error"
+// | "reconnecting"
+
 /**
  * client socket narrowed to emit API messages
  */
@@ -11,14 +24,25 @@ export interface GhostInSocket
     ): GhostInSocket;
 
     once<T extends keyof API["out"], P extends API["out"][T]>(
-        e: T,
+        e: T | SocketEvents,
         fn: (payload: P) => any
     ): GhostInSocket;
 
     on<T extends keyof API["out"], P extends API["out"][T]>(
-        e: T,
+        e: T | SocketEvents,
         fn: (payload: P) => any
     ): GhostInSocket;
+
+    listen: <L extends keyof API["out"], P extends API["out"][L]>(
+        listenMsg: L | SocketEvents,
+        predicate?: (data: P) => boolean
+    ) => Promise<P>;
+
+    listenAfter: <L extends keyof API["out"], P extends API["out"][L]>(
+        after: Function,
+        listenMsg: L | SocketEvents,
+        predicate?: (data: P) => boolean
+    ) => Promise<P>;
 }
 
 /**
@@ -31,7 +55,7 @@ export async function socListen<
     P extends API["out"][L]
 >(
     s: GhostInSocket,
-    listenMsg: L,
+    listenMsg: L | SocketEvents,
     predicate?: (data: P) => boolean
 ): Promise<P> {
     return new Promise(resolve => {
@@ -56,7 +80,7 @@ export async function socListenAfter<
 >(
     after: Function,
     s: GhostInSocket,
-    listenMsg: L,
+    listenMsg: L | SocketEvents,
     predicate?: (data: P) => boolean
 ): Promise<P> {
     const promise = socListen(s, listenMsg, predicate);

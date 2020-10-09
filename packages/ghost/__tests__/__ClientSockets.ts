@@ -10,7 +10,7 @@ import ioClient from "socket.io-client";
 import { errorlog } from "../src/utils";
 
 import { API as gh_api } from "@trulyacerbic/ttt-apis/ghost-api";
-import { GhostInSocket } from "./__utils";
+import { GhostInSocket, socListen, socListenAfter } from "./__utils";
 
 export default class ClientSockets {
     // keeps track of opened sockets to close them between tests
@@ -67,6 +67,13 @@ export default class ClientSockets {
             .on("reconnect_failed", () => {
                 let z = playerName;
             });
+
+        // helper methods that don't exist in Socket but are useful
+        // for testing.
+        (socket as GhostInSocket).listen = (msg, pred?) =>
+            socListen(socket as GhostInSocket, msg, pred);
+        (socket as GhostInSocket).listenAfter = (after, msg, pred?) =>
+            socListenAfter(after, socket as GhostInSocket, msg, pred);
         return socket as GhostInSocket;
     }
 
