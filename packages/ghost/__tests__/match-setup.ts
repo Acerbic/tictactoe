@@ -210,7 +210,7 @@ describe("WS communication", () => {
             .connect();
     });
 
-    test.only("player can quit before the game start and another player take his place", async () => {
+    test("player can quit before the game start and another player take his place", async () => {
         const c1 = socs.openClientSocket("p1");
         const c2 = socs.openClientSocket("p2");
         const c3 = socs.openClientSocket("p3");
