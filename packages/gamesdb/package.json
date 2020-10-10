@@ -4,6 +4,7 @@
   "description": "Hasura graphql database meta and model bindings",
   "private": true,
   "scripts": {
+    "hasura": "hasura --project hasura",
     "deploy": "hasura migrate apply --project hasura && hasura metadata apply --project hasura",
     "console": "hasura console --project hasura",
     "generate": "gq http://localhost:8080/v1/graphql --introspect > hasura.graphql"

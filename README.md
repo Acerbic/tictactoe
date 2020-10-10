@@ -17,13 +17,14 @@ my hand on a number of exciting technologies.
     features)
 -   [Docker] (lightweight containerization for running your code)
 
-## Install prerequisites
+## Prerequisites and installation
 
 -   Docker
 -   Docker Compose
 
 ```bash
 npm i -g yarn lerna
+yarn
 ```
 
 ## Organization of the project files
@@ -44,8 +45,6 @@ Directories and files structure:
 -   `packages/*/*` the source files
 -   `lerna.json` configuration for Lerna.
 
-
-
 ## Running in dev environment
 
 For dev purposes you can either run components of the project in separate
@@ -56,8 +55,7 @@ debug code with node debugger.
 Docker is easier to run and is closer to production configuration, but if you
 want to observe packages' debug output, you must use `docker logs`.
 
-Gmaster process/container is using port 9228 for node debugger. Ghost is using
-9229.
+Gmaster process/container is using port 9228 for node debugger. Ghost is using 9229.
 
 ### Running dev in Docker
 
@@ -130,20 +128,19 @@ The configuration provided allow either to attach to already running processes
 (in Docker or local processes), or launch new (local) process with vscode
 supervision.
 
-- Attaching is faster and you can use the same instance of vscode to attach/detach
-to different processes. The downside is that upon rebuild after source files
-change vscode will not automatically re-attach.
+-   Attaching is faster and you can use the same instance of vscode to attach/detach
+    to different processes. The downside is that upon rebuild after source files
+    change vscode will not automatically re-attach.
 
-- "Launch" configurations will reattach nicely after process restarts, but if you
-launch gmaster and ghost separately, you'd need two instances of vscode to debug
-them simultaneously.
+-   "Launch" configurations will reattach nicely after process restarts, but if you
+    launch gmaster and ghost separately, you'd need two instances of vscode to debug
+    them simultaneously.
 
-- Finally, the "ALL - Launch" configuration will run all 3 packages in parallel
-  and under vscode observation (like if you run `yarn dev`). With that, you can
-  use the same vscode instance to trace both ghost and gmaster code and you
-  don't need to manually start any extraneous processes. The negatives are that
-  the startup time is longer and its harder to understand console output.
-
+-   Finally, the "ALL - Launch" configuration will run all 3 packages in parallel
+    and under vscode observation (like if you run `yarn dev`). With that, you can
+    use the same vscode instance to trace both ghost and gmaster code and you
+    don't need to manually start any extraneous processes. The negatives are that
+    the startup time is longer and its harder to understand console output.
 
 [node]: https://nodejs.org/
 [lerna]: https://lerna.js.org/
