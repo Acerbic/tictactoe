@@ -2,18 +2,19 @@
 ☐ see if css-modules can be injected as normal classes via JSX transform
 ☐ Update DOCS diagrams
 ☐ client: handle ghost going d/c
-☐ auto clean old games from DB even if they aren't finished
 ☐ custom icons for player occupied cells @created(05-06-2020 15:18)
 ☐ puppetier testing of client @created(05-06-2020 15:18)
 ☐ e2e testing @created(05-06-2020 15:19)
-☐ check in ghost on ws connection that same playerId is not trying to connect from 2 sockets
 ☐ replace graphcurl in gmaster with ApolloClient
-☐ add a cronjob for DB maintenance to the gmaster container
 ☐ sort out debug messages for ghost xstate by categories better
-☐ move 'gamesdb' package from workspaces to save `yarn install` time?
 ☐ Travis container build script failure doesn't break the build!
 ☐ add cronjob to prune outdated docker images
 ☐ move API's `*.d.ts` into non-root folder?
+
+gamesdb:
+    ☐ add a cronjob for DB maintenance to the gmaster container
+    ☐ move 'gamesdb' package from workspaces to save `yarn install` time?
+    ☐ auto clean old games from DB even if they aren't finished
 
 client:
     ☐ use [Enter] to save user name change
@@ -21,6 +22,7 @@ client:
     ☐ display opponent name during game
 
 ghost:
+    ☐ check in ghost on ws connection that same playerId is not trying to connect from 2 sockets
     ☐ drop game if both clients d/c?
     ☐ detect hung games (with no players connected for a reconnection grace period)
     ☐ client global state should be in one place if possible
