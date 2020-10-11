@@ -5,9 +5,9 @@
 // Seems like this is not needed in Node v14, but in LTS (12)
 // absense of this causes an error - Cannot find name 'URL'
 // @see https://github.com/DefinitelyTyped/DefinitelyTyped/issues/34960
+import { URL } from "url";
 
 import { statelog, hostlog, errorlog, debuglog } from "../utils";
-import { URL } from "url";
 
 import {
     GameId,
@@ -99,9 +99,9 @@ async function gmasterGet<
     });
 }
 
-class GMConnector {
+export class GameMasterConnector {
     post = gmasterPost;
     get = gmasterGet;
 }
 
-export default GMConnector;
+export default GameMasterConnector;
