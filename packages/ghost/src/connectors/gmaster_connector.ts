@@ -7,8 +7,6 @@
 // @see https://github.com/DefinitelyTyped/DefinitelyTyped/issues/34960
 import { URL } from "url";
 
-import { statelog, hostlog, errorlog, debuglog } from "../utils";
-
 import {
     GameId,
     GameMasterGetRequest,
@@ -21,7 +19,8 @@ import {
     APIResponseSuccess,
     CheckGameRequest
 } from "@trulyacerbic/ttt-apis/gmaster-api";
-import fetch from "isomorphic-unfetch";
+import fetch from "./fetch";
+import { statelog, hostlog, errorlog, debuglog } from "../utils";
 
 const gmaster_url = process.env["GMASTER_URL"];
 
