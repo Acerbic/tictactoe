@@ -1,4 +1,5 @@
-☐ Docker HEALTHCHECK?
+✔ Docker HEALTHCHECK? @done(17-10-2020 18:01)
+☐ Test if Traefik is restarting containers based on HEALTHCHECK
 ☐ Update DOCS diagrams
 ☐ e2e testing @created(05-06-2020 15:19)
 ☐ replace graphcurl in gmaster with ApolloClient

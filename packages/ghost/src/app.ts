@@ -8,3 +8,8 @@ app.use(
         origin: "*"
     })
 );
+
+// Docker healthcheck
+app.get("/healthcheck", function (_, res) {
+    res.send({});
+});

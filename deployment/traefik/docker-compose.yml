@@ -40,6 +40,8 @@ services:
     environment:
       HASURA_URL: http://graphql-engine:8080/v1/graphql
     restart: always
+    healthcheck:
+      test: "wget --no-verbose --tries=1 --spider http://localhost:3000/healthcheck || exit 1"
 
   ghost:
     image: $DOCKER_REGISTRY/ttt/ghost
@@ -47,6 +49,8 @@ services:
       GMASTER_URL: http://gmaster:3000
       JWT_SECRET:
     restart: always
+    healthcheck:
+      test: "wget --no-verbose --tries=1 --spider http://localhost:3060/healthcheck || exit 1"
     labels:
       - "traefik.enable=true"
       # custom label to generate traefik router Host rule
