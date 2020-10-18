@@ -40,7 +40,7 @@ services:
         GMASTER_PORT: 3000
     image: ttt/gmaster:latest
     healthcheck:
-      test: "wget --no-verbose --tries=1 --spider http://localhost:3000/healthcheck || exit 1"
+      test: "wget --no-verbose --tries=1 --timeout=2 --spider http://localhost:3000/healthcheck || exit 1"
     environment:
       HASURA_URL: http://graphql-engine:8080/v1/graphql
     restart: always
@@ -60,7 +60,7 @@ services:
         GHOST_PORT: 3060
     image: ttt/ghost:latest
     healthcheck:
-      test: "wget --no-verbose --tries=1 --spider http://localhost:3060/healthcheck || exit 1"
+      test: "wget --no-verbose --tries=1 --timeout=2 --spider http://localhost:3060/healthcheck || exit 1"
     environment:
       GMASTER_URL: http://gmaster:3000
       JWT_SECRET:
