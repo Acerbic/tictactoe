@@ -24,6 +24,17 @@ app.set("port", port);
 var server = http.createServer(app);
 
 /**
+ * Regular tasks (instead of cron)
+ */
+var daily = setInterval(() => {
+    var connector = app.get("gamesDb");
+    connector && typeof connector.Upkeep === "function" && connector.Upkeep();
+}, 1000 * 60 * 60 * 24);
+server.on("close", () => {
+    clearInterval(daily);
+});
+
+/**
  * Listen on provided port, on all network interfaces.
  */
 server.on("error", onError);
