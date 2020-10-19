@@ -11,7 +11,6 @@ import CreateGame from "./routes/CreateGame";
 import CheckGame from "./routes/CheckGame";
 import DropGame from "./routes/DropGame";
 import MakeMove from "./routes/MakeMove";
-import Maintenance from "./routes/Maintenance";
 import healthcheck from "./routes/healthcheck";
 import { APIResponseFailure } from "@trulyacerbic/ttt-apis/gmaster-api";
 import { makeFailureResponse } from "./routes/utils";
@@ -39,7 +38,6 @@ const generateApp = () => {
     app.use(MakeMove);
 
     // Util
-    app.use(Maintenance);
     app.use(healthcheck);
 
     // Catch-all error handler

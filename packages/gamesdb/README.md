@@ -21,6 +21,10 @@ See `deployment/prod` and `deployment/dev` directories of the monorepo. When
 used to build a specialized Hasura container, only `./hasura` directory of this
 package is really used. No Node.js modules are installed.
 
+The container runs an instance of Hasura server (GraphQL API to DB). Upon
+startup (or restart) the container runs migrations from file definitions to
+update underlying database.
+
 ## As a cli command center
 
 If this package's Node.js dependencies are installed, you have access to [Hasura
