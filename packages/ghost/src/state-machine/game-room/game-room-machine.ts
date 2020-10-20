@@ -4,8 +4,6 @@
 
 import { statelog, hostlog, errorlog, debuglog } from "../../utils";
 
-import { top_reconnect, emit_update_both } from "./promise-actors";
-
 import {
     MachineConfig,
     MachineOptions,
@@ -202,10 +200,7 @@ export const machine_options: Partial<MachineOptions<
         ...((MachineActions as unknown) as ActionFunctionMap<
             GameRoomContext,
             GameRoomEvent
-        >),
-
-        top_reconnect,
-        emit_update_both
+        >)
     },
 
     guards: {

@@ -1,23 +1,15 @@
-import { spawn, assign } from "xstate";
+/**
+ * Functions that generates a Promise Actor
+ */
 
-import {
-    statelog,
-    hostlog,
-    errorlog,
-    debuglog,
-    populate_update_meta
-} from "../../../utils";
-import debug from "debug";
-const actionlog = debug("ttt:ghost:action");
+import { errorlog, debuglog, populate_update_meta } from "../../../utils";
 
-import { GameRoomContext, GameRoomEvent } from "../game-room-schema";
+import { GameRoomContext } from "../game-room-schema";
 import { API } from "@trulyacerbic/ttt-apis/ghost-api";
 import { chain_promise } from "../../../utils";
 
 // we need to use `assign` to register the spawned actor with the system
-export const emit_update_both = assign<GameRoomContext, GameRoomEvent>(ctx => {
-    actionlog("emit_update_both");
-
+export const emit_update_both = (ctx: GameRoomContext) => {
     const thePromise = ctx.gm_connect
         .get("CheckGame", ctx.game_id!)
         .then(response => {
@@ -44,8 +36,5 @@ export const emit_update_both = assign<GameRoomContext, GameRoomEvent>(ctx => {
             throw reason;
         });
 
-    spawn(thePromise, "emit_update_both");
-
-    // no actual assignment, the actor is free-floating
-    return {};
-});
+    return thePromise;
+};

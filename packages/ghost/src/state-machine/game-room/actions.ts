@@ -37,6 +37,8 @@ import {
 
 import { chain_promise, populate_update_meta } from "../../utils";
 
+import * as actors from "./actors";
+
 // shortcut to ActionFunction signature
 type AF<E extends AnyEventObject = GameRoomEvent> = ActionFunction<
     GameRoomContext,
@@ -229,10 +231,54 @@ export const clear_player_setup = assign<
     };
 });
 
-export const top_disconnect: AF<GameRoom_PlayerDisconnected> = (ctx, event) => {
-    // disconnect during game in progress - don't drop the game,
-    // await reconnection instead
-    // TODO: inform players of disconnect
+export const top_disconnect = assign<
+    GameRoomContext,
+    GameRoom_PlayerDisconnected
+>((ctx, { player_id }) => {
+    // disconnect during game in progress - don't drop the game, await
+    // reconnection instead
+    actionlog("top-disconnect", player_id);
 
-    actionlog("top-disconnect", event.player_id);
-};
+    //TODO: inform players of disconnect
+
+    // start a reconnection timeout
+
+    return {};
+});
+
+// we need to use `assign` to register the spawned actor with the system
+export const emit_update_both = assign<GameRoomContext, GameRoomEvent>(ctx => {
+    actionlog("emit_update_both");
+
+    const thePromise = actors.emit_update_both(ctx);
+
+    spawn(thePromise, "emit_update_both");
+
+    // no actual assignment, the actor is free-floating
+    return {};
+});
+
+export const top_reconnect = assign<GameRoomContext, GameRoomEvent>(
+    (ctx, event) => {
+        if (event.type !== "SOC_RECONNECT") {
+            return {};
+        }
+
+        actionlog("top_reconnect");
+        // reconnection during game in progress - update socket
+
+        // Note: this is a bit cheesy to just plop assignment inside "assign"
+        // already, but it is more concise than fiddling with Map
+        ctx.players.get(event.player_id)!.socket = event.socket;
+
+        const thePromise = actors.top_reconnect(ctx, event);
+        // reconnection during game in progress - update socket
+
+        // FIXME: "top_reconnect" is not unique - both players can theoretically
+        // reconnect at the same time
+        spawn(thePromise, "top_reconnect");
+
+        // no actual ref assignment, the actor is free-floating
+        return {};
+    }
+);
