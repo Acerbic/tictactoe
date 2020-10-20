@@ -25,11 +25,19 @@ import { regenerate } from "./auth";
 
 export class SocketDispatcher {
     /**
-     * Rooms awaiting players to join
+     * Connected players. For each playerId, it remembers its current socket and
+     * assigned game room;
+     *
+     * socket can be undefined if the player is reconnecting; room can be
+     * undefined if the player is in-between games (but still connected);
+     * socket and room should not be undefined at the same time though.
+     *
+     * A single room can be assigned to more than one player.
      */
-    private awaitingGameRooms: Array<GameRoomInterpreter> = [];
-    // Rooms with games in progress (for reconnect)
-    private activeGameRooms = new Map<PlayerId, GameRoomInterpreter>();
+    private playersConnected = new Map<
+        PlayerId,
+        { socket?: GhostOutSocket; room?: GameRoomInterpreter }
+    >();
 
     /**
      * Injected dependencies to be provided to xstate Interpreter
@@ -38,69 +46,52 @@ export class SocketDispatcher {
         gmaster: new GmasterConnector()
     };
 
-    // NOTE: if game-room machine is implemented as actor in higher-order
-    //       ghost machine, these would be events to the parent
-    private promoteRoom(room: GameRoomInterpreter) {
-        const roomInd = this.awaitingGameRooms.findIndex(r => r === room);
-        if (roomInd >= 0) {
-            this.awaitingGameRooms.splice(roomInd, 1);
-        }
-        for (let playerId of room.state.context.players.keys()) {
-            this.activeGameRooms.set(playerId, room);
-        }
-    }
     private dropRoom(room: GameRoomInterpreter) {
-        this.activeGameRooms.delete(room.state.context.player1!);
-        this.activeGameRooms.delete(room.state.context.player2!);
+        const p1 = room.state.context.player1;
+        const p2 = room.state.context.player2;
+
+        if (p1 && this.playersConnected.has(p1)) {
+            this.playersConnected.get(p1)!.room = undefined;
+        }
+        if (p2 && this.playersConnected.has(p2)) {
+            this.playersConnected.get(p2)!.room = undefined;
+        }
     }
 
     private isPlayerInGame(playerId: PlayerId): boolean {
-        return this.activeGameRooms.has(playerId);
+        const room = this.playersConnected.get(playerId)?.room;
+        return !!(room?.initialized && !room.state.matches("players_setup"));
     }
 
     private getRoomForPlayer(playerId: string): GameRoomInterpreter {
         hostlog("getting room for player %s", playerId);
-        debuglog(
-            "awaiting: ",
-            this.awaitingGameRooms.map(r => r.roomId)
-        );
-        debuglog(
-            "active: ",
-            [...this.activeGameRooms.entries()].map(
-                ([p, r]) => `${p} => ${r.roomId}`
-            )
-        );
 
-        // if there's an active room for this player ID, treat this as reconnect
-        if (this.activeGameRooms.has(playerId)) {
-            return this.activeGameRooms.get(playerId)!;
+        // fetch player's connection data
+        const playerConnection = this.playersConnected.get(playerId);
+        if (!playerConnection) {
+            throw new Error(
+                `Player ${playerId} was not found in playersConnected Map`
+            );
         }
 
-        // if there are waiting rooms in the queue, check that the player is not
-        // already listed as waiting in one of the rooms and then pick the first
-        // from the queue
-        if (this.awaitingGameRooms.length > 0) {
-            for (let r of this.awaitingGameRooms) {
-                if (r.hasPlayer(playerId)) {
-                    throw "Only permitted one connection per player";
-                }
-            }
-            return this.awaitingGameRooms[0];
+        // if there's an active room for this player ID, treat this as reconnect
+        if (playerConnection.room) {
+            return playerConnection.room;
+        }
+
+        // if there are waiting rooms in the queue then pick the first from the
+        // queue
+        const playersWaitingForOpponents = [
+            ...this.playersConnected.entries()
+        ].filter(([_, { room }]) => room && room.playersCount() < 2);
+
+        if (playersWaitingForOpponents.length > 0) {
+            return playersWaitingForOpponents[0][1].room!;
         }
 
         // create a fresh new room
         const newRoom = new GameRoomInterpreter(this.deps);
-
-        // observe new room state to move it from "awaiting" to "active" list
-        const promoter: StateListener<
-            GameRoomContext,
-            GameRoomEvent
-        > = state => {
-            if (!state.matches("players_setup")) {
-                this.promoteRoom(newRoom);
-                newRoom.off(promoter); // self-remove ("once")
-            }
-        };
+        playerConnection.room = newRoom;
         newRoom
             .onTransition(
                 // just logging
@@ -112,14 +103,31 @@ export class SocketDispatcher {
                         r.getDetailedStateValue()
                     ))(newRoom)
             )
-            .onTransition(promoter)
-            .onDone(() => {
-                this.dropRoom(newRoom);
-            })
+            .onDone(() => this.dropRoom(newRoom))
             .start();
-        hostlog("game room created: %s", newRoom.roomId);
-        this.awaitingGameRooms.push(newRoom);
+        // hostlog("game room created: %s", newRoom.roomId);
         return newRoom;
+    }
+
+    private rememberPlayerConnection(playerId: string, socket: GhostOutSocket) {
+        // storing or updating connection data
+        const connData = this.playersConnected.get(playerId);
+        if (connData?.socket?.connected) {
+            // Error. Player with same ID is trying to connect on a different socket.
+            socket.emit("server_error", {
+                message: "This player has connected already.",
+                abandonGame: true
+            });
+            socket.disconnect(true);
+        }
+        this.playersConnected.set(playerId, {
+            // preserving other connection data - room.
+            ...this.playersConnected.get(playerId),
+            socket
+        });
+        (socket as Socket).on("disconnect", () => {
+            this.playersConnected.get(playerId)!.socket = undefined;
+        });
     }
 
     attach(ioServer: SocServer) {
@@ -139,6 +147,8 @@ export class SocketDispatcher {
                 playerName,
                 socket.id
             );
+
+            this.rememberPlayerConnection(playerId, socket);
 
             // confirm to client and refresh the token for the upcoming game
             socket.emit("connection_ack", {

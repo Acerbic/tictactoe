@@ -19,8 +19,5 @@ client:
     ☐ puppetier testing of client @created(05-06-2020 15:18)
     
 ghost:
-    ☐ check in ghost on ws connection that same playerId is not trying to connect from 2 sockets
-    ☐ drop game if both clients d/c?
-    ☐ detect hung games (with no players connected for a reconnection grace period)
     ☐ ghost all-catch unexpected/unhandled xstate errors (unhandled?)
     ☐ sort out debug messages for ghost xstate by categories better

@@ -32,7 +32,11 @@ export const regenerate = (
         if (connQuery.token) {
             payload = verify(connQuery.token, JWT_SECRET) as JWTSession;
         }
-    } catch (e) {}
+    } catch (e) {
+        // in case of invalid or empty token, we just create a fresh one.
+        // The token currently is only for authentication, not authorization.
+        // I.e. its to support reconnecting players to a game in progress.
+    }
 
     if (connQuery.playerName) {
         payload.playerName = connQuery.playerName;

@@ -306,4 +306,9 @@ describe("After game started", () => {
             }
         });
     });
+
+    test.todo(
+        "when player doesn't reconnect in a given wait period, auto lose"
+    );
+    test.todo("when both players disconnect for some time, drop game");
 });

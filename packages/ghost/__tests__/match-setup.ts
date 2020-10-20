@@ -190,15 +190,11 @@ describe("WS communication", () => {
 
         client1.once("choose_role", () => {
             const client2 = socs.openClientSocket("p1", client1_token);
-            (client2 as typeof Socket).once("disconnect", () => done());
-            client2.once("choose_role", () => {
+            client2.once("server_error", () => done());
+            client2.once("connection_ack", () => {
                 fail(
                     "Can't have second connection opened with the same playerId"
                 );
-                done();
-            });
-            client2.once("connection_ack", () => {
-                client2.emit("start_game");
             });
             client2.connect();
         });
