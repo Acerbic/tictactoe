@@ -7,7 +7,7 @@
 const EXTEND_SOCKET_TIMEOUTS = process.env.VSCODE_CLI ? true : false;
 
 import ioClient from "socket.io-client";
-import { errorlog } from "../src/utils";
+import { errorlog, debuglog } from "../src/utils";
 
 import { API as gh_api } from "@trulyacerbic/ttt-apis/ghost-api";
 import { GhostInSocket, socListen, socListenAfter } from "./__utils";
@@ -44,17 +44,17 @@ export default class ClientSockets {
         // for IDE debugging purposes
         socket
             .on("disconnect", (reason: any) => {
-                let z = playerName;
+                debuglog("ClientSockets: disconnect");
             })
             .on("reconnect", (attemptNum: any) => {
-                let z = playerName;
+                debuglog("ClientSockets: reconnect");
             })
             .on("connect_error", (error: any) => {
                 errorlog("ClientSockets: Connect error for %s", playerName);
                 throw error;
             })
             .on("connect_timeout", (timeout: any) => {
-                let z = playerName;
+                debuglog("ClientSockets: connect_timeout");
             })
             .on("error", (error: any) => {
                 errorlog("ClientSockets: Error for %s", playerName);
@@ -65,7 +65,7 @@ export default class ClientSockets {
                 throw error;
             })
             .on("reconnect_failed", () => {
-                let z = playerName;
+                debuglog("ClientSockets: reconnect_failed");
             });
 
         // helper methods that don't exist in Socket but are useful

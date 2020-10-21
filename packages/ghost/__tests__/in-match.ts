@@ -14,13 +14,35 @@ import { decode } from "jsonwebtoken";
 import GmasterConnector from "../src/connectors/gmaster_connector";
 jest.mock("../src/connectors/gmaster_connector");
 
+// mock reconnect_timer Callback Actor to use Jest fake timers cannot use fake
+// timers on test level, because Socket.IO gets confused (test doesn't exit in
+// time)
+jest.mock("../src/state-machine/game-room/actors/reconnect_timer", () => {
+    const { reconnect_timer: orig } = jest.requireActual(
+        "../src/state-machine/game-room/actors/reconnect_timer"
+    );
+    return {
+        reconnect_timer: (...args: any[]) => {
+            const generatedCallbackActor = orig(...args);
+            return (...args: any[]) => {
+                jest.useFakeTimers();
+                const actorCallResult = generatedCallbackActor(...args);
+                jest.useRealTimers();
+                return actorCallResult;
+            };
+        }
+    };
+});
+
 import * as gm_api from "@trulyacerbic/ttt-apis/gmaster-api";
 import { API as gh_api, JWTSession } from "@trulyacerbic/ttt-apis/ghost-api";
 
-import { GhostInSocket, socListen } from "./__utils";
+import { GhostInSocket, socListen, tickTimers } from "./__utils";
 import ClientSockets from "./__ClientSockets";
 
 import { TestServer } from "./__TestServer";
+
+import { debuglog } from "../src/utils";
 
 describe("After game started", () => {
     let mocked_gmc: {
@@ -108,9 +130,8 @@ describe("After game started", () => {
     /**
      *  Cleanup WS & HTTP servers
      */
-    afterEach(() => {
-        ts && ts.destroy();
-        ts = null;
+    afterEach(async () => {
+        return ts && ts.destroy();
     });
 
     test("can pass turns between players", async () => {
@@ -307,8 +328,32 @@ describe("After game started", () => {
         });
     });
 
-    test.todo(
-        "when player doesn't reconnect in a given wait period, auto lose"
-    );
+    test("auto lose if player doesn't reconnect in a given wait period - p1", async () => {
+        const game_result_p = client2.listenAfter(() => {
+            client1.disconnect();
+        }, "gameover");
+
+        tickTimers(30000);
+        jest.useRealTimers();
+        const game_result = await game_result_p;
+        expect(game_result.winner).toBe(player2Id);
+    });
+
+    test("auto lose if player doesn't reconnect in a given wait period - p2", async () => {
+        await client2.listenAfter(
+            () => client1.emit("move", { column: 0, row: 0 }),
+            "update"
+        );
+        const game_result_p = client2.listenAfter(() => {
+            client1.disconnect();
+        }, "gameover");
+
+        tickTimers(30000);
+        jest.useRealTimers();
+        const game_result = await game_result_p;
+        expect(game_result.winner).toBe(player2Id);
+    });
+
+    test.todo("can reconnect within grace period");
     test.todo("when both players disconnect for some time, drop game");
 });

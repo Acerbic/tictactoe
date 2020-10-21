@@ -87,3 +87,16 @@ export async function socListenAfter<
     after();
     return promise;
 }
+
+/**
+ * Advance Jest fake timers. NOTE: drops to real timers both after this function
+ * and after delayed callback
+ */
+export function tickTimers(advanceBy: number = 1000, waitFirst: number = 10) {
+    jest.useRealTimers();
+    setTimeout(() => {
+        jest.useFakeTimers();
+        jest.advanceTimersByTime(advanceBy);
+        jest.useRealTimers();
+    }, waitFirst);
+}
