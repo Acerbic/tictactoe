@@ -68,6 +68,7 @@ describe("test gmaster connector", () => {
             // prevent server hanging after the test is done
             checkPromise.finally(() => {
                 server.close();
+                return new Promise(rs => server.once("close", rs));
             });
             // NOTE: if this timeout is too long, it exceeds connectors wait
             // period and the test fails (as it should)
@@ -92,6 +93,7 @@ describe("test gmaster connector", () => {
             let hungTimeout: NodeJS.Timeout;
             const hungDetector = new Promise((rs, rj) => {
                 hungTimeout = setTimeout(() => {
+                    debuglog("server hung");
                     rj("server hung");
                 }, REQUEST_TIMEOUT + RETRY_DELAY);
             });
@@ -104,15 +106,17 @@ describe("test gmaster connector", () => {
                 // Must have a catch clause to prevent
                 // UnhandledPromiseRejectionWarning
                 .catch(r => {
+                    debuglog("request exception");
                     expect(r.type).toBe("aborted");
-                })
-                .finally(() => {
-                    server.close();
                 });
 
             return Promise.race([hungDetector, checkPromise]).finally(() => {
-                server.close();
+                debuglog("race finally");
+                server.close(e => {
+                    debuglog("server close error", e);
+                });
                 clearTimeout(hungTimeout);
+                return new Promise(rs => server.once("close", rs));
             });
         },
         REQUEST_TIMEOUT + 1000

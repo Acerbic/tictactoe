@@ -13,8 +13,8 @@ describe("test players' ability to change name", () => {
         s = new TestServer();
     });
 
-    afterEach(() => {
-        s && s.destroy();
+    afterEach(async () => {
+        return s && s.destroy();
     });
 
     test("without reconnecting", async () => {

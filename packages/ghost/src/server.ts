@@ -22,7 +22,7 @@ const socServer = socketio(http, {
 /**
  * Add custom ws behaviours
  */
-new SocketDispatcher().attach(socServer);
+new SocketDispatcher(socServer);
 
 // start listening for http connections
 const ghost_port = process.env.GHOST_PORT || 3060;

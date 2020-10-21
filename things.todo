@@ -21,3 +21,6 @@ client:
 ghost:
     ☐ ghost all-catch unexpected/unhandled xstate errors (unhandled?)
     ☐ sort out debug messages for ghost xstate by categories better
+    ✔ SocketDispatcher attach()-> constructor @done(21-10-2020 10:20)
+    ✔ SocketDispatcher close() - SHUTDOWN all rooms @done(21-10-2020 10:20)
+    ✔ GameRoomInterpreter SHUTDOWN event (clear actors, timeouts, etc.) @done(21-10-2020 10:20)

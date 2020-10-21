@@ -40,6 +40,7 @@ export class TestServer {
 
     private httpServer: http.Server;
     private socServer: ioServer.Server;
+    private socd: SocketDispatcher;
 
     constructor() {
         // 1. First, we create a running server and mock gmaster connection
@@ -53,7 +54,7 @@ export class TestServer {
             pingTimeout: EXTEND_TIMEOUTS ? 1000000 : 5000
         });
 
-        new SocketDispatcher().attach(this.socServer);
+        this.socd = new SocketDispatcher(this.socServer);
         // `new SocketDispatcher()` above creates an instance of (mocked)
         // GmasterConnector internally, the following line catches it for
         // inspection and manipulation. A bit hacky with the cast, but better
@@ -73,10 +74,13 @@ export class TestServer {
         this.openClientSocket = (n, t) => this.socs.openClientSocket(n, t);
     }
 
-    destroy() {
+    async destroy() {
         this.socs && this.socs.cleanUp();
+        this.socd.destroy();
+        this.socServer.removeAllListeners();
         this.socServer.close();
         this.httpServer.close();
+        return new Promise(rs => this.httpServer.once("close", rs));
     }
 }
 

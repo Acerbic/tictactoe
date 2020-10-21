@@ -19,6 +19,11 @@ import {
 import GMConnector from "../../connectors/gmaster_connector";
 import { GhostOutSocket } from "../../utils";
 
+/**
+ * How long a player is allowed to be disconnected before game is forfeited
+ */
+export const DISCONNECT_FORFEIT_TIMEOUT = 1000 * 30;
+
 export interface GameRoomSchema extends StateSchema<GameRoomContext> {
     states: {
         players_setup: {};
@@ -38,6 +43,7 @@ export interface PlayerInfo {
     role_request?: "first" | "second";
     // this holds spawned submachine operating player's setup phase
     setup_actor: Actor<PlayerSetupContext, PlayerSetupEvent>;
+    reconnect_actor?: Actor;
 }
 
 export interface GameRoomContext {
@@ -122,12 +128,31 @@ export type GameRoom_PlayerMove = {
     ack?: Function;
 };
 
+/**
+ * Happens if in a middle of a game disconnect was not followed with a reconnect
+ * within a grace period
+ */
+export type GameRoom_PlayerDisconnectTimeout = {
+    type: "DISCONNECT_TIMEOUT";
+    player_id: PlayerId;
+};
+
+/**
+ * Game room terminated for not game-specific reasons (not due to game natural
+ * conclusion)
+ */
+export type GameRoom_Shutdown = {
+    type: "SHUTDOWN";
+};
+
 export type GameRoomEvent =
     | GameRoom_PlayerJoinRoom
     | GameRoom_PlayerReconnected
     | GameRoom_PlayerDisconnected
+    | GameRoom_PlayerDisconnectTimeout
     | GameRoom_PlayerDropped
     | GameRoom_PlayerQuit
+    | GameRoom_Shutdown
     | GameRoom_PlayerPickRole
     | GameRoom_PlayerReady
     | GameRoom_PlayerMove

@@ -25,7 +25,9 @@ import {
     PlayerInfo,
     GameRoom_PlayerQuit,
     isGREvent,
-    GameRoom_PlayerJoinRoom
+    GameRoom_PlayerJoinRoom,
+    GameRoom_PlayerDisconnectTimeout,
+    GameRoom_Shutdown
 } from "./game-room-schema";
 import { API } from "@trulyacerbic/ttt-apis/ghost-api";
 
@@ -123,13 +125,15 @@ export const finalize_setup: AF = ctx => {
 };
 
 export const emit_gameover: AF<
-    GameRoom_PlayerQuit | DoneInvokeEvent<MakeMoveResponse>
+    | GameRoom_PlayerDisconnectTimeout
+    | GameRoom_PlayerQuit
+    | DoneInvokeEvent<MakeMoveResponse>
 > = (ctx, e) => {
     actionlog("emit_gameover");
 
     let winner: API["out"]["gameover"]["winner"] = null;
 
-    if (isGREvent(e, "SOC_PLAYER_QUIT")) {
+    if (isGREvent(e, "SOC_PLAYER_QUIT") || isGREvent(e, "DISCONNECT_TIMEOUT")) {
         // game ended with a rage quit
         if (ctx.player1 === e.player_id) {
             winner = ctx.player2!;
@@ -242,6 +246,11 @@ export const top_disconnect = assign<
     //TODO: inform players of disconnect
 
     // start a reconnection timeout
+    const cb_actor = actors.reconnect_timer(player_id);
+    ctx.players.get(player_id)!.reconnect_actor = spawn(
+        cb_actor,
+        "reconnect_timer"
+    );
 
     return {};
 });
@@ -265,14 +274,19 @@ export const top_reconnect = assign<GameRoomContext, GameRoomEvent>(
         }
 
         actionlog("top_reconnect");
+
         // reconnection during game in progress - update socket
 
         // Note: this is a bit cheesy to just plop assignment inside "assign"
         // already, but it is more concise than fiddling with Map
         ctx.players.get(event.player_id)!.socket = event.socket;
 
+        // cancel reconnect timer
+        ctx.players
+            .get(event.player_id)
+            ?.reconnect_actor?.send({ type: "ABORT_TIMER" });
+
         const thePromise = actors.top_reconnect(ctx, event);
-        // reconnection during game in progress - update socket
 
         // FIXME: "top_reconnect" is not unique - both players can theoretically
         // reconnect at the same time
@@ -282,3 +296,15 @@ export const top_reconnect = assign<GameRoomContext, GameRoomEvent>(
         return {};
     }
 );
+
+/**
+ * Room is terminating - clear all hanging promises, fetch calls, timeouts,
+ * etc...
+ */
+export const shutdown_ongoing_activities: AF<GameRoom_Shutdown> = (ctx, e) => {
+    actionlog("shutdown");
+    ctx.players.forEach(pinfo => {
+        pinfo.setup_actor.stop?.();
+        pinfo.reconnect_actor?.stop?.();
+    });
+};

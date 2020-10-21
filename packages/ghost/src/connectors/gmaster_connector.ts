@@ -101,6 +101,8 @@ async function gmasterGet<
 export class GameMasterConnector {
     post = gmasterPost;
     get = gmasterGet;
+    // TODO: find a way to abort all ongoing API calls
+    public destroy() {}
 }
 
 export default GameMasterConnector;

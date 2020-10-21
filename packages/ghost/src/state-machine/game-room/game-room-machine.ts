@@ -122,6 +122,7 @@ export const state_machine: MachineConfig<
             }
         },
         end: {
+            entry: "shutdown_ongoing_activities",
             type: "final"
         }
     },
@@ -132,11 +133,18 @@ export const state_machine: MachineConfig<
         SOC_DISCONNECT: {
             actions: "top_disconnect"
         },
+        DISCONNECT_TIMEOUT: {
+            target: "end",
+            actions: ["emit_gameover", "call_dropgame"]
+        },
         SOC_PLAYER_QUIT: {
             target: "end",
             actions: ["emit_gameover", "call_dropgame"]
         },
-        "error.platform.emit_update_both": "end"
+        "error.platform.emit_update_both": "end",
+        SHUTDOWN: {
+            target: "end"
+        }
     }
 };
 

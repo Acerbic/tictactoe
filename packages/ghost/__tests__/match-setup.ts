@@ -24,6 +24,7 @@ describe("WS communication", () => {
     let socServer: ioServer.Server;
 
     let socs: ClientSockets;
+    let socd: SocketDispatcher;
 
     /**
      * Setup WS & HTTP servers
@@ -39,7 +40,7 @@ describe("WS communication", () => {
         socServer = ioServer(httpServer, {
             pingTimeout: EXTEND_SOCKET_TIMEOUTS ? 1000000 : 5000
         });
-        new SocketDispatcher().attach(socServer);
+        socd = new SocketDispatcher(socServer);
 
         socs = new ClientSockets(
             // Travis CI ?
@@ -52,10 +53,11 @@ describe("WS communication", () => {
     /**
      *  Cleanup WS & HTTP servers
      */
-    afterEach(() => {
+    afterEach(async () => {
         socs.cleanUp();
+        socd.destroy();
         socServer.close();
-        httpServer.close();
+        return new Promise(rs => httpServer.once("close", rs));
     });
 
     test("player should be able to connect via websocket", done => {

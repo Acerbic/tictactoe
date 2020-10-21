@@ -130,7 +130,7 @@ export class SocketDispatcher {
         });
     }
 
-    attach(ioServer: SocServer) {
+    constructor(ioServer: SocServer) {
         // attach important socket handlers
         ioServer.on("connection", (socket: GhostOutSocket) => {
             const conn_query: API["connection"] = socket.handshake.query;
@@ -216,5 +216,10 @@ export class SocketDispatcher {
                 }
             }
         });
+    }
+
+    public destroy() {
+        this.deps.gmaster.destroy();
+        this.playersConnected.forEach(({ room }) => room?.send("SHUTDOWN"));
     }
 }
