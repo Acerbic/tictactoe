@@ -38,11 +38,7 @@ export const reconnect_timer = (player_id: PlayerId): InvokeCallback => {
         });
 
         return () => {
-            debuglog(
-                "clearing reconnect timer for player",
-                player_id,
-                (timeout as any)._destroyed
-            );
+            debuglog("clearing reconnect timer for player", player_id);
             clearTimeout(timeout);
         };
     };

@@ -13,24 +13,10 @@ import { decode } from "jsonwebtoken";
  */
 import GmasterConnector from "../src/connectors/gmaster_connector";
 jest.mock("../src/connectors/gmaster_connector");
-
-// mock reconnect_timer Callback Actor to use Jest fake timers cannot use fake
-// timers on test level, because Socket.IO gets confused (test doesn't exit in
-// time)
+import { reconnect_timer } from "./__reconnect_timer";
 jest.mock("../src/state-machine/game-room/actors/reconnect_timer", () => {
-    const { reconnect_timer: orig } = jest.requireActual(
-        "../src/state-machine/game-room/actors/reconnect_timer"
-    );
     return {
-        reconnect_timer: (...args: any[]) => {
-            const generatedCallbackActor = orig(...args);
-            return (...args: any[]) => {
-                jest.useFakeTimers();
-                const actorCallResult = generatedCallbackActor(...args);
-                jest.useRealTimers();
-                return actorCallResult;
-            };
-        }
+        reconnect_timer
     };
 });
 
@@ -354,6 +340,25 @@ describe("After game started", () => {
         expect(game_result.winner).toBe(player2Id);
     });
 
-    test.todo("can reconnect within grace period");
+    test("can reconnect within grace period", async () => {
+        expect(player1Id).toBeTruthy();
+
+        await client1.listenAfter(() => client1.disconnect(), "disconnect");
+        tickTimers(10000);
+        jest.useRealTimers();
+        client1 = socs!.openClientSocket("p1", client1_token);
+        const data = await client1.listenAfter(
+            () => client1.connect(),
+            "update"
+        );
+
+        expect(data.turn).toBe("player1");
+        expect(data.board).toEqual([
+            [null, null, null],
+            [null, null, null],
+            [null, null, null]
+        ]);
+    });
+
     test.todo("when both players disconnect for some time, drop game");
 });
