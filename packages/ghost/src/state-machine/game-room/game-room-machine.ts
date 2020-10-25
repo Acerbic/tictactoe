@@ -10,7 +10,7 @@ import {
     ActionFunctionMap,
     DoneInvokeEvent
 } from "xstate";
-import { pure, send, forwardTo, choose } from "xstate/lib/actions";
+import { forwardTo } from "xstate/lib/actions";
 
 import * as MachineActions from "./actions";
 
@@ -19,7 +19,8 @@ import {
     GameRoomSchema,
     GameRoomEvent,
     GameRoom_PlayerMove,
-    GameRoom_Shutdown
+    GameRoom_Shutdown,
+    GameRoom_PlayerQuit
 } from "./game-room-schema";
 import {
     CreateGameResponse,
@@ -32,8 +33,10 @@ import { GMasterError } from "../../connectors/gmaster_connector";
 
 import {
     players_pool_machine,
-    PlayersPoolContext
+    PlayersPoolContext,
+    PlayersPool_PlayerDone
 } from "../player-connection/players-pool-machine";
+import { send_to_ppool } from "../../utils";
 
 export const state_machine: MachineConfig<
     GameRoomContext,
@@ -143,7 +146,7 @@ export const state_machine: MachineConfig<
                         DISCONNECT_TIMEOUT: {
                             target: "game.end",
                             actions: [
-                                "store_winner_timeout",
+                                "store_winner_forfeit",
                                 "emit_gameover_timeout",
                                 "remove_done_players"
                             ]
@@ -169,15 +172,8 @@ export const state_machine: MachineConfig<
         },
         end: {
             entry: [
-                "shutdown_ongoing_activities",
-                choose([
-                    {
-                        cond: "player_pool_not_done",
-                        actions: send(<GameRoom_Shutdown>{ type: "SHUTDOWN" }, {
-                            to: "player_pool"
-                        })
-                    }
-                ])
+                "shutdown_ongoing_activities"
+                // send_to_ppool(<GameRoom_Shutdown>{ type: "SHUTDOWN" })
             ],
             type: "final"
         }
@@ -187,7 +183,17 @@ export const state_machine: MachineConfig<
         SOC_RECONNECT: [
             {
                 cond: "game_already_ended",
-                actions: ["emit_gameover_final", "send_player_done"]
+                actions: [
+                    "emit_gameover_final",
+                    send_to_ppool(
+                        (_, event) =>
+                            <PlayersPool_PlayerDone>{
+                                type: "PLAYER_DONE",
+                                player_id: (event as GameRoom_PlayerQuit)
+                                    .player_id
+                            }
+                    )
+                ]
             },
             {
                 actions: ["top_reconnect", forwardTo("player_pool")]
@@ -197,8 +203,16 @@ export const state_machine: MachineConfig<
             actions: forwardTo("player_pool")
         },
         SOC_PLAYER_QUIT: {
-            target: "end",
-            actions: ["emit_gameover", "call_dropgame", "send_player_done"]
+            target: [
+                "game_in_progress.game.end",
+                ".game_in_progress.connections"
+            ],
+            actions: [
+                "emit_gameover",
+                "call_dropgame",
+                "store_winner_forfeit",
+                "remove_done_players"
+            ]
         },
         "error.platform.top_reconnect": "end",
         "error.platform.emit_update_both": "end",
@@ -295,8 +309,6 @@ export const machine_options: Partial<MachineOptions<
             const game = (event as DoneInvokeEvent<MakeMoveResponse>).data
                 .newState.game;
             return game === "over" || game === "draw";
-        },
-        player_pool_not_done: (ctx, e, { state }) =>
-            state.children.player_pool?.state?.matches("end")
+        }
     }
 };

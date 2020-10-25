@@ -380,4 +380,34 @@ describe("After game started", () => {
 
         expect(data.winner).toBe(player2Id);
     });
+
+    test("can quit game", async () => {
+        const data = await client2.listenAfter(
+            () => client1.emit("im_done"),
+            "gameover"
+        );
+        expect(data.winner).toBe(player2Id);
+    });
+
+    test("can start another game after first one ended", async () => {
+        await client2.listenAfter(() => client1.emit("im_done"), "gameover");
+
+        await client1.listenAfter(
+            () => client1.emit("start_game"),
+            "choose_role"
+        );
+    });
+
+    test("can get gameover update on reconnect, when other player quits", async () => {
+        await client1.listenAfter(() => client1.disconnect(), "disconnect");
+        await tickTimers(DISCONNECT_FORFEIT_TIMEOUT * 0.5);
+        await client2.listenAfter(() => client2.emit("im_done"), "gameover");
+
+        client1 = socs!.openClientSocket("p1", client1_token);
+        const data = await client1.listenAfter(() => {
+            client1.connect();
+        }, "gameover");
+
+        expect(data.winner).toBe(player1Id);
+    });
 });

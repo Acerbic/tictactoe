@@ -10,8 +10,13 @@ export const debuglog = debug("ttt:ghost:debug");
 
 import { Socket } from "socket.io";
 import { API } from "@trulyacerbic/ttt-apis/ghost-api";
-import { GameRoomContext } from "./state-machine/game-room/game-room-schema";
-import { AnyEventObject } from "xstate";
+import {
+    GameRoomContext,
+    GameRoomEvent
+} from "./state-machine/game-room/game-room-schema";
+import { ActionObject, AnyEventObject } from "xstate";
+import { PlayersPoolEvent } from "./state-machine/player-connection/players-pool-machine";
+import { choose, pure, send } from "xstate/lib/actions";
 
 // server-side socket narrowed to emit API messages
 export interface GhostOutSocket extends Omit<Socket, "once" | "on"> {
@@ -74,5 +79,36 @@ export class UnexpectedEvent extends Error {
             `Unexpected event encountered: ${event.type}.` + more &&
                 ` (${more})`
         );
+    }
+}
+
+/**
+ * Check state of player_pool machine and if its not not ended yet - send it an event
+ */
+export function send_to_ppool(
+    eventOrEventBuilder:
+        | PlayersPoolEvent
+        | ((ctx: GameRoomContext, event: GameRoomEvent) => PlayersPoolEvent)
+): ActionObject<GameRoomContext, GameRoomEvent> {
+    if (typeof eventOrEventBuilder === "function") {
+        return pure((ctx, event) =>
+            choose<GameRoomContext, GameRoomEvent>([
+                {
+                    cond: (ctx, e, { state }) =>
+                        state.children.player_pool?.state?.done,
+                    actions: send(eventOrEventBuilder(ctx, event), {
+                        to: "player_pool"
+                    })
+                }
+            ])
+        );
+    } else {
+        return choose<GameRoomContext, GameRoomEvent>([
+            {
+                cond: (ctx, e, { state }) =>
+                    state.children.player_pool?.state?.done,
+                actions: send(eventOrEventBuilder, { to: "player_pool" })
+            }
+        ]);
     }
 }

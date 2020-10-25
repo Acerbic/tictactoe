@@ -105,7 +105,10 @@ export class SocketDispatcher {
                         r.getDetailedStateValue()
                     ))(newRoom)
             )
-            .onDone(() => this.dropRoom(newRoom))
+            .onDone(() => {
+                hostlog("Dropping room", newRoom.roomId);
+                this.dropRoom(newRoom);
+            })
             .start();
         // hostlog("game room created: %s", newRoom.roomId);
         return newRoom;

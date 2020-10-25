@@ -344,20 +344,9 @@ export const emit_gameover_final: AF<GameRoom_PlayerReconnected> = (ctx, e) => {
     e.socket.emit("gameover", { winner: ctx.game_winner });
 };
 
-export const send_player_done = pure(
-    (_, { player_id }: GameRoom_PlayerReconnected | GameRoom_PlayerQuit) =>
-        send(
-            <PlayersPool_PlayerDone>{
-                type: "PLAYER_DONE",
-                player_id
-            },
-            { to: "player_pool" }
-        )
-);
-
-export const store_winner_timeout = assign<
+export const store_winner_forfeit = assign<
     GameRoomContext,
-    PlayerDisconnectTimeout
+    PlayerDisconnectTimeout | GameRoom_PlayerQuit
 >({
     game_winner: ({ player1, player2 }, { player_id }) =>
         player_id === player1 ? player2! : player1!

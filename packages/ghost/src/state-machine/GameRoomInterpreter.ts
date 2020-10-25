@@ -69,7 +69,7 @@ export class GameRoomInterpreter extends Interpreter<
                 }
             } catch (exc) {
                 // catch-all for unhandled machine errors
-                errorlog("GameRoomeInterpreter catch-all:", exc);
+                errorlog("GameRoomeInterpreter catch-all:", exc, args);
             }
             return this.state;
         };
