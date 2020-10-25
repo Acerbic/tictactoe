@@ -51,7 +51,8 @@ export class GameRoomInterpreter extends Interpreter<
                 players: new Map(),
                 emits_sync: Promise.resolve(),
 
-                gm_connect: deps.gmaster
+                gm_connect: deps.gmaster,
+                game_winner: null
             })
         );
         this.roomId = "#" + roomCount;

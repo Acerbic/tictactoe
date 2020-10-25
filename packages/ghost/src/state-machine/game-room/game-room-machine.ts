@@ -10,13 +10,16 @@ import {
     ActionFunctionMap,
     DoneInvokeEvent
 } from "xstate";
+import { pure, send, forwardTo, choose } from "xstate/lib/actions";
+
 import * as MachineActions from "./actions";
 
 import {
     GameRoomContext,
     GameRoomSchema,
     GameRoomEvent,
-    GameRoom_PlayerMove
+    GameRoom_PlayerMove,
+    GameRoom_Shutdown
 } from "./game-room-schema";
 import {
     CreateGameResponse,
@@ -26,6 +29,11 @@ import {
     ErrorCodes
 } from "@trulyacerbic/ttt-apis/gmaster-api";
 import { GMasterError } from "../../connectors/gmaster_connector";
+
+import {
+    players_pool_machine,
+    PlayersPoolContext
+} from "../player-connection/players-pool-machine";
 
 export const state_machine: MachineConfig<
     GameRoomContext,
@@ -57,90 +65,142 @@ export const state_machine: MachineConfig<
             after: {
                 // zero-delay instead of transient transition to enforce actions stack execution
                 0: {
-                    target: "creating_game",
+                    target: "game_in_progress",
                     actions: ["finalize_setup"]
                 }
             }
         },
-        creating_game: {
-            invoke: {
-                src: "invoke_create_game",
-                onDone: {
-                    target: "wait4move",
-                    actions: ["emit_game_started"]
+        game_in_progress: {
+            type: "parallel",
+            states: {
+                game: {
+                    initial: "creating_game",
+                    states: {
+                        creating_game: {
+                            invoke: {
+                                src: "invoke_create_game",
+                                onDone: {
+                                    target: "wait4move",
+                                    actions: ["emit_game_started"]
+                                },
+                                onError: {
+                                    target: "end",
+                                    actions: ["emit_server_error_fatal"]
+                                }
+                            }
+                        },
+                        wait4move: {
+                            on: {
+                                SOC_MOVE: {
+                                    target: "making_move"
+                                }
+                            }
+                        },
+                        making_move: {
+                            invoke: {
+                                src: "invoke_make_move",
+                                onDone: [
+                                    {
+                                        cond: "move_ended_game",
+                                        target: "end",
+                                        actions: [
+                                            "emit_update_both",
+                                            "emit_gameover" /* possible racing with emit_update_both */,
+                                            "call_dropgame",
+                                            "remove_done_players",
+                                            "store_winner"
+                                        ]
+                                    },
+                                    {
+                                        target: "wait4move",
+                                        actions: ["emit_update_both"]
+                                    }
+                                ],
+                                onError: [
+                                    {
+                                        cond: (_, e) =>
+                                            typeof e.data.rejectReason ===
+                                                "object" &&
+                                            e.data.rejectReason instanceof
+                                                GMasterError &&
+                                            e.data.rejectReason.code ===
+                                                ErrorCodes.ILLEGAL_MOVE,
+                                        target: "wait4move",
+                                        actions: "ack_invalid_move"
+                                    },
+                                    {
+                                        target: "end",
+                                        actions: "emit_server_error_fatal"
+                                    }
+                                ]
+                            }
+                        },
+                        end: {
+                            type: "final"
+                        }
+                    },
+                    on: {
+                        DISCONNECT_TIMEOUT: {
+                            target: "game.end",
+                            actions: [
+                                "store_winner_timeout",
+                                "emit_gameover_timeout",
+                                "remove_done_players"
+                            ]
+                        }
+                    }
                 },
-                onError: {
-                    target: "end",
-                    actions: ["emit_server_error_fatal"]
-                }
-            }
-        },
-        wait4move: {
-            on: {
-                SOC_MOVE: {
-                    target: "making_move"
-                }
-            }
-        },
-        making_move: {
-            invoke: {
-                src: "invoke_make_move",
-                onDone: [
-                    {
-                        cond: (_, e: DoneInvokeEvent<MakeMoveResponse>) =>
-                            e.data.newState.game === "wait",
-                        target: "wait4move",
-                        actions: ["emit_update_both"]
-                    },
-                    {
-                        cond: (_, e: DoneInvokeEvent<MakeMoveResponse>) =>
-                            e.data.newState.game === "over" ||
-                            e.data.newState.game === "draw",
-                        target: "end",
-                        actions: [
-                            "emit_update_both",
-                            "emit_gameover" /* possible racing with emit_update_both */,
-                            "call_dropgame"
-                        ]
+                connections: {
+                    invoke: {
+                        id: "player_pool",
+                        src: players_pool_machine,
+                        data: ctx =>
+                            <PlayersPoolContext>{
+                                playerConnections: new Map()
+                                    .set(ctx.player1!, {})
+                                    .set(ctx.player2!, {})
+                            },
+                        onDone: {
+                            target: "#ghost.end"
+                        }
                     }
-                ],
-                onError: [
-                    {
-                        cond: (_, e) =>
-                            typeof e.data.rejectReason === "object" &&
-                            e.data.rejectReason instanceof GMasterError &&
-                            e.data.rejectReason.code ===
-                                ErrorCodes.ILLEGAL_MOVE,
-                        target: "wait4move",
-                        actions: "ack_invalid_move"
-                    },
-                    {
-                        target: "end",
-                        actions: "emit_server_error_fatal"
-                    }
-                ]
+                }
             }
         },
         end: {
-            entry: "shutdown_ongoing_activities",
+            entry: [
+                "shutdown_ongoing_activities",
+                choose([
+                    {
+                        cond: "player_pool_not_done",
+                        actions: send(<GameRoom_Shutdown>{ type: "SHUTDOWN" }, {
+                            to: "player_pool"
+                        })
+                    }
+                ])
+            ],
             type: "final"
         }
     },
     on: {
         // might be overtaken by deeper (more specific) states transitions
-        SOC_RECONNECT: { actions: "top_reconnect" },
-        "error.platform.top_reconnect": "end",
+        SOC_RECONNECT: [
+            {
+                cond: "game_already_ended",
+                actions: ["emit_gameover_final", "send_player_done"]
+            },
+            {
+                actions: ["top_reconnect", forwardTo("player_pool")]
+            }
+        ],
         SOC_DISCONNECT: {
-            actions: "top_disconnect"
-        },
-        DISCONNECT_TIMEOUT: {
-            target: "end",
-            actions: ["emit_gameover", "call_dropgame"]
+            actions: forwardTo("player_pool")
         },
         SOC_PLAYER_QUIT: {
             target: "end",
-            actions: ["emit_gameover", "call_dropgame"]
+            actions: ["emit_gameover", "call_dropgame", "send_player_done"]
         },
+        "error.platform.top_reconnect": "end",
         "error.platform.emit_update_both": "end",
         SHUTDOWN: {
             target: "end"
@@ -222,6 +282,21 @@ export const machine_options: Partial<MachineOptions<
                     pinfo.setup_actor.state!.matches("ready2play")
                 ).length == 2
             );
-        }
+        },
+        game_already_ended: (_, event, { state }) => {
+            debuglog("test game already ended", state.value);
+            if (event.type !== "SOC_RECONNECT") {
+                throw new Error("Mismatched Action");
+            }
+
+            return state.matches("game_in_progress.game.end");
+        },
+        move_ended_game: (_, event) => {
+            const game = (event as DoneInvokeEvent<MakeMoveResponse>).data
+                .newState.game;
+            return game === "over" || game === "draw";
+        },
+        player_pool_not_done: (ctx, e, { state }) =>
+            state.children.player_pool?.state?.matches("end")
     }
 };

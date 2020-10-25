@@ -60,7 +60,7 @@ export class SocketDispatcher {
 
     private isPlayerInGame(playerId: PlayerId): boolean {
         const room = this.playersConnected.get(playerId)?.room;
-        return !!(room?.initialized && !room.state.matches("players_setup"));
+        return !!(room?.initialized && room.state.matches("game_in_progress"));
     }
 
     private getRoomForPlayer(playerId: string): GameRoomInterpreter {
@@ -86,7 +86,9 @@ export class SocketDispatcher {
         ].filter(([_, { room }]) => room && room.playersCount() < 2);
 
         if (playersWaitingForOpponents.length > 0) {
-            return playersWaitingForOpponents[0][1].room!;
+            const firstFreeRoom = playersWaitingForOpponents[0][1].room!;
+            playerConnection.room = firstFreeRoom;
+            return firstFreeRoom;
         }
 
         // create a fresh new room

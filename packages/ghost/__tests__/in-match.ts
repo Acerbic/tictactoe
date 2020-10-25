@@ -7,6 +7,8 @@ const EXTEND_TIMEOUTS = process.env.VSCODE_CLI ? true : false;
 
 import { Socket } from "socket.io-client";
 import { decode } from "jsonwebtoken";
+import debug from "debug";
+const testlog = debug("ttt:test");
 
 /**
  * Mockarena!
@@ -359,5 +361,23 @@ describe("After game started", () => {
         ]);
     });
 
-    test.todo("when both players disconnect for some time, drop game");
+    test("when both players disconnect for some time, drop game", async () => {
+        expect(player1Id).toBeTruthy();
+
+        // First player disconnects
+        await client1.listenAfter(() => client1.disconnect(), "disconnect");
+        await tickTimers(DISCONNECT_FORFEIT_TIMEOUT * 0.8);
+        // Second player disconnects while the first one is still disconnected
+        await client2.listenAfter(() => client2.disconnect(), "disconnect");
+        await tickTimers(DISCONNECT_FORFEIT_TIMEOUT * 0.5);
+
+        // First player's reconnection window expired, but for p2 isn't yet
+        client2 = socs!.openClientSocket("p2", client2_token);
+        const data = await client2.listenAfter(() => {
+            // 2nd player reconnects to receive gameover update
+            client2.connect();
+        }, "gameover");
+
+        expect(data.winner).toBe(player2Id);
+    });
 });

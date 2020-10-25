@@ -11,6 +11,7 @@ export const debuglog = debug("ttt:ghost:debug");
 import { Socket } from "socket.io";
 import { API } from "@trulyacerbic/ttt-apis/ghost-api";
 import { GameRoomContext } from "./state-machine/game-room/game-room-schema";
+import { AnyEventObject } from "xstate";
 
 // server-side socket narrowed to emit API messages
 export interface GhostOutSocket extends Omit<Socket, "once" | "on"> {
@@ -65,4 +66,13 @@ export function populate_update_meta(
         }
     });
     return { ...data, meta };
+}
+
+export class UnexpectedEvent extends Error {
+    constructor(event: AnyEventObject, more?: string) {
+        super(
+            `Unexpected event encountered: ${event.type}.` + more &&
+                ` (${more})`
+        );
+    }
 }

@@ -8,13 +8,13 @@ const actionlog = debug("ttt:ghost:action");
 
 import {
     ActionFunction,
-    assign,
     spawn,
     Spawnable,
     AnyEventObject,
     DoneInvokeEvent,
     ErrorPlatformEvent
 } from "xstate";
+import { pure, send, assign } from "xstate/lib/actions";
 
 import {
     GameRoomContext,
@@ -26,8 +26,8 @@ import {
     GameRoom_PlayerQuit,
     isGREvent,
     GameRoom_PlayerJoinRoom,
-    GameRoom_PlayerDisconnectTimeout,
-    GameRoom_Shutdown
+    GameRoom_Shutdown,
+    GameRoom_PlayerReconnected
 } from "./game-room-schema";
 import { API } from "@trulyacerbic/ttt-apis/ghost-api";
 
@@ -40,6 +40,10 @@ import {
 import { chain_promise, populate_update_meta } from "../../utils";
 
 import * as actors from "./actors";
+import {
+    PlayerDisconnectTimeout,
+    PlayersPool_PlayerDone
+} from "../player-connection/players-pool-machine";
 
 // shortcut to ActionFunction signature
 type AF<E extends AnyEventObject = GameRoomEvent> = ActionFunction<
@@ -125,15 +129,15 @@ export const finalize_setup: AF = ctx => {
 };
 
 export const emit_gameover: AF<
-    | GameRoom_PlayerDisconnectTimeout
     | GameRoom_PlayerQuit
     | DoneInvokeEvent<MakeMoveResponse>
+    | GameRoom_PlayerReconnected
 > = (ctx, e) => {
     actionlog("emit_gameover");
 
     let winner: API["out"]["gameover"]["winner"] = null;
 
-    if (isGREvent(e, "SOC_PLAYER_QUIT") || isGREvent(e, "DISCONNECT_TIMEOUT")) {
+    if (isGREvent(e, "SOC_PLAYER_QUIT")) {
         // game ended with a rage quit
         if (ctx.player1 === e.player_id) {
             winner = ctx.player2!;
@@ -142,10 +146,13 @@ export const emit_gameover: AF<
         } else {
             // this should not happen!
         }
+    } else if (isGREvent(e, "SOC_RECONNECT")) {
+        winner = ctx.game_winner;
     } else {
         // normal game finish
-        if (e.data.newState.game == "over") {
-            if (e.data.newState.turn === "player1") {
+        const gameState = e.data.newState;
+        if (gameState.game === "over") {
+            if (gameState.turn === "player1") {
                 winner = ctx.player2!;
             } else {
                 winner = ctx.player1!;
@@ -159,6 +166,34 @@ export const emit_gameover: AF<
         );
     });
 };
+
+export const remove_done_players = pure<
+    GameRoomContext,
+    GameRoom_PlayerQuit | DoneInvokeEvent<MakeMoveResponse>
+>((ctx, e) => {
+    actionlog("remove_done_players");
+    const actions: any[] = [];
+    for (const pinfo of ctx.players.values()) {
+        debuglog(
+            "For player",
+            pinfo.id,
+            "socket is ",
+            pinfo.socket.connected ? "connected" : "disconnected"
+        );
+        if (pinfo.socket.connected) {
+            actions.push(
+                send(
+                    <PlayersPool_PlayerDone>{
+                        type: "PLAYER_DONE",
+                        player_id: pinfo.id
+                    },
+                    { to: "player_pool" }
+                )
+            );
+        }
+    }
+    return actions;
+});
 
 export const call_dropgame: AF = ctx => {
     actionlog("call_dropgame");
@@ -235,26 +270,6 @@ export const clear_player_setup = assign<
     };
 });
 
-export const top_disconnect = assign<
-    GameRoomContext,
-    GameRoom_PlayerDisconnected
->((ctx, { player_id }) => {
-    // disconnect during game in progress - don't drop the game, await
-    // reconnection instead
-    actionlog("top-disconnect", player_id);
-
-    //TODO: inform players of disconnect
-
-    // start a reconnection timeout
-    const cb_actor = actors.reconnect_timer(player_id);
-    ctx.players.get(player_id)!.reconnect_actor = spawn(
-        cb_actor,
-        "reconnect_timer"
-    );
-
-    return {};
-});
-
 // we need to use `assign` to register the spawned actor with the system
 export const emit_update_both = assign<GameRoomContext, GameRoomEvent>(ctx => {
     actionlog("emit_update_both");
@@ -269,22 +284,16 @@ export const emit_update_both = assign<GameRoomContext, GameRoomEvent>(ctx => {
 
 export const top_reconnect = assign<GameRoomContext, GameRoomEvent>(
     (ctx, event) => {
+        actionlog("top_reconnect");
         if (event.type !== "SOC_RECONNECT") {
             return {};
         }
-
-        actionlog("top_reconnect");
 
         // reconnection during game in progress - update socket
 
         // Note: this is a bit cheesy to just plop assignment inside "assign"
         // already, but it is more concise than fiddling with Map
         ctx.players.get(event.player_id)!.socket = event.socket;
-
-        // cancel reconnect timer
-        ctx.players
-            .get(event.player_id)
-            ?.reconnect_actor?.send({ type: "ABORT_TIMER" });
 
         const thePromise = actors.top_reconnect(ctx, event);
 
@@ -305,6 +314,60 @@ export const shutdown_ongoing_activities: AF<GameRoom_Shutdown> = (ctx, e) => {
     actionlog("shutdown");
     ctx.players.forEach(pinfo => {
         pinfo.setup_actor.stop?.();
-        pinfo.reconnect_actor?.stop?.();
+        // pinfo.reconnect_actor?.stop?.();
     });
+};
+
+/**
+ * Preserve end game winner to (possibly) send updates about it later
+ */
+export const store_winner = assign<
+    GameRoomContext,
+    DoneInvokeEvent<MakeMoveResponse>
+>({
+    game_winner: (ctx, event) => {
+        const gameState = event.data.newState;
+        if (gameState.game === "over") {
+            if (gameState.turn === "player1") {
+                return ctx.player2!;
+            } else {
+                return ctx.player1!;
+            }
+        }
+        return null;
+    }
+});
+
+export const emit_gameover_final: AF<GameRoom_PlayerReconnected> = (ctx, e) => {
+    actionlog("emit_gameover_final");
+
+    e.socket.emit("gameover", { winner: ctx.game_winner });
+};
+
+export const send_player_done = pure(
+    (_, { player_id }: GameRoom_PlayerReconnected | GameRoom_PlayerQuit) =>
+        send(
+            <PlayersPool_PlayerDone>{
+                type: "PLAYER_DONE",
+                player_id
+            },
+            { to: "player_pool" }
+        )
+);
+
+export const store_winner_timeout = assign<
+    GameRoomContext,
+    PlayerDisconnectTimeout
+>({
+    game_winner: ({ player1, player2 }, { player_id }) =>
+        player_id === player1 ? player2! : player1!
+});
+
+export const emit_gameover_timeout: AF<PlayerDisconnectTimeout> = (ctx, e) => {
+    actionlog("emit_gameover_timeout");
+    const winner = e.player_id === ctx.player1 ? ctx.player2! : ctx.player1!;
+
+    for (const pinfo of ctx.players.values()) {
+        pinfo.socket.connected && pinfo.socket.emit("gameover", { winner });
+    }
 };

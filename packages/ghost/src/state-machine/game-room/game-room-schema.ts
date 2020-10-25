@@ -5,19 +5,17 @@
  */
 
 import { StateSchema, Actor, AnyEventObject } from "xstate";
-import {
-    PlayerId,
-    GameId,
-    GameState
-} from "@trulyacerbic/ttt-apis/gmaster-api";
+import { PlayerId, GameId } from "@trulyacerbic/ttt-apis/gmaster-api";
 import {
     PlayerSetupEvent,
-    PlayerSetupContext,
-    PlayerSetupStateSchema
+    PlayerSetupContext
 } from "../player-setup/player-setup-schema";
+
+import { PlayerDisconnectTimeout } from "../player-connection/players-pool-machine";
 
 import GMConnector from "../../connectors/gmaster_connector";
 import { GhostOutSocket } from "../../utils";
+import { API } from "@trulyacerbic/ttt-apis/ghost-api";
 
 /**
  * How long a player is allowed to be disconnected before game is forfeited
@@ -28,9 +26,19 @@ export interface GameRoomSchema extends StateSchema<GameRoomContext> {
     states: {
         players_setup: {};
         roles_setup: {};
-        creating_game: {};
-        wait4move: {};
-        making_move: {};
+        game_in_progress: {
+            states: {
+                game: {
+                    states: {
+                        creating_game: {};
+                        wait4move: {};
+                        making_move: {};
+                        end: {};
+                    };
+                };
+                connections: {};
+            };
+        };
         end: {};
     };
 }
@@ -43,25 +51,22 @@ export interface PlayerInfo {
     role_request?: "first" | "second";
     // this holds spawned submachine operating player's setup phase
     setup_actor: Actor<PlayerSetupContext, PlayerSetupEvent>;
-    reconnect_actor?: Actor;
+    // reconnect_actor?: Actor;
 }
 
 export interface GameRoomContext {
-    // since game master operates on 'player1' and 'player2' tokens
-    // we need to keep mapping of those to player ids.
-    // these fields can be undefined during a game's setup, but after that
-    // will be holding permanent values
+    // Since game master operates on 'player1' and 'player2' tokens we need to
+    // keep mapping of those to player ids. These fields can be undefined during
+    // a game's setup, but after that will be holding permanent values
     player1?: PlayerId;
     player2?: PlayerId;
 
-    // id of the current player (the one who's turn is next)
-
-    // game id in gamesDB of this game room (assigned after creation by game master)
+    // Game id in gamesDB of this game room (assigned after creation by game
+    // master)
     game_id?: GameId;
 
-    // holds records for who connected to this room.
-    // this also tracks player's socket for disconnection/reconnection
-    // during the game
+    // Holds records for who connected to this room. This also tracks player's
+    // socket for disconnection/reconnection during the game
     players: Map<PlayerId, PlayerInfo>;
 
     // Used to synchronize calls to socket.emit (state transitions
@@ -69,16 +74,20 @@ export interface GameRoomContext {
     // later time)
     emits_sync: Promise<any>;
 
-    // Probably should not keep this in StateContext, but it is easier to do this
-    // as a form of dependency injection for actions/guards
+    // Probably should not keep this in StateContext, but it is easier to do
+    // this as a form of dependency injection for actions/guards
     gm_connect: GMConnector;
+
+    // Final state of the game. This value used to send game over update to
+    // players who were disconnected during actual game over event.
+    game_winner: API["out"]["gameover"]["winner"];
 }
 
 /**
  * `SOC_*` type events originate from socket, but they are describing business
- * logic events, not transport level. I.e. "SOC_CONNECT" doesn't indicate
+ * logic events, not transport level. I.e. "SOC_RECONNECT" doesn't indicate
  * websocket-level (re-)connection attempt, but rather "player connects to the
- * game room" higher-level event.
+ * game room already in progress after disconnecting" higher-level event.
  */
 export type GameRoom_PlayerJoinRoom = {
     type: "SOC_START";
@@ -129,15 +138,6 @@ export type GameRoom_PlayerMove = {
 };
 
 /**
- * Happens if in a middle of a game disconnect was not followed with a reconnect
- * within a grace period
- */
-export type GameRoom_PlayerDisconnectTimeout = {
-    type: "DISCONNECT_TIMEOUT";
-    player_id: PlayerId;
-};
-
-/**
  * Game room terminated for not game-specific reasons (not due to game natural
  * conclusion)
  */
@@ -149,7 +149,7 @@ export type GameRoomEvent =
     | GameRoom_PlayerJoinRoom
     | GameRoom_PlayerReconnected
     | GameRoom_PlayerDisconnected
-    | GameRoom_PlayerDisconnectTimeout
+    | PlayerDisconnectTimeout
     | GameRoom_PlayerDropped
     | GameRoom_PlayerQuit
     | GameRoom_Shutdown
