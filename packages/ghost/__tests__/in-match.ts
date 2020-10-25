@@ -25,10 +25,9 @@ import { API as gh_api, JWTSession } from "@trulyacerbic/ttt-apis/ghost-api";
 
 import { GhostInSocket, socListen, tickTimers } from "./__utils";
 import ClientSockets from "./__ClientSockets";
-
 import { TestServer } from "./__TestServer";
 
-import { debuglog } from "../src/utils";
+import { DISCONNECT_FORFEIT_TIMEOUT } from "../src/state-machine/game-room/game-room-schema";
 
 describe("After game started", () => {
     let mocked_gmc: {
@@ -319,7 +318,7 @@ describe("After game started", () => {
             client1.disconnect();
         }, "gameover");
 
-        tickTimers(30000);
+        tickTimers(DISCONNECT_FORFEIT_TIMEOUT * 2);
         jest.useRealTimers();
         const game_result = await game_result_p;
         expect(game_result.winner).toBe(player2Id);
@@ -334,7 +333,7 @@ describe("After game started", () => {
             client1.disconnect();
         }, "gameover");
 
-        tickTimers(30000);
+        tickTimers(DISCONNECT_FORFEIT_TIMEOUT * 2);
         jest.useRealTimers();
         const game_result = await game_result_p;
         expect(game_result.winner).toBe(player2Id);
@@ -344,7 +343,7 @@ describe("After game started", () => {
         expect(player1Id).toBeTruthy();
 
         await client1.listenAfter(() => client1.disconnect(), "disconnect");
-        tickTimers(10000);
+        tickTimers(DISCONNECT_FORFEIT_TIMEOUT / 2);
         jest.useRealTimers();
         client1 = socs!.openClientSocket("p1", client1_token);
         const data = await client1.listenAfter(

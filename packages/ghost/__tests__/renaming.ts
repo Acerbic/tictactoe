@@ -1,9 +1,10 @@
+import { decode } from "jsonwebtoken";
+
 import { JWTSession } from "@trulyacerbic/ttt-apis/ghost-api";
 import {
     CheckGameResponse,
     MakeMoveResponse
 } from "@trulyacerbic/ttt-apis/gmaster-api";
-import { decode } from "jsonwebtoken";
 import { TestServer } from "./__TestServer";
 
 describe("test players' ability to change name", () => {
