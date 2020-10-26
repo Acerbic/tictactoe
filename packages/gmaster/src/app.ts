@@ -5,7 +5,8 @@
 import express, { ErrorRequestHandler, Response } from "express";
 import morgan from "morgan";
 
-import { HasuraConnector } from "./db/db-hasura";
+// import { HasuraConnector } from "./db/db-hasura";
+import { HasuraApolloConnector } from "./db/db-hasura-apollo";
 
 import CreateGame from "./routes/CreateGame";
 import CheckGame from "./routes/CheckGame";
@@ -28,7 +29,8 @@ const generateApp = () => {
     // DB connection to be reused by all API calls
     app.set(
         "gamesDb",
-        new HasuraConnector({ endpoint: process.env.HASURA_URL! })
+        new HasuraApolloConnector(process.env.HASURA_URL!)
+        // new HasuraConnector({ endpoint: process.env.HASURA_URL! })
     );
 
     // Rest API
