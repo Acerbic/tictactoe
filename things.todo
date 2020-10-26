@@ -17,7 +17,9 @@ client:
     ☐ client: handle ghost going d/c
     ☐ custom icons for player occupied cells @created(05-06-2020 15:18)
     ☐ puppetier testing of client @created(05-06-2020 15:18)
+    ☐ Anonymous player first time connects as "undefined"
     
 ghost:
     ☐ ghost all-catch unexpected/unhandled xstate errors (unhandled?)
     ☐ sort out debug messages for ghost xstate by categories better
+    ☐ reconnect-into-gameover doesn't receive the final board, only game outcome

@@ -153,6 +153,15 @@ export class SocketDispatcher {
                 socket.id
             );
 
+            (socket as Socket).on("disconnect", () => {
+                hostlog(
+                    "Player (%s) %s disconnected, socket=%s",
+                    playerId,
+                    playerName,
+                    socket.id
+                );
+            });
+
             this.rememberPlayerConnection(playerId, socket);
 
             // confirm to client and refresh the token for the upcoming game

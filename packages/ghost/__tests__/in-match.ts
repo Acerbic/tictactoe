@@ -400,8 +400,9 @@ describe("After game started", () => {
 
     test("can get gameover update on reconnect, when other player quits", async () => {
         await client1.listenAfter(() => client1.disconnect(), "disconnect");
-        await tickTimers(DISCONNECT_FORFEIT_TIMEOUT * 0.5);
+        await tickTimers(DISCONNECT_FORFEIT_TIMEOUT * 0.3);
         await client2.listenAfter(() => client2.emit("im_done"), "gameover");
+        await tickTimers(DISCONNECT_FORFEIT_TIMEOUT * 0.2);
 
         client1 = socs!.openClientSocket("p1", client1_token);
         const data = await client1.listenAfter(() => {
@@ -409,5 +410,25 @@ describe("After game started", () => {
         }, "gameover");
 
         expect(data.winner).toBe(player1Id);
+    });
+
+    test("can start a new game after post-end update, when other player quits", async () => {
+        await client1.listenAfter(() => client1.disconnect(), "disconnect");
+        await tickTimers(DISCONNECT_FORFEIT_TIMEOUT * 0.3);
+        await client2.listenAfter(() => client2.emit("im_done"), "gameover");
+        await tickTimers(DISCONNECT_FORFEIT_TIMEOUT * 0.2);
+
+        client1 = socs!.openClientSocket("p1", client1_token);
+        const data = await client1.listenAfter(() => {
+            client1.connect();
+        }, "gameover");
+
+        expect(data.winner).toBe(player1Id);
+        await tickTimers(DISCONNECT_FORFEIT_TIMEOUT * 2);
+
+        await client1.listenAfter(
+            () => client1.emit("start_game"),
+            "choose_role"
+        );
     });
 });

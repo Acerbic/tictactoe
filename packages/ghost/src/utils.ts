@@ -95,7 +95,7 @@ export function send_to_ppool(
             choose<GameRoomContext, GameRoomEvent>([
                 {
                     cond: (ctx, e, { state }) =>
-                        state.children.player_pool?.state?.done,
+                        !state.children.player_pool?.state?.done,
                     actions: send(eventOrEventBuilder(ctx, event), {
                         to: "player_pool"
                     })
@@ -106,7 +106,7 @@ export function send_to_ppool(
         return choose<GameRoomContext, GameRoomEvent>([
             {
                 cond: (ctx, e, { state }) =>
-                    state.children.player_pool?.state?.done,
+                    !state.children.player_pool?.state?.done,
                 actions: send(eventOrEventBuilder, { to: "player_pool" })
             }
         ]);

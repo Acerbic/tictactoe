@@ -25,16 +25,18 @@ export const fetch = fetchFactory(originalFetchAbortable, {
     retries: RETRIES,
     retryDelay: RETRY_DELAY,
     retryOn: (attempt: number, error: any, response: any) => {
-        debuglog(
-            `Attempt: ${attempt}; error: ${error ? error.type : "-"}; res: ${
-                response ? response.status : "-"
-            }`
-        );
+        if (attempt > 0 || error || response.status !== 200) {
+            debuglog(
+                `Attempt: ${attempt}; error: ${
+                    error ? error.type : "-"
+                }; res: ${response ? response.status : "-"}`
+            );
+        }
         const retry =
             ((error && error.type !== "aborted") ||
                 (response && response.status >= 500)) &&
             attempt < RETRIES - 1;
-        debuglog(retry ? "Will retry" : "Will abort");
+        debuglog(!retry && "Will stop retries");
         return retry;
     }
 });
