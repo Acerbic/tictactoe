@@ -11,7 +11,7 @@ import {
     PlayerSetupContext
 } from "../player-setup/player-setup-schema";
 
-import { PlayerDisconnectTimeout } from "../player-connection/players-pool-machine";
+import { PlayerDisconnectTimeout } from "../players-pool/players-pool-machine";
 
 import GMConnector from "../../connectors/gmaster_connector";
 import { GhostOutSocket } from "../../utils";

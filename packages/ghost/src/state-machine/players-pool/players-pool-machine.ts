@@ -24,7 +24,6 @@ const actionlog = debug("ttt:ghost:action:players");
 
 import { PlayerId } from "@trulyacerbic/ttt-apis/gmaster-api";
 import {
-    // GameRoom_PlayerJoinRoom,
     GameRoom_PlayerDisconnected,
     GameRoom_PlayerReconnected,
     GameRoom_Shutdown,
@@ -44,7 +43,6 @@ export type PlayersPool_PlayerDone = {
     player_id: PlayerId;
 };
 export type PlayersPoolEvent =
-    // | GameRoom_PlayerJoinRoom
     | GameRoom_PlayerDisconnected
     | GameRoom_PlayerReconnected
     | PlayerDisconnectTimeout
@@ -129,23 +127,6 @@ export const players_pool_machine = Machine<
     },
     {
         actions: {
-            // add_player: assign((ctx, e) => {
-            //     if (e.type !== "SOC_START") {
-            //         throw new UnexpectedEvent(e, "add_player");
-            //     }
-            //     const { player_id } = e;
-
-            //     actionlog("add_player", player_id);
-            //     if (ctx.playerConnections.has(player_id)) {
-            //         throw new Error(
-            //             `A player joins but is already in the game: ${player_id}`
-            //         );
-            //     }
-
-            //     return {
-            //         playerConnections: ctx.playerConnections.set(player_id, {})
-            //     };
-            // }),
             start_reconnection_timer: assign((ctx, e) => {
                 if (e.type !== "SOC_DISCONNECT") {
                     throw new UnexpectedEvent(e, "start_reconnection_timer");

@@ -35,7 +35,7 @@ import {
     players_pool_machine,
     PlayersPoolContext,
     PlayersPool_PlayerDone
-} from "../player-connection/players-pool-machine";
+} from "../players-pool/players-pool-machine";
 import { send_to_ppool } from "../../utils";
 
 export const state_machine: MachineConfig<

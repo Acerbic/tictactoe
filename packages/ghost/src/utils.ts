@@ -15,7 +15,7 @@ import {
     GameRoomEvent
 } from "./state-machine/game-room/game-room-schema";
 import { ActionObject, AnyEventObject } from "xstate";
-import { PlayersPoolEvent } from "./state-machine/player-connection/players-pool-machine";
+import { PlayersPoolEvent } from "./state-machine/players-pool/players-pool-machine";
 import { choose, pure, send } from "xstate/lib/actions";
 
 // server-side socket narrowed to emit API messages

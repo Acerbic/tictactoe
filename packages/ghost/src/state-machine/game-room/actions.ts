@@ -2,7 +2,7 @@
  * Actions for game-room machine
  */
 
-import { statelog, hostlog, errorlog, debuglog } from "../../utils";
+import { errorlog, debuglog } from "../../utils";
 import debug from "debug";
 const actionlog = debug("ttt:ghost:action");
 
@@ -43,19 +43,13 @@ import * as actors from "./actors";
 import {
     PlayerDisconnectTimeout,
     PlayersPool_PlayerDone
-} from "../player-connection/players-pool-machine";
+} from "../players-pool/players-pool-machine";
 
 // shortcut to ActionFunction signature
 type AF<E extends AnyEventObject = GameRoomEvent> = ActionFunction<
     GameRoomContext,
     E
 >;
-
-export const ack_invalid_move: AF<ErrorPlatformEvent> = (ctx, e) => {
-    actionlog("ack_invalid_move", e.type);
-
-    e.data.srcEvent.ack?.(false);
-};
 
 export const emit_server_error_fatal: AF<ErrorPlatformEvent> = (ctx, e) => {
     actionlog("emit_server_error_fatal", e.type);
@@ -66,6 +60,12 @@ export const emit_server_error_fatal: AF<ErrorPlatformEvent> = (ctx, e) => {
             abandonGame: true
         })
     );
+};
+
+export const ack_invalid_move: AF<ErrorPlatformEvent> = (ctx, e) => {
+    actionlog("ack_invalid_move", e.type);
+
+    e.data.srcEvent.ack?.(false);
 };
 
 export const emit_game_started: AF<DoneInvokeEvent<CreateGameResponse>> = (
@@ -103,29 +103,6 @@ export const emit_game_started: AF<DoneInvokeEvent<CreateGameResponse>> = (
         debuglog(">> emitting update for ", player_context.id);
         player_context.socket.emit("update", data);
     });
-};
-
-export const finalize_setup: AF = ctx => {
-    actionlog("finalize_setup");
-
-    const [p1, p2] = ctx.players.values();
-
-    // "player1" goes first
-    ctx.player1 = p1.id;
-    ctx.player2 = p2.id;
-
-    if (p1.role_request === p2.role_request) {
-        // role request conflict -> coin toss
-        if (Math.random() > 0.5) {
-            [ctx.player1, ctx.player2] = [p2.id, p1.id];
-        }
-    } else {
-        if (p1.role_request == "second") {
-            // different roles requested, but opposite to positions - swap
-            // positions
-            [ctx.player1, ctx.player2] = [p2.id, p1.id];
-        }
-    }
 };
 
 export const emit_gameover: AF<
@@ -167,34 +144,6 @@ export const emit_gameover: AF<
     });
 };
 
-export const remove_done_players = pure<
-    GameRoomContext,
-    GameRoom_PlayerQuit | DoneInvokeEvent<MakeMoveResponse>
->((ctx, e) => {
-    actionlog("remove_done_players");
-    const actions: any[] = [];
-    for (const pinfo of ctx.players.values()) {
-        debuglog(
-            "For player",
-            pinfo.id,
-            "socket is ",
-            pinfo.socket.connected ? "connected" : "disconnected"
-        );
-        if (pinfo.socket.connected) {
-            actions.push(
-                send(
-                    <PlayersPool_PlayerDone>{
-                        type: "PLAYER_DONE",
-                        player_id: pinfo.id
-                    },
-                    { to: "player_pool" }
-                )
-            );
-        }
-    }
-    return actions;
-});
-
 export const call_dropgame: AF = ctx => {
     actionlog("call_dropgame");
 
@@ -224,6 +173,29 @@ export const initiate_player_setup = assign<
         players: ctx.players.set(player_id, pinfo)
     };
 });
+
+export const finalize_setup: AF = ctx => {
+    actionlog("finalize_setup");
+
+    const [p1, p2] = ctx.players.values();
+
+    // "player1" goes first
+    ctx.player1 = p1.id;
+    ctx.player2 = p2.id;
+
+    if (p1.role_request === p2.role_request) {
+        // role request conflict -> coin toss
+        if (Math.random() > 0.5) {
+            [ctx.player1, ctx.player2] = [p2.id, p1.id];
+        }
+    } else {
+        if (p1.role_request == "second") {
+            // different roles requested, but opposite to positions - swap
+            // positions
+            [ctx.player1, ctx.player2] = [p2.id, p1.id];
+        }
+    }
+};
 
 /**
  * Conditionally forwards event to a child actor
@@ -296,10 +268,7 @@ export const top_reconnect = assign<GameRoomContext, GameRoomEvent>(
         ctx.players.get(event.player_id)!.socket = event.socket;
 
         const thePromise = actors.top_reconnect(ctx, event);
-
-        // FIXME: "top_reconnect" is not unique - both players can theoretically
-        // reconnect at the same time
-        spawn(thePromise, "top_reconnect");
+        spawn(thePromise, `top_reconnect_${event.player_id}`);
 
         // no actual ref assignment, the actor is free-floating
         return {};
@@ -314,7 +283,6 @@ export const shutdown_ongoing_activities: AF<GameRoom_Shutdown> = (ctx, e) => {
     actionlog("shutdown");
     ctx.players.forEach(pinfo => {
         pinfo.setup_actor.stop?.();
-        // pinfo.reconnect_actor?.stop?.();
     });
 };
 
@@ -360,3 +328,32 @@ export const emit_gameover_timeout: AF<PlayerDisconnectTimeout> = (ctx, e) => {
         pinfo.socket.connected && pinfo.socket.emit("gameover", { winner });
     }
 };
+
+export const remove_done_players = pure<
+    GameRoomContext,
+    GameRoom_PlayerQuit | DoneInvokeEvent<MakeMoveResponse>
+>((ctx, e) => {
+    actionlog("remove_done_players");
+
+    const actions: any[] = [];
+    for (const pinfo of ctx.players.values()) {
+        debuglog(
+            "For player",
+            pinfo.id,
+            "socket is ",
+            pinfo.socket.connected ? "connected" : "disconnected"
+        );
+        if (pinfo.socket.connected) {
+            actions.push(
+                send(
+                    <PlayersPool_PlayerDone>{
+                        type: "PLAYER_DONE",
+                        player_id: pinfo.id
+                    },
+                    { to: "player_pool" }
+                )
+            );
+        }
+    }
+    return actions;
+});
