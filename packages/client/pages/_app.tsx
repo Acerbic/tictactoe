@@ -1,11 +1,8 @@
-import React, { useEffect } from "react";
+import React from "react";
 import { AppProps } from "next/app";
-import { RecoilRoot, useRecoilState } from "recoil";
+import { RecoilRoot } from "recoil";
 
-import {
-    playerAuthState,
-    playerAuthStateInitializer
-} from "../state-defs/playerAuth";
+import { usePlayerAuthInitialize } from "../state-defs/playerAuth";
 
 // Tailwind CSS + custom components
 import "../components/tailwind/index.css";
@@ -15,8 +12,7 @@ import "../components/tailwind/index.css";
  */
 const RecoilDependent: React.FC = ({ children }) => {
     // initiating stored playerAuth session from Local Storage
-    const [value, setValue] = useRecoilState(playerAuthState);
-    useEffect(() => playerAuthStateInitializer(setValue), []);
+    usePlayerAuthInitialize();
     return <>{children}</>;
 };
 

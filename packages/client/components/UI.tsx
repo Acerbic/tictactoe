@@ -4,7 +4,7 @@
  * something.
  */
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useRecoilState } from "recoil";
 import { Machine } from "xstate";
 import { useMachine } from "@xstate/react";
@@ -22,7 +22,22 @@ export const UI: React.FC = () => {
     // awkwardly disabling server-side rendering, bc playerAuthState
     // is loaded from local storage and will not match during hydration.
     const [mounted, setMounted] = useState(false);
-    useEffect(() => setMounted(true), []);
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
+    const formComponentRef = useRef<HTMLDivElement>(null);
+    const [formJustOpened, setFormJustOpened] = useState(false);
+
+    // catching transition signal into Open form
+    useEffect(() => {
+        if (formJustOpened) {
+            setFormJustOpened(false);
+            (formComponentRef.current?.querySelector(
+                'input[type="text"]'
+            ) as HTMLInputElement)?.focus();
+        }
+    }, [formJustOpened]);
 
     const [player, setPlayer] = useRecoilState(playerAuthState);
 
@@ -40,13 +55,10 @@ export const UI: React.FC = () => {
                         name: event.newName || "Anonymous"
                     }));
                 }
-            }
+            },
+            setFormJustOpened: () => setFormJustOpened(true)
         }
     });
-
-    const onPlayerNameClick = () => {
-        send("EDIT_NAME");
-    };
 
     const isFormClosing = machine.matches("formclosing");
     const isFormVisible =
@@ -57,20 +69,26 @@ export const UI: React.FC = () => {
         (mounted && (
             <>
                 <UserBar
-                    onPlayerNameClick={onPlayerNameClick}
+                    onPlayerNameClick={() => send("EDIT_NAME")}
                     playerName={player.name || "Anonymous"}
                 ></UserBar>
 
-                <FadeMinimize hold={isFormHoldOpen} hidden={!isFormVisible}>
-                    <UsernameInputForm
-                        initialValue={player.name || "Anonymous"}
-                        isFormClosing={isFormClosing}
-                        onCancelClick={() => send("CANCEL_EDIT")}
-                        onSaveClick={newName =>
-                            send({ type: "SAVE_NEW_NAME", newName })
-                        }
-                    />
-                </FadeMinimize>
+                <div ref={formComponentRef}>
+                    <FadeMinimize
+                        reset={formJustOpened}
+                        hold={isFormHoldOpen}
+                        hidden={!isFormVisible}
+                    >
+                        <UsernameInputForm
+                            initialValue={player.name || "Anonymous"}
+                            isFormClosing={isFormClosing}
+                            onCancelClick={() => send("CANCEL_EDIT")}
+                            onSaveClick={newName =>
+                                send({ type: "SAVE_NEW_NAME", newName })
+                            }
+                        />
+                    </FadeMinimize>
+                </div>
             </>
         )) || <></>
     );

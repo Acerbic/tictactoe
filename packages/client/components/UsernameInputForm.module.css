@@ -26,11 +26,13 @@
 .root input[type="text"] {
     @apply block w-full text-center text-4xl bg-gray-800 text-gray-500 border-b-2 mb-8;
     outline: none;
+    @apply border-gray-600;
 }
 
 .root input[type="text"]:hover,
 .root input[type="text"]:focus {
     @apply bg-gray-900 text-gray-300;
+    @apply border-white;
 }
 
 .root :global .buttons {

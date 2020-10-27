@@ -1,6 +1,11 @@
 /**
  * React-spring wrapper to minimize and fade a div over a short period of time
- * after holding it visible until a signal
+ * after holding it visible until a signal.
+ *
+ * When Hold is true, the animation retains original position and scaling
+ *           is false, the content is faded out and minimize towards top-right
+ * When Reset is true, the animation is snapped towards full "Hold" state
+ * When Hidden is true, "display: none" CSS is applied
  */
 
 import React from "react";
@@ -9,9 +14,15 @@ import { useSpring, animated } from "react-spring";
 interface P {
     hold: boolean;
     hidden: boolean;
+    reset: boolean;
 }
 
-export const FadeMinimize: React.FC<P> = ({ hold, hidden, children }) => {
+export const FadeMinimize: React.FC<P> = ({
+    hold,
+    hidden,
+    reset,
+    children
+}) => {
     const { transform, opacity } = useSpring({
         transform: hold
             ? "translate(0%, 0%) scale(1)"
@@ -21,7 +32,7 @@ export const FadeMinimize: React.FC<P> = ({ hold, hidden, children }) => {
             transform: "translate(0%, 0%) scale(1)",
             opacity: 1
         },
-        reset: hold
+        reset
     });
 
     return (

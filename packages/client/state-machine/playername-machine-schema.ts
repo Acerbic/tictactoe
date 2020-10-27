@@ -60,6 +60,7 @@ export const playername_machine: MachineConfig<
             ]
         },
         formopen: {
+            entry: "setFormJustOpened",
             on: {
                 SAVE_NEW_NAME: {
                     target: "formclosing",

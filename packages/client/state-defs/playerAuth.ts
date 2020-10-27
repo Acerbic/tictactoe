@@ -6,6 +6,8 @@
  * game server and it is required for an active match to proceed.
  */
 
+import { useEffect } from "react";
+import { useSetRecoilState } from "recoil";
 import { atomLocalStorage } from "./atomLocalStorage";
 
 export type PlayerAuthState = {
@@ -23,4 +25,11 @@ const [playerAuthState, playerAuthStateInitializer] = atomLocalStorage<
     default: { name: null, token: null }
 });
 
-export { playerAuthState, playerAuthStateInitializer };
+export const usePlayerAuthInitialize = () => {
+    const setValue = useSetRecoilState(playerAuthState);
+    useEffect(() => {
+        playerAuthStateInitializer(setValue);
+    }, []);
+};
+
+export { playerAuthState };

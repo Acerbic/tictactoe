@@ -1,8 +1,8 @@
 /**
- * A screen for player to input the name
+ * A screen for player to input their name
  */
 
-import React, { useState } from "react";
+import React, { FormEvent, useState } from "react";
 
 import styles from "./UsernameInputForm.module.css";
 
@@ -35,34 +35,41 @@ export const UsernameInputForm: React.FC<P> = props => {
         dragEnd = null;
     };
 
+    const submit = (e: React.FormEvent) => {
+        e.preventDefault();
+        setNewName(newName.trim());
+        props.onSaveClick(newName.trim());
+    };
+
     return (
         <div
             className={`${styles.root} ${
                 props.isFormClosing ? styles.closing : ""
             }`}
             onClick={backdropClick}
-            onMouseDown={e => (dragOrigin = e.target)}
-            onMouseUp={e => (dragEnd = e.target)}
+            onKeyUp={({ key }) => {
+                if (key === "Escape") {
+                    props.onCancelClick();
+                }
+            }}
         >
             <div className="content">
-                <h1>Your name is....</h1>
-                <input
-                    type="text"
-                    onChange={e => setNewName(e.target.value)}
-                    value={newName}
-                ></input>
-                <div className="buttons">
+                <form onSubmit={submit}>
+                    <h1>Your name is....</h1>
                     <input
-                        type="button"
-                        onClick={props.onCancelClick}
-                        value="Cancel"
-                    />
-                    <input
-                        type="submit"
-                        onClick={() => props.onSaveClick(newName)}
-                        value="Save"
-                    />
-                </div>
+                        type="text"
+                        onChange={e => setNewName(e.target.value)}
+                        value={newName}
+                    ></input>
+                    <div className="buttons">
+                        <input
+                            type="button"
+                            onClick={props.onCancelClick}
+                            value="Cancel"
+                        />
+                        <input type="submit" value="Save" />
+                    </div>
+                </form>
             </div>
         </div>
     );
