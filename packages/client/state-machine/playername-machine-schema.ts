@@ -26,6 +26,10 @@ export interface PlayernameSchema extends StateSchema<PlayernameContext> {
     };
 }
 
+export interface Mounted extends EventObject {
+    type: "MOUNTED";
+}
+
 export interface EditName extends EventObject {
     type: "EDIT_NAME";
 }
@@ -43,7 +47,12 @@ export interface ForceClose extends EventObject {
     type: "FORCE_CLOSE";
 }
 
-export type AggregateEvent = EditName | SaveNewName | CancelEdit | ForceClose;
+export type AggregateEvent =
+    | Mounted
+    | EditName
+    | SaveNewName
+    | CancelEdit
+    | ForceClose;
 
 export const playername_machine: MachineConfig<
     PlayernameContext,
@@ -54,10 +63,12 @@ export const playername_machine: MachineConfig<
     initial: "initial",
     states: {
         initial: {
-            always: [
-                { cond: "isRequiringInputUsername", target: "formopen" },
-                { target: "formclosed" }
-            ]
+            on: {
+                MOUNTED: [
+                    { cond: "isRequiringInputUsername", target: "formopen" },
+                    { target: "formclosed" }
+                ]
+            }
         },
         formopen: {
             entry: "setFormJustOpened",

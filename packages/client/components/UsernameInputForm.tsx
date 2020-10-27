@@ -2,7 +2,7 @@
  * A screen for player to input their name
  */
 
-import React, { FormEvent, useState } from "react";
+import React, { useEffect, useState } from "react";
 
 import styles from "./UsernameInputForm.module.css";
 
@@ -24,12 +24,20 @@ export const UsernameInputForm: React.FC<P> = props => {
     // playerAuthState.name changes, the form will not lose its input field
     // value
     const [newName, setNewName] = useState<string>(props.initialValue);
+    useEffect(() => {
+        setNewName(props.initialValue);
+    }, [props.initialValue]);
+
+    const cancel = () => {
+        setNewName(props.initialValue);
+        props.onCancelClick();
+    };
 
     const backdropClick = (e: React.MouseEvent<HTMLElement, MouseEvent>) => {
         if (e.target === e.currentTarget && dragEnd === dragOrigin) {
             e.stopPropagation();
             e.preventDefault();
-            props.onCancelClick();
+            cancel();
         }
         dragOrigin = null;
         dragEnd = null;
@@ -49,7 +57,7 @@ export const UsernameInputForm: React.FC<P> = props => {
             onClick={backdropClick}
             onKeyUp={({ key }) => {
                 if (key === "Escape") {
-                    props.onCancelClick();
+                    cancel();
                 }
             }}
         >
@@ -62,11 +70,7 @@ export const UsernameInputForm: React.FC<P> = props => {
                         value={newName}
                     ></input>
                     <div className="buttons">
-                        <input
-                            type="button"
-                            onClick={props.onCancelClick}
-                            value="Cancel"
-                        />
+                        <input type="button" onClick={cancel} value="Cancel" />
                         <input type="submit" value="Save" />
                     </div>
                 </form>
