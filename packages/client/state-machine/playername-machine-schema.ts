@@ -77,7 +77,7 @@ export const playername_machine: MachineConfig<
                     target: "formclosing",
                     actions: "saveNewName"
                 },
-                CANCEL_EDIT: { target: "formclosing" }
+                CANCEL_EDIT: { target: "formclosing", actions: "cancelEdit" }
             }
         },
         formclosing: {

@@ -2,45 +2,57 @@
  * A screen for player to input their name
  */
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
+
+import { playerAuthState } from "../state-defs/playerAuth";
+import { useRecoilValue } from "recoil";
 
 import styles from "./UsernameInputForm.module.css";
 
 interface P {
-    initialValue: string;
     onSaveClick: (newName: string) => void;
     onCancelClick: () => void;
-    isFormClosing?: boolean;
+    isOpen: boolean;
 }
 
-// Not part of component state to eliminate extra revalidations
-// As a trade-off, this React Component must be used as a singleton
-let dragOrigin: EventTarget | null = null;
-let dragEnd: EventTarget | null = null;
+// This structure tracks accidental mouse drag motion (for example, when
+// mouse-selecting input field's contents) and is used to determine it the user
+// actually indented to click the backdrop or not.
+interface Drag {
+    origin: EventTarget | null;
+    end: EventTarget | null;
+}
 
 export const UsernameInputForm: React.FC<P> = props => {
-    // because name is only being read on state initialization, there's no
-    // reactive dependency i.e. even if during form operation underlying
-    // playerAuthState.name changes, the form will not lose its input field
-    // value
-    const [newName, setNewName] = useState<string>(props.initialValue);
+    const player = useRecoilValue(playerAuthState);
+
+    // the form will be rendered while player===undefined, but will not be
+    // opened or shown, thus we need to stub player name with ""
+    const [newName, setNewName] = useState<string>(player?.name || "");
     useEffect(() => {
-        setNewName(props.initialValue);
-    }, [props.initialValue]);
+        if (props.isOpen) {
+            // resetting local name to global name when "isOpen" changed to true
+            setNewName(player!.name);
+        }
+    }, [props.isOpen]);
+
+    const drag = useRef<Drag>({ origin: null, end: null });
 
     const cancel = () => {
-        setNewName(props.initialValue);
         props.onCancelClick();
     };
 
     const backdropClick = (e: React.MouseEvent<HTMLElement, MouseEvent>) => {
-        if (e.target === e.currentTarget && dragEnd === dragOrigin) {
+        if (
+            e.target === e.currentTarget &&
+            drag.current.end === drag.current.origin
+        ) {
             e.stopPropagation();
             e.preventDefault();
             cancel();
         }
-        dragOrigin = null;
-        dragEnd = null;
+        drag.current.origin = null;
+        drag.current.end = null;
     };
 
     const submit = (e: React.FormEvent) => {
@@ -51,15 +63,10 @@ export const UsernameInputForm: React.FC<P> = props => {
 
     return (
         <div
-            className={`${styles.root} ${
-                props.isFormClosing ? styles.closing : ""
-            }`}
+            className={`${styles.root} ${props.isOpen ? "" : styles.closing}`}
+            onMouseDown={e => (drag.current.origin = e.target)}
+            onMouseUp={e => (drag.current.end = e.target)}
             onClick={backdropClick}
-            onKeyUp={({ key }) => {
-                if (key === "Escape") {
-                    cancel();
-                }
-            }}
         >
             <div className="content">
                 <form onSubmit={submit}>
@@ -68,10 +75,20 @@ export const UsernameInputForm: React.FC<P> = props => {
                         type="text"
                         onChange={e => setNewName(e.target.value)}
                         value={newName}
+                        disabled={!props.isOpen}
                     ></input>
                     <div className="buttons">
-                        <input type="button" onClick={cancel} value="Cancel" />
-                        <input type="submit" value="Save" />
+                        <input
+                            type="button"
+                            onClick={cancel}
+                            value="Cancel"
+                            disabled={!props.isOpen}
+                        />
+                        <input
+                            type="submit"
+                            value="Save"
+                            disabled={!props.isOpen}
+                        />
                     </div>
                 </form>
             </div>

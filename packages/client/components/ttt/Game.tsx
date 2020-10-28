@@ -64,9 +64,11 @@ export const Game: React.FC = () => {
     // initiate permanent ws connection to the server
     const socConnector = useSocketGameConnector(send, setBoard);
 
-    // somewhat roundabout way to react to renaming event
-    if (playerWasRenamed(player)) {
-        socConnector.emit_renamed(player.name!);
+    if (socConnector) {
+        // somewhat roundabout way to react to renaming event
+        if (playerWasRenamed(player!)) {
+            socConnector.emit_renamed(player!.name!);
+        }
     }
 
     // TODO: check against submitting incorrect move (occupied cells)

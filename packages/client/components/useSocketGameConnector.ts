@@ -2,7 +2,7 @@
  * Hook to wrap SocketGameConnector class and wire it up to Recoil state
  */
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRecoilValue, useRecoilCallback, useSetRecoilState } from "recoil";
 import decode from "jwt-decode";
 
@@ -11,7 +11,7 @@ import {
     roleAssignedState,
     opponentNameState
 } from "../state-defs";
-import { JWTSession, Role } from "@trulyacerbic/ttt-apis/ghost-api";
+import { JWTSession } from "@trulyacerbic/ttt-apis/ghost-api";
 import { ClientEventSender } from "../state-machine/state-machine-schema";
 import {
     SocketGameConnector,
@@ -33,14 +33,14 @@ export const useSocketGameConnector = (
             try {
                 const payload: JWTSession = decode(token);
                 set(playerAuthState, oldValue => ({
-                    ...oldValue,
+                    ...oldValue!,
                     token
                 }));
             } catch (error) {
                 // TODO?
                 console.debug(error, token);
                 set(playerAuthState, oldValue => ({
-                    ...oldValue,
+                    ...oldValue!,
                     token: null
                 }));
             }
@@ -56,12 +56,23 @@ export const useSocketGameConnector = (
     };
 
     // initiate permanent ws connection to the server
-    const [socConnector] = useState(
-        // the connector will use "send" to self-store into the machine's
-        // context and to send websocket events into machine. The machine, in
-        // return will use its context value to order actions to the connector
-        () => new SocketGameConnector(xstateSend, player, setters)
-    );
+    const [
+        socConnector,
+        setSocConnector
+    ] = useState<SocketGameConnector | null>(null);
+
+    useEffect(() => {
+        // only create soc connector after player data initialized
+        if (player && !socConnector) {
+            setSocConnector(
+                // the connector will use "send" to self-store into the
+                // machine's context and to send websocket events into machine.
+                // The machine, in return will use its context value to order
+                // actions to the connector
+                new SocketGameConnector(xstateSend, player, setters)
+            );
+        }
+    }, [player, socConnector]);
 
     return socConnector;
 };

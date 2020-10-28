@@ -19,7 +19,7 @@ export const UI: React.FC = () => {
         <>
             <UserBar
                 onPlayerNameClick={() => sendRef.current?.("EDIT_NAME")}
-                playerName={player.name || "Anonymous"}
+                playerName={player?.name || "..."}
             ></UserBar>
 
             <UsernameInputScreen sendRef={sendRef} />

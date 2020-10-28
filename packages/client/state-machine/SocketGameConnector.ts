@@ -136,7 +136,7 @@ export class SocketGameConnector implements GameConnector {
     private attachListeners = (socket: SocketIOClient.Socket) => {
         socket.once("connection_ack", this.s_connection_ack);
 
-        socket.once("rename_ack", this.s_rename_ack);
+        socket.on("rename_ack", this.s_rename_ack);
 
         // game setup negotiation
         // this one will be received if we are joining a new game

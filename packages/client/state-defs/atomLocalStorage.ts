@@ -21,23 +21,28 @@ export interface LSAtomOptions<T> {
  */
 export function atomLocalStorage<T>(
     opts: LSAtomOptions<T>
-): [RecoilState<T>, (setter: SetterOrUpdater<T>) => void] {
+): [
+    RecoilState<T | undefined>,
+    (setter: SetterOrUpdater<T | undefined>) => void
+] {
     const key = `atom-ls-recoiled-${opts.storageKey}`;
-    let rs: RecoilState<T>;
+    // undefined is value of the state before initializer is run (to be
+    // consistent with SSR)
+    let rs: RecoilState<T | undefined>;
 
     if (recoilStates.has(key)) {
         rs = recoilStates.get(key)!;
     } else {
         // backstorage to facilitate Recoil observable pattern
-        let a: RecoilState<T> = atom<T>({
+        let a = atom<T | undefined>({
             key,
-            // reading value from localStorage here would issue a SSR hydration warning
-            // (inconsistency with server rendering)
-            default: opts.default
+            // reading value from localStorage here would issue a SSR hydration
+            // warning (inconsistency with server rendering)
+            default: undefined
         });
 
         // selector to augment setting atom with setting to local storage
-        rs = selector<T>({
+        rs = selector<T | undefined>({
             key: `selector-ls-recoiled-${opts.storageKey}`,
             get: ({ get }) => get(a),
             set: ({ get, set }, newValue) => {
@@ -55,8 +60,8 @@ export function atomLocalStorage<T>(
     // initialized loads stored value from local storage and subscribes to
     // changes must be called with an appropriate setter (from a React component
     // code hook useRecoilState)
-    const initializer = (setValue: SetterOrUpdater<T>) => {
-        setValue(ls.get(opts.storageKey));
+    const initializer = (setValue: SetterOrUpdater<T | undefined>) => {
+        setValue(ls.get<T>(opts.storageKey) || opts.default);
 
         // subscribe to updates from other tabs
         ls.on(opts.storageKey, (v: any) => {
@@ -64,5 +69,8 @@ export function atomLocalStorage<T>(
         });
     };
 
+    // now this is a bit hacky. before initializer is executed, rs is
+    // RecoilState<undefined> - i.e. always returns undefined value, after
+    // initializer its either defaults or value read from local storage
     return [rs, initializer];
 }

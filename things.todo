@@ -11,7 +11,7 @@ gamesdb:
 
 client:
     ✔ use [Enter] to save user name change @done(27-10-2020 15:38)
-    ☐ use [Escape] to close input form even if input field isn't in focus
+    ✔ use [Escape] to close input form even if input field isn't in focus @done(28-10-2020 17:09)
     ✔ on opening input form, put text field into focus @done(27-10-2020 21:16)
     ☐ consider using Monorepo config for deploying to vercel (https://vercel.com/docs/git-integrations#monorepos) and webhooks instead of project linking
     ☐ display opponent name during game
@@ -19,7 +19,7 @@ client:
     ☐ client: handle ghost going d/c
     ☐ custom icons for player occupied cells @created(05-06-2020 15:18)
     ☐ puppetier testing of client @created(05-06-2020 15:18)
-    ☐ Anonymous player first time connects as "undefined"
+    ✔ Anonymous player first time connects as "undefined" @done(28-10-2020 17:09)
     ☐ when input form closing is cancelled (form quickly reopens) it doesn't snap to original full visibility immediately
     
 ghost:

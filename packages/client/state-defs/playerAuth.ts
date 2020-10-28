@@ -11,9 +11,13 @@ import { useSetRecoilState } from "recoil";
 import { atomLocalStorage } from "./atomLocalStorage";
 
 export type PlayerAuthState = {
-    // null value means the name was not set even to default "Anonymous"
-    // when name is null, the user will be prompted with an input form
-    name: string | null;
+    // player's displayed name
+    name: string;
+
+    // if player did not have a chance to enter his name yet (default name
+    // "Anonymous" is assigned), this flag is set.
+    nameAccepted: boolean;
+
     // jwt
     token: string | null;
 };
@@ -22,7 +26,7 @@ const [playerAuthState, playerAuthStateInitializer] = atomLocalStorage<
     PlayerAuthState
 >({
     storageKey: "ttt-player",
-    default: { name: null, token: null }
+    default: { name: "Anonymous", nameAccepted: false, token: null }
 });
 
 export const usePlayerAuthInitialize = () => {

@@ -24,6 +24,14 @@ interface P {
 export const UsernameInputScreen: React.FC<P> = ({ sendRef }) => {
     const [player, setPlayer] = useRecoilState(playerAuthState);
 
+    // This allows access to a reactive variable "player" from outside of
+    // reactive scope - i.e. from guard functions. Without a ref to wrap player,
+    // the guard function's scope would lock onto stale player value.
+    const playerRef = useRef(player);
+    useEffect(() => {
+        playerRef.current = player;
+    }, [player]);
+
     const formComponentRef = useRef<HTMLDivElement>(null);
     const [formJustOpened, setFormJustOpened] = useState(false);
 
@@ -37,31 +45,48 @@ export const UsernameInputScreen: React.FC<P> = ({ sendRef }) => {
         }
     }, [formJustOpened]);
 
+    // starting machine to track state of the screen
     const [machine, send] = useMachine(Machine(playername_machine), {
         guards: {
             isRequiringInputUsername: () => {
-                return player.name === null;
+                return !playerRef.current!.nameAccepted;
             }
         },
         actions: {
             saveNewName: (_, event: AggregateEvent) => {
                 if (event.type === "SAVE_NEW_NAME") {
                     setPlayer(value => ({
-                        ...value,
+                        ...value!,
+                        nameAccepted: true,
                         name: event.newName || "Anonymous"
                     }));
                 }
             },
+            cancelEdit: () => {
+                setPlayer(value => ({ ...value!, nameAccepted: true }));
+            },
             setFormJustOpened: () => setFormJustOpened(true)
         }
     });
+
+    // Note: useImperativeHandle?
     sendRef.current = send;
 
+    // global capture of "Escape" key
     useEffect(() => {
-        send("MOUNTED");
+        const keyUpHandler = ({ key }: KeyboardEvent) =>
+            key === "Escape" && send("CANCEL_EDIT");
+        document.addEventListener("keyup", keyUpHandler);
+        return () => document.removeEventListener("keyup", keyUpHandler);
     }, []);
 
-    const isFormClosing = machine.matches("formclosing");
+    useEffect(() => {
+        // only send event after initializer is executed on playerAuthState
+        if (typeof player !== "undefined") {
+            send("MOUNTED");
+        }
+    }, [player]);
+
     const isFormVisible =
         machine.matches("formopen") || machine.matches("formclosing");
     const isFormHoldOpen = machine.matches("formopen");
@@ -74,8 +99,7 @@ export const UsernameInputScreen: React.FC<P> = ({ sendRef }) => {
                 hidden={!isFormVisible}
             >
                 <UsernameInputForm
-                    initialValue={player.name || "Anonymous"}
-                    isFormClosing={isFormClosing}
+                    isOpen={isFormHoldOpen}
                     onCancelClick={() => send("CANCEL_EDIT")}
                     onSaveClick={newName =>
                         send({ type: "SAVE_NEW_NAME", newName })
