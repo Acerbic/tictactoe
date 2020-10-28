@@ -3,7 +3,7 @@
  * The form itself is handled by the form component UsernameInputForm.
  */
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef } from "react";
 import { useRecoilState } from "recoil";
 import { Machine, Sender } from "xstate";
 import { useMachine } from "@xstate/react";
@@ -33,17 +33,6 @@ export const UsernameInputScreen: React.FC<P> = ({ sendRef }) => {
     }, [player]);
 
     const formComponentRef = useRef<HTMLDivElement>(null);
-    const [formJustOpened, setFormJustOpened] = useState(false);
-
-    // catching transition signal into Open form
-    useEffect(() => {
-        if (formJustOpened) {
-            setFormJustOpened(false);
-            (formComponentRef.current?.querySelector(
-                'input[type="text"]'
-            ) as HTMLInputElement)?.focus();
-        }
-    }, [formJustOpened]);
 
     // starting machine to track state of the screen
     const [machine, send] = useMachine(Machine(playername_machine), {
@@ -64,8 +53,7 @@ export const UsernameInputScreen: React.FC<P> = ({ sendRef }) => {
             },
             cancelEdit: () => {
                 setPlayer(value => ({ ...value!, nameAccepted: true }));
-            },
-            setFormJustOpened: () => setFormJustOpened(true)
+            }
         }
     });
 
@@ -94,7 +82,7 @@ export const UsernameInputScreen: React.FC<P> = ({ sendRef }) => {
     return (
         <div ref={formComponentRef}>
             <FadeMinimize
-                reset={formJustOpened}
+                reset={isFormHoldOpen}
                 hold={isFormHoldOpen}
                 hidden={!isFormVisible}
             >

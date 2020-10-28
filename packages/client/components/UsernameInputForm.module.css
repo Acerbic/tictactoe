@@ -21,6 +21,7 @@
 }
 .root h1 {
     @apply text-center font-mono text-yellow-300 font-extrabold text-4xl mb-6;
+    @apply select-none;
 }
 
 .root input[type="text"] {

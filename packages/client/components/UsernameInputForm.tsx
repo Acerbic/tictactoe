@@ -29,10 +29,14 @@ export const UsernameInputForm: React.FC<P> = props => {
     // the form will be rendered while player===undefined, but will not be
     // opened or shown, thus we need to stub player name with ""
     const [newName, setNewName] = useState<string>(player?.name || "");
+
+    const inputFieldRef = useRef<HTMLInputElement>(null);
+
     useEffect(() => {
         if (props.isOpen) {
             // resetting local name to global name when "isOpen" changed to true
             setNewName(player!.name);
+            inputFieldRef.current?.focus();
         }
     }, [props.isOpen]);
 
@@ -73,6 +77,7 @@ export const UsernameInputForm: React.FC<P> = props => {
                     <h1>Your name is....</h1>
                     <input
                         type="text"
+                        ref={inputFieldRef}
                         onChange={e => setNewName(e.target.value)}
                         value={newName}
                         disabled={!props.isOpen}

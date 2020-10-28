@@ -1,7 +1,5 @@
 /**
- * Higher-order component extracting user logic from the presentational side.
- * There's no particular reason for HOC pattern, I just wanted to use it for
- * something.
+ * UI overlay over game display.
  */
 
 import React, { useRef } from "react";
