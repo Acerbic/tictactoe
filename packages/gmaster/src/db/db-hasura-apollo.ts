@@ -16,7 +16,14 @@ export class HasuraApolloConnector implements DbConnector {
     constructor(endpoint: string) {
         this.client = new ApolloClient({
             cache: new InMemoryCache(),
-            link: new HttpLink({ uri: endpoint, fetch })
+            link: new HttpLink({
+                uri: endpoint,
+                fetch,
+                headers: {
+                    "x-hasura-admin-secret":
+                        process.env.HASURA_GRAPHQL_ADMIN_SECRET
+                }
+            })
         });
     }
     LoadGame(id: GameId): Promise<Game> {
