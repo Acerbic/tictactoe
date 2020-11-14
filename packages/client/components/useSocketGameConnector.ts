@@ -31,7 +31,7 @@ export const useSocketGameConnector = (
     const setAuthToken = useRecoilCallback<[string], void>(
         ({ set }) => token => {
             try {
-                const payload: JWTSession = decode(token);
+                const payload = decode(token) as JWTSession;
                 set(playerAuthState, oldValue => ({
                     ...oldValue!,
                     token

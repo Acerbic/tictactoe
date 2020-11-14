@@ -8,6 +8,8 @@ apis:
 
 gamesdb:
     ✔ replace graphcurl in gmaster with ApolloClient @done(26-10-2020 17:02)
+    ✔ test Hasura update propagation to prod. @done(14-11-2020 10:15)
+    ✔ replace using Apollo full dependency to download GraphQL schema with a more robust solution (no graphqurl tho) @done(14-11-2020 12:31)
 
 client:
     ✔ use [Enter] to save user name change @done(27-10-2020 15:38)

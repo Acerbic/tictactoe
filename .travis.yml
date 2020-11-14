@@ -2,7 +2,7 @@ language: node_js
 node: 14
 git:
   depth: 3
-cache: yarn
+cache: false
 before_script:
   # no need to install deps for this package
   - rm -rf packages/gamesdb
@@ -10,11 +10,11 @@ before_script:
 jobs:
   - stage: test
     name: Testing gmaster
-    script: yarn workspace gmaster test --runInBand
+    script: yarn workspace gmaster test
 
   - stage: test
     name: Testing ghost
-    script: yarn workspace ghost test --runInBand
+    script: yarn workspace ghost test
 
   - stage: deploy
     name: Deploying Docker containers
@@ -42,6 +42,7 @@ jobs:
 
   - stage: deploy
     name: Deploying Next.js Client code
+    if: branch = master
     install: skip
     before_script: npm i -g vercel
     script:

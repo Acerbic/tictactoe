@@ -31,7 +31,7 @@ const playerWasRenamed = (player: PlayerAuthState): boolean => {
         return false;
     }
     try {
-        const payload: JWTSession = decode(player.token);
+        const payload = decode(player.token) as JWTSession;
         return player.name !== payload.playerName;
     } catch (e) {
         return false;
