@@ -48,14 +48,6 @@ type PromiseOnReject<T> = Promise<T>["then"] extends (
     ? A
     : never;
 
-export function chain_promise<F = any, R = any>(
-    ctx: GameRoomContext,
-    onfulfilled: PromiseOnFulfill<F>,
-    onrejected?: PromiseOnReject<R>
-) {
-    ctx.emits_sync = ctx.emits_sync.then(onfulfilled, onrejected);
-}
-
 /**
  * Game state as reported by gmaster is incomplete. This function appends
  * data that is needed by client but is only known by ghost.

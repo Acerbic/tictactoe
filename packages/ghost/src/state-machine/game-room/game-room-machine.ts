@@ -107,8 +107,7 @@ export const state_machine: MachineConfig<
                                         cond: "move_ended_game",
                                         target: "end",
                                         actions: [
-                                            "emit_update_both",
-                                            "emit_gameover" /* possible racing with emit_update_both */,
+                                            "emit_update_and_gameover",
                                             "call_dropgame",
                                             "remove_done_players",
                                             "store_winner"
@@ -121,13 +120,7 @@ export const state_machine: MachineConfig<
                                 ],
                                 onError: [
                                     {
-                                        cond: (_, e) =>
-                                            typeof e.data.rejectReason ===
-                                                "object" &&
-                                            e.data.rejectReason instanceof
-                                                GMasterError &&
-                                            e.data.rejectReason.code ===
-                                                ErrorCodes.ILLEGAL_MOVE,
+                                        cond: "move_error_recoverable",
                                         target: "wait4move",
                                         actions: "ack_invalid_move"
                                     },
@@ -310,6 +303,12 @@ export const machine_options: Partial<MachineOptions<
             const game = (event as DoneInvokeEvent<MakeMoveResponse>).data
                 .newState.game;
             return game === "over" || game === "draw";
-        }
+        },
+        move_error_recoverable: (_, e) =>
+            typeof (e as DoneInvokeEvent<any>).data.rejectReason === "object" &&
+            (e as DoneInvokeEvent<any>).data.rejectReason instanceof
+                GMasterError &&
+            (e as DoneInvokeEvent<any>).data.rejectReason.code ===
+                ErrorCodes.ILLEGAL_MOVE
     }
 };

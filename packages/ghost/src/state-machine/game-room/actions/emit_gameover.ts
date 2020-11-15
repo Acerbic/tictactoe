@@ -3,7 +3,6 @@ import { DoneInvokeEvent } from "xstate";
 import { API } from "@trulyacerbic/ttt-apis/ghost-api";
 import { MakeMoveResponse } from "@trulyacerbic/ttt-apis/gmaster-api";
 
-import { chain_promise } from "../../../utils";
 import {
     GameRoom_PlayerQuit,
     GameRoom_PlayerReconnected,
@@ -43,9 +42,7 @@ export const emit_gameover: AF<
         }
     }
 
-    chain_promise(ctx, () => {
-        ctx.players.forEach(player_context =>
-            player_context.socket.emit("gameover", { winner })
-        );
-    });
+    ctx.players.forEach(player_context =>
+        player_context.socket.emit("gameover", { winner })
+    );
 };

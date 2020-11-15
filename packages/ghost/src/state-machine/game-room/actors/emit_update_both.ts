@@ -6,7 +6,6 @@ import { errorlog, debuglog, populate_update_meta } from "../../../utils";
 
 import { GameRoomContext } from "../game-room-schema";
 import { API } from "@trulyacerbic/ttt-apis/ghost-api";
-import { chain_promise } from "../../../utils";
 
 // we need to use `assign` to register the spawned actor with the system
 export const emit_update_both = (ctx: GameRoomContext) => {
@@ -19,11 +18,9 @@ export const emit_update_both = (ctx: GameRoomContext) => {
                 response.state
             );
 
-            chain_promise(ctx, () => {
-                ctx.players.forEach(player_context => {
-                    debuglog(">> emitting update for ", player_context.id);
-                    player_context.socket.emit("update", data);
-                });
+            ctx.players.forEach(player_context => {
+                debuglog(">> emitting update for ", player_context.id);
+                player_context.socket.emit("update", data);
             });
         })
         .catch(reason => {

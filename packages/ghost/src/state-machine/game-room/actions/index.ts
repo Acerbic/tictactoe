@@ -26,6 +26,7 @@ import { emit_gameover_timeout } from "./emit_gameover_timeout";
 import { emit_gameover } from "./emit_gameover";
 import { emit_game_started } from "./emit_game_started";
 import { emit_server_error_fatal } from "./emit_server_error_fatal";
+import { emit_update_and_gameover } from "./emit_update_and_gameover";
 import { emit_update_both } from "./emit_update_both";
 import { finalize_setup } from "./finalize_setup";
 import { forward_soc_event } from "./forward_soc_event";
@@ -49,6 +50,7 @@ export default ({
     emit_gameover,
     emit_game_started,
     emit_server_error_fatal,
+    emit_update_and_gameover,
     emit_update_both,
     finalize_setup,
     forward_soc_event,

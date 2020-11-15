@@ -69,11 +69,6 @@ export interface GameRoomContext {
     // socket for disconnection/reconnection during the game
     players: Map<PlayerId, PlayerInfo>;
 
-    // Used to synchronize calls to socket.emit (state transitions
-    // could cause racing in actions, if action is delaying emit to the
-    // later time)
-    emits_sync: Promise<any>;
-
     // Probably should not keep this in StateContext, but it is easier to do
     // this as a form of dependency injection for actions/guards
     gm_connect: GMConnector;
