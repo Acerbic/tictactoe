@@ -1,7 +1,7 @@
 language: node_js
 node: 14
 git:
-  depth: 3
+  depth: 1
 cache: false
 before_script:
   # no need to install deps for this package
