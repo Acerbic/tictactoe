@@ -28,3 +28,4 @@ ghost:
     ☐ ghost all-catch unexpected/unhandled xstate errors (unhandled?)
     ☐ sort out debug messages for ghost xstate by categories better
     ☐ reconnect-into-gameover doesn't receive the final board, only game outcome
+    ☐ when the player quits and IMMEDIATELY starts a new game, after receiving GAME_OVER but before the game quitting is fully processed, he fails to receive a role picking prompt

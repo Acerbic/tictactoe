@@ -12,7 +12,7 @@ import {
 } from "xstate";
 import { forwardTo } from "xstate/lib/actions";
 
-import * as MachineActions from "./actions";
+import actions from "./actions";
 
 import {
     GameRoomContext,
@@ -279,10 +279,11 @@ export const machine_options: Partial<MachineOptions<
 
     actions: {
         // casting it here allows for more flexible approach with definitions in actions.ts
-        ...((MachineActions as unknown) as ActionFunctionMap<
-            GameRoomContext,
-            GameRoomEvent
-        >)
+        // ...((MachineActions as unknown) as ActionFunctionMap<
+        //     GameRoomContext,
+        //     GameRoomEvent
+        // >)
+        ...actions
     },
 
     guards: {
