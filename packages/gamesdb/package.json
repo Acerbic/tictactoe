@@ -7,7 +7,7 @@
     "hasura": "hasura --project hasura",
     "deploy": "hasura migrate apply --project hasura && hasura metadata apply --project hasura",
     "console": "hasura console --project hasura",
-    "generate": "gq http://localhost:8080/v1/graphql --introspect > hasura.graphql"
+    "generate": "graphql-inspector introspect http://localhost:8080/v1/graphql --write hasura.graphql"
   },
   "keywords": [
     "hasura",
@@ -19,8 +19,8 @@
   "author": "Varenov Gleb",
   "license": "ISC",
   "dependencies": {
-    "graphql": "^0.13.1",
-    "graphqurl": "^0.3.3",
+    "@graphql-inspector/cli": "^2.3.0",
+    "graphql": "^15.4.0",
     "hasura-cli": "^1.2.1",
     "rimraf": "^3.0.2"
   }
