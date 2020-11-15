@@ -392,6 +392,8 @@ describe("After game started", () => {
     test("can start another game after first one ended", async () => {
         await client2.listenAfter(() => client1.emit("im_done"), "gameover");
 
+        await new Promise(rs => setTimeout(rs, 100));
+
         await client1.listenAfter(
             () => client1.emit("start_game"),
             "choose_role"
