@@ -2,7 +2,7 @@
 
 # PWD should be the monorepo's root
 
-yarn --pure-lockfile && \
+yarn  && \
 yarn workspace @trulyacerbic/ttt-apis build && \
 sudo docker-compose \
     --project-name ttt-dev-local \

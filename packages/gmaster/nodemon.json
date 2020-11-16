@@ -1,5 +1,5 @@
 {
     "restartable": false,
     "watch": ["bin", "dist"],
-    "exec": "node --inspect=0.0.0.0:9228 ./bin/www.js"
+    "exec": "yarn node --inspect=0.0.0.0:9228 ./bin/www.js"
 }

@@ -24,20 +24,5 @@
     "prettier": "2.1.2",
     "rimraf": "^3.0.2",
     "typescript": "^4.0.5"
-  },
-  "resolutions": {
-    "react": "^16",
-    "react-dom": "^16"
-  },
-  "dependenciesMeta": {
-    "@next/env": {
-      "unplugged": true
-    },
-    "next": {
-      "unplugged": true
-    }
-  },
-  "dependencies": {
-    "@yarnpkg/pnpify": "^2.3.3"
   }
 }
