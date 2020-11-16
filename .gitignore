@@ -3,3 +3,11 @@ node_modules
 **/node_modules
 yarn-error.log
 .vercel
+
+# Zero-Install (https://yarnpkg.com/getting-started/qa#which-files-should-be-gitignored)
+.yarn/*
+!.yarn/cache
+!.yarn/releases
+!.yarn/plugins
+!.yarn/sdks
+!.yarn/versions
