@@ -1852,6 +1852,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@graphql-inspector/config@npm:2.3.0":
+  version: 2.3.0
+  resolution: "@graphql-inspector/config@npm:2.3.0"
+  peerDependencies:
+    graphql: ^0.13.0 || ^14.0.0 || ^15.0.0
+  checksum: e3584db022c4e56b9f655aedf7a82b8d9bbe51a882f6e0f7c254887e28a8241e388c270718d6479e6e02b592d4ba3b2f75c69f7c91f5d594880fb9739ff681f5
+  languageName: node
+  linkType: hard
+
 "@graphql-inspector/core@npm:2.3.0":
   version: 2.3.0
   resolution: "@graphql-inspector/core@npm:2.3.0"
@@ -2246,7 +2255,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@graphql-tools/utils@npm:^7.0.0, @graphql-tools/utils@npm:^7.0.1, @graphql-tools/utils@npm:^7.0.2":
+"@graphql-tools/utils@npm:^6.0.0 || ^7.0.0, @graphql-tools/utils@npm:^7.0.0, @graphql-tools/utils@npm:^7.0.1, @graphql-tools/utils@npm:^7.0.2":
   version: 7.0.2
   resolution: "@graphql-tools/utils@npm:7.0.2"
   dependencies:
@@ -2698,6 +2707,21 @@ __metadata:
     graphql: ^15.4.0
     hasura-cli: ^1.2.1
     rimraf: ^3.0.2
+  languageName: unknown
+  linkType: soft
+
+"@trulyacerbic/ttt@workspace:.":
+  version: 0.0.0-use.local
+  resolution: "@trulyacerbic/ttt@workspace:."
+  dependencies:
+    "@jest/test-sequencer": ^26.6.3
+    concurrently: ^5.3.0
+    cross-env: ^7.0.2
+    jest-cli: ^26.6.3
+    jest-environment-node: ^26.6.2
+    prettier: 2.1.2
+    rimraf: ^3.0.2
+    typescript: ^4.0.5
   languageName: unknown
   linkType: soft
 
@@ -4620,7 +4644,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"bufferutil@npm:^4.0.1":
+"bufferutil@npm:*, bufferutil@npm:^4.0.1":
   version: 4.0.2
   resolution: "bufferutil@npm:4.0.2"
   dependencies:
@@ -12320,18 +12344,6 @@ resolve@^1.18.1:
   languageName: node
   linkType: hard
 
-"root-workspace-0b6124@workspace:.":
-  version: 0.0.0-use.local
-  resolution: "root-workspace-0b6124@workspace:."
-  dependencies:
-    concurrently: ^5.3.0
-    cross-env: ^7.0.2
-    prettier: 2.1.2
-    rimraf: ^3.0.2
-    typescript: ^4.0.5
-  languageName: unknown
-  linkType: soft
-
 "rsvp@npm:^4.8.4":
   version: 4.8.5
   resolution: "rsvp@npm:4.8.5"
@@ -13345,6 +13357,15 @@ resolve@^1.18.1:
   languageName: node
   linkType: hard
 
+"supports-color@npm:*, supports-color@npm:^7.0.0, supports-color@npm:^7.1.0":
+  version: 7.2.0
+  resolution: "supports-color@npm:7.2.0"
+  dependencies:
+    has-flag: ^4.0.0
+  checksum: 8e57067c39216f3c2ffce7cc14ca934d54746192571203aa9c9922d97d2d55cc1bdaa9e41a11f91e620670b5a74ebdec6b548a885d8cc2dea7cab59e21416029
+  languageName: node
+  linkType: hard
+
 "supports-color@npm:^5.3.0, supports-color@npm:^5.4.0, supports-color@npm:^5.5.0":
   version: 5.5.0
   resolution: "supports-color@npm:5.5.0"
@@ -13360,15 +13381,6 @@ resolve@^1.18.1:
   dependencies:
     has-flag: ^3.0.0
   checksum: 86821571295ad9f808d5e0149f13c2b0ca6faaf1325c427b369e6f4b2b1e4759046b7a4ea0e3c3c7f2546035fa2fb0d6a90f31c6c4f751eaedbcdc1b983a08cc
-  languageName: node
-  linkType: hard
-
-"supports-color@npm:^7.0.0, supports-color@npm:^7.1.0":
-  version: 7.2.0
-  resolution: "supports-color@npm:7.2.0"
-  dependencies:
-    has-flag: ^4.0.0
-  checksum: 8e57067c39216f3c2ffce7cc14ca934d54746192571203aa9c9922d97d2d55cc1bdaa9e41a11f91e620670b5a74ebdec6b548a885d8cc2dea7cab59e21416029
   languageName: node
   linkType: hard
 
@@ -14172,7 +14184,7 @@ resolve@^1.18.1:
   languageName: node
   linkType: hard
 
-"utf-8-validate@npm:^5.0.2":
+"utf-8-validate@npm:*, utf-8-validate@npm:^5.0.2":
   version: 5.0.3
   resolution: "utf-8-validate@npm:5.0.3"
   dependencies:

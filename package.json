@@ -1,4 +1,5 @@
 {
+  "name": "@trulyacerbic/ttt",
   "scripts": {
     "clean": "lerna run clean && lerna clean -y && rimraf node_modules",
     "deploy:dev:local": "bash ./deployment/dev/deploy_dev_local.sh",
@@ -19,8 +20,11 @@
     "packages/*"
   ],
   "devDependencies": {
+    "@jest/test-sequencer": "^26.6.3",
     "concurrently": "^5.3.0",
     "cross-env": "^7.0.2",
+    "jest-cli": "^26.6.3",
+    "jest-environment-node": "^26.6.2",
     "prettier": "2.1.2",
     "rimraf": "^3.0.2",
     "typescript": "^4.0.5"
