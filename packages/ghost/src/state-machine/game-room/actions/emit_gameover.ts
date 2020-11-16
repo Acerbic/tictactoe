@@ -9,6 +9,7 @@ import {
     isGREvent
 } from "../game-room-schema";
 import { actionlog, AF } from "./index";
+import { get_winner_4_api } from "../../../utils";
 
 export const emit_gameover: AF<
     | GameRoom_PlayerQuit
@@ -29,7 +30,7 @@ export const emit_gameover: AF<
             // this should not happen!
         }
     } else if (isGREvent(e, "SOC_RECONNECT")) {
-        winner = ctx.game_winner;
+        winner = get_winner_4_api(ctx);
     } else {
         // normal game finish
         const gameState = e.data.newState;

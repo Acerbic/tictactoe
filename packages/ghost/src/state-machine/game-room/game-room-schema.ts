@@ -5,7 +5,11 @@
  */
 
 import { StateSchema, Actor, AnyEventObject } from "xstate";
-import { PlayerId, GameId } from "@trulyacerbic/ttt-apis/gmaster-api";
+import {
+    PlayerId,
+    GameId,
+    GameState
+} from "@trulyacerbic/ttt-apis/gmaster-api";
 import {
     PlayerSetupEvent,
     PlayerSetupContext
@@ -51,7 +55,6 @@ export interface PlayerInfo {
     role_request?: "first" | "second";
     // this holds spawned submachine operating player's setup phase
     setup_actor: Actor<PlayerSetupContext, PlayerSetupEvent>;
-    // reconnect_actor?: Actor;
 }
 
 export interface GameRoomContext {
@@ -73,9 +76,8 @@ export interface GameRoomContext {
     // this as a form of dependency injection for actions/guards
     gm_connect: GMConnector;
 
-    // Final state of the game. This value used to send game over update to
-    // players who were disconnected during actual game over event.
-    game_winner: API["out"]["gameover"]["winner"];
+    // Latest game state - stored to update reconnected players.
+    game_state?: GameState;
 }
 
 /**

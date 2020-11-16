@@ -225,7 +225,12 @@ describe("After game started", () => {
 
             mocked_gmc.post.mockResolvedValueOnce(<gm_api.MakeMoveResponse>{
                 success: true,
-                newState: { game: "draw", turn: "player2" }
+                newState: {
+                    game: "draw",
+                    turn: "player2",
+                    player1: player1Id,
+                    player2: player2Id
+                }
             });
             c1.emit("move", { row: 2, column: 2 });
             const { winner } = await gameOverPromise;

@@ -5,7 +5,7 @@
  * directory.
  */
 
-import { ActionFunction, AnyEventObject } from "xstate";
+import { ActionFunction, AnyEventObject, ActionObject } from "xstate";
 import debug from "debug";
 export const actionlog = debug("ttt:ghost:action");
 
@@ -33,8 +33,8 @@ import { forward_soc_event } from "./forward_soc_event";
 import { initiate_player_setup } from "./initiate_player_setup";
 import { remove_done_players } from "./remove_done_players";
 import { shutdown_ongoing_activities } from "./shutdown_ongoing_activities";
+import { store_game_state } from "./store_game_state";
 import { store_winner_forfeit } from "./store_winner_forfeit";
-import { store_winner } from "./store_winner";
 import { top_reconnect } from "./top_reconnect";
 
 // recasting a collection of action with individual narrow event parameters to a
@@ -57,7 +57,11 @@ export default ({
     initiate_player_setup,
     remove_done_players,
     shutdown_ongoing_activities,
+    store_game_state,
     store_winner_forfeit,
-    store_winner,
     top_reconnect
-} as any) as Record<string, AF>;
+} as any) as Record<
+    string,
+    | ActionObject<GameRoomContext, GameRoomEvent>
+    | ActionFunction<GameRoomContext, GameRoomEvent>
+>;

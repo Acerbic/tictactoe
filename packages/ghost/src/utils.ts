@@ -104,3 +104,26 @@ export function send_to_ppool(
         ]);
     }
 }
+
+/**
+ * Derive the winning player's id from the latest game state (stored in context)
+ */
+export function get_winner_4_api(
+    ctx: GameRoomContext
+): API["out"]["gameover"]["winner"] {
+    if (!ctx.game_state) {
+        throw new Error("Missing stored game state");
+    }
+
+    if (ctx.game_state.game === "wait") {
+        throw new Error("Game is still in progress");
+    }
+
+    if (ctx.game_state.game === "draw") {
+        return null;
+    }
+
+    const winner_tag =
+        ctx.game_state.turn === "player1" ? "player2" : "player1";
+    return ctx.game_state[winner_tag];
+}

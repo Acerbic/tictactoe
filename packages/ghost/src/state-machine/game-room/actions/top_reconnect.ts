@@ -1,27 +1,31 @@
-import { spawn } from "xstate";
 import { assign } from "xstate/lib/actions";
 
+import { populate_update_meta } from "../../../utils";
 import { actionlog } from "./index";
-import { GameRoomContext, GameRoomEvent } from "../game-room-schema";
-import * as actors from "../actors";
+import {
+    GameRoomContext,
+    GameRoom_PlayerReconnected
+} from "../game-room-schema";
 
-export const top_reconnect = assign<GameRoomContext, GameRoomEvent>(
-    (ctx, event) => {
-        actionlog("top_reconnect");
-        if (event.type !== "SOC_RECONNECT") {
-            return {};
-        }
+export const top_reconnect = assign<
+    GameRoomContext,
+    GameRoom_PlayerReconnected
+>((ctx, event) => {
+    actionlog("top_reconnect");
 
-        // reconnection during game in progress - update socket
+    // reconnection during game in progress - update socket
+    // Note: this is a bit cheesy to just plop assignment inside "assign"
+    // already, but it is more concise than fiddling with Map
+    ctx.players.get(event.player_id)!.socket = event.socket;
 
-        // Note: this is a bit cheesy to just plop assignment inside "assign"
-        // already, but it is more concise than fiddling with Map
-        ctx.players.get(event.player_id)!.socket = event.socket;
-
-        const thePromise = actors.top_reconnect(ctx, event);
-        spawn(thePromise, `top_reconnect_${event.player_id}`);
-
-        // no actual ref assignment, the actor is free-floating
-        return {};
+    if (ctx.game_state) {
+        event.socket.emit("update", populate_update_meta(ctx, ctx.game_state));
+    } else {
+        event.socket.emit("server_error", {
+            message: "Missing game state",
+            abandonGame: true
+        });
     }
-);
+
+    return {};
+});

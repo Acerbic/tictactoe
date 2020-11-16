@@ -2,14 +2,9 @@
  * Implementation of game-room machine
  */
 
-import { statelog, hostlog, errorlog, debuglog } from "../../utils";
+import { errorlog, debuglog } from "../../utils";
 
-import {
-    MachineConfig,
-    MachineOptions,
-    ActionFunctionMap,
-    DoneInvokeEvent
-} from "xstate";
+import { MachineConfig, MachineOptions, DoneInvokeEvent } from "xstate";
 import { forwardTo } from "xstate/lib/actions";
 
 import actions from "./actions";
@@ -19,7 +14,6 @@ import {
     GameRoomSchema,
     GameRoomEvent,
     GameRoom_PlayerMove,
-    GameRoom_Shutdown,
     GameRoom_PlayerQuit
 } from "./game-room-schema";
 import {
@@ -84,7 +78,10 @@ export const state_machine: MachineConfig<
                                 src: "invoke_create_game",
                                 onDone: {
                                     target: "wait4move",
-                                    actions: ["emit_game_started"]
+                                    actions: [
+                                        "emit_game_started",
+                                        "store_game_state"
+                                    ]
                                 },
                                 onError: {
                                     target: "end",
@@ -110,12 +107,15 @@ export const state_machine: MachineConfig<
                                             "emit_update_and_gameover",
                                             "call_dropgame",
                                             "remove_done_players",
-                                            "store_winner"
+                                            "store_game_state"
                                         ]
                                     },
                                     {
                                         target: "wait4move",
-                                        actions: ["emit_update_both"]
+                                        actions: [
+                                            "emit_update_both",
+                                            "store_game_state"
+                                        ]
                                     }
                                 ],
                                 onError: [
@@ -207,8 +207,6 @@ export const state_machine: MachineConfig<
                 "remove_done_players"
             ]
         },
-        "error.platform.top_reconnect": "end",
-        "error.platform.emit_update_both": "end",
         SHUTDOWN: {
             target: "end"
         }
@@ -271,11 +269,6 @@ export const machine_options: Partial<MachineOptions<
     },
 
     actions: {
-        // casting it here allows for more flexible approach with definitions in actions.ts
-        // ...((MachineActions as unknown) as ActionFunctionMap<
-        //     GameRoomContext,
-        //     GameRoomEvent
-        // >)
         ...actions
     },
 
