@@ -3,6 +3,7 @@ node: 14
 git:
   depth: 1
 cache: false
+install: yarn --immutable --immutable-cache
 before_script:
   # no need to install deps for this package
   - rm -rf packages/gamesdb
