@@ -3,9 +3,11 @@ RUN apk add yarn
 WORKDIR /app
 
 # Common dependencies among projects
-COPY ["package.json", "yarn.lock", "./"]
+COPY ["package.json", "yarn.lock", ".pnp.js", ".yarnrc.yml", "./"]
+COPY .yarn ./.yarn
 COPY packages/apis ./packages/apis
-RUN yarn --pure-lockfile
+
+RUN yarn
 RUN yarn workspace @trulyacerbic/ttt-apis build
 
 # parameters to run this Dockerfile
@@ -18,7 +20,7 @@ CMD cd ./packages/client && yarn dev
 
 # install deps for this package & crosslink
 COPY ["packages/client/package.json", "./packages/client/"]
-RUN yarn --pure-lockfile
+RUN yarn
 
 # copying files and building the project
 COPY packages/client ./packages/client
