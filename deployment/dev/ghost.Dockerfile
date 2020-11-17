@@ -7,9 +7,6 @@ COPY ["package.json", "yarn.lock", ".pnp.js", ".yarnrc.yml", "./"]
 COPY .yarn ./.yarn
 COPY packages/apis ./packages/apis
 
-RUN yarn
-RUN yarn workspace @trulyacerbic/ttt-apis build
-
 # parameters to run this Dockerfile
 ARG GHOST_PORT=3060
 
@@ -28,4 +25,5 @@ RUN yarn
 COPY packages/ghost ./packages/ghost
 
 # compile TypeScript
+RUN yarn workspace @trulyacerbic/ttt-apis build
 RUN yarn workspace ghost build

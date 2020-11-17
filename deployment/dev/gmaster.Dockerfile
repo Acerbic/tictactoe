@@ -7,9 +7,6 @@ COPY ["package.json", "yarn.lock", ".pnp.js", ".yarnrc.yml", "./"]
 COPY .yarn ./.yarn
 COPY packages/apis ./packages/apis
 
-RUN yarn 
-RUN yarn workspace @trulyacerbic/ttt-apis build
-
 # parameters to run this Dockerfile
 ARG GMASTER_PORT=3000
 
@@ -26,4 +23,5 @@ RUN yarn
 COPY packages/gmaster ./packages/gmaster
 
 # build
+RUN yarn workspace @trulyacerbic/ttt-apis build
 RUN yarn workspace gmaster build
