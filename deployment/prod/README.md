@@ -15,3 +15,7 @@ client separately if you want to use it to actually play the game:
 ```bash
 yarn start:client
 ```
+
+Since Yarn v2 dropped some functionality Yarn v1 had, a custom yarn plugin is
+used to discard devDependencies for prod build:
+[prod-install](https://gitlab.com/larry1123/yarn-contrib/-/tree/master/packages/plugin-production-install)
