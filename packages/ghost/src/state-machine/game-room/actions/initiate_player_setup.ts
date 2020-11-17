@@ -4,7 +4,7 @@ import { assign } from "xstate/lib/actions";
 import {
     PlayerSetupContext,
     PlayerSetupEvent
-} from "src/state-machine/player-setup/player-setup-schema";
+} from "../../player-setup/player-setup-schema";
 import player_setup from "../../player-setup/player-setup-machine";
 import {
     GameRoomContext,
