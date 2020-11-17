@@ -5,6 +5,7 @@
 
 apis:
     ☐ move API's `*.d.ts` into non-root folder?
+    ☐ build on prepack hook?
 
 gamesdb:
     ✔ replace graphcurl in gmaster with ApolloClient @done(26-10-2020 17:02)
