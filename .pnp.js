@@ -20823,7 +20823,7 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
       ]],
       ["ts-jest", [
         ["virtual:b6911f4cd4950804c781efda7cc9ef088a693c415dff64f03bf49ef0a9ad304cb9e57d2968597c23985505cd5da6dc3cd4bb52407532099c55b7ff0f1180d6b4#npm:26.4.4", {
-          "packageLocation": "./.yarn/$$virtual/ts-jest-virtual-0a155d844e/0/cache/ts-jest-npm-26.4.4-6fd34d9b91-bee46b789c.zip/node_modules/ts-jest/",
+          "packageLocation": "./.yarn/unplugged/ts-jest-virtual-0a155d844e/node_modules/ts-jest/",
           "packageDependencies": [
             ["ts-jest", "virtual:b6911f4cd4950804c781efda7cc9ef088a693c415dff64f03bf49ef0a9ad304cb9e57d2968597c23985505cd5da6dc3cd4bb52407532099c55b7ff0f1180d6b4#npm:26.4.4"],
             ["@types/jest", "npm:26.0.15"],
