@@ -5,8 +5,6 @@ git:
 cache: false
 install: yarn --immutable --immutable-cache
 before_script:
-  # no need to install deps for this package
-  - rm -rf packages/gamesdb
   - yarn workspace @trulyacerbic/ttt-apis build
 jobs:
   - stage: test
