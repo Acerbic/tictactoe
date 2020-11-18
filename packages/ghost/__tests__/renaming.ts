@@ -157,6 +157,8 @@ describe("test players' ability to change name", () => {
             ({ game }) => game === "draw"
         );
 
+        await new Promise(rs => setTimeout(rs, 10));
+
         // starting a second game
         await c1.listenAfter(() => c1.emit("start_game"), "choose_role");
         const p1_ready_2 = c1.listenAfter(
